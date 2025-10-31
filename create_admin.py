@@ -1,54 +1,40 @@
 # create_admin.py
 from app import create_app, db
-from app.models import User, Role
-from flask_bcrypt import Bcrypt
+# --- Update Imports ---
+from flask_security import utils
 
 app = create_app()
-bcrypt = Bcrypt(app)
 
 with app.app_context():
     print("Starting script...")
+    
+    # Re-create all tables. This is safe since we deleted hospital.db
+    db.create_all()
+    print("Database tables created.")
+
+    # Get the datastore
+    datastore = app.security.datastore
 
     # 1. Create Roles
-    role_admin = Role.query.filter_by(name='Admin').first()
-    if not role_admin:
-        role_admin = Role(name='Admin', description='Administrator')
-        db.session.add(role_admin)
-        print("Created 'Admin' role.")
-
-    role_doctor = Role.query.filter_by(name='Doctor').first()
-    if not role_doctor:
-        role_doctor = Role(name='Doctor', description='Doctor')
-        db.session.add(role_doctor)
-        print("Created 'Doctor' role.")
-
-    role_patient = Role.query.filter_by(name='Patient').first()
-    if not role_patient:
-        role_patient = Role(name='Patient', description='Patient')
-        db.session.add(role_patient)
-        print("Created 'Patient' role.")
+    datastore.find_or_create_role(name='Admin', description='Administrator')
+    datastore.find_or_create_role(name='Doctor', description='Doctor')
+    datastore.find_or_create_role(name='Patient', description='Patient')
+    print("Roles created/verified.")
 
     # 2. Create Admin User
     admin_email = 'admin@hms.com'
-    admin_user = User.query.filter_by(email=admin_email).first()
-
-    if not admin_user:
+    if not datastore.find_user(email=admin_email):
         # Hash the password
-        hashed_password = bcrypt.generate_password_hash('admin123').decode('utf-8')
-
-        admin_user = User(
+        hashed_password = utils.hash_password('admin123')
+        
+        datastore.create_user(
             email=admin_email,
             password=hashed_password,
             full_name='Admin User',
+            roles=['Admin'], # Assign role by name
             active=True
         )
-
-        # Assign the 'Admin' role
-        admin_user.roles.append(role_admin)
-
-        db.session.add(admin_user)
         print(f"Created admin user: {admin_email}")
-
     else:
         print(f"Admin user '{admin_email}' already exists.")
 

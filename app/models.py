@@ -1,6 +1,8 @@
 # app/models.py
 from . import db
 from datetime import datetime
+from flask_security import UserMixin, RoleMixin
+import uuid
 
 # Association table for the many-to-many relationship between Users and Roles
 roles_users = db.Table('roles_users',
@@ -8,24 +10,25 @@ roles_users = db.Table('roles_users',
     db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
 )
 
-class Role(db.Model):
+class Role(db.Model, RoleMixin):
     __tablename__ = 'role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    description = db.Column(db.String(255)) # For Flask-Security
+    description = db.Column(db.String(255))
 
-class User(db.Model):
+class User(db.Model, UserMixin): # Add UserMixin
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False) # We will hash this
+    password = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255))
-    active = db.Column(db.Boolean()) # For Flask-Security
-    # Define the many-to-many relationship
+    active = db.Column(db.Boolean())
+    # This is required by Flask-Security-Too
+    fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
+
+    # Relationships
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
-
-    # One-to-one relationships for profiles
     doctor_profile = db.relationship('Doctor', back_populates='user', uselist=False)
     patient_profile = db.relationship('Patient', back_populates='user', uselist=False)
 

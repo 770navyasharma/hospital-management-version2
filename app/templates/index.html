@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="container hero-section">
+    <div class="hero-text">
+        <h1 class="display-4 fw-bold">
+            Modern Care,
+            <br>
+            Managed Simply.
+        </h1>
+        <p class="lead">
+            Welcome to the Hospital Management System. Book appointments, manage patient history, and streamline hospital operations, all in one place.
+        </p>
+        <div class="hero-buttons">
+            <a class="btn btn-primary btn-lg" href="{{ url_for('main.patient_register') }}" role="button">Book Appointment</a>
+            <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('security.login') }}" role="button">Staff Login</a>
+        </div>
+    </div>
+    <div class="hero-image">
+        <img src="https://fe-hospital-management-system.vercel.app/static/media/hero-home.021b7cea0f5708247550062de1acf0f4.svg" alt="Hospital Graphic">
+    </div>
+</div>
+
+<div class="role-section">
+    <div class="container">
+        <h2 class="mb-5">How It Works</h2>
+        <div class="row g-4">
+            
+            <div class="col-md-4">
+                <div class="role-card">
+                    <div class="icon"><i class="bi bi-person"></i></div>
+                    <h3>For Patients</h3>
+                    <p>Easily create an account, search for doctors by specialty, and book, reschedule, or cancel your appointments online.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="role-card">
+                    <div class="icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                    <h3>For Doctors</h3>
+                    <p>Log in to your secure dashboard to view upcoming appointments, manage your availability, and access patient medical histories.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="role-card">
+                    <div class="icon"><i class="bi bi-gear-wide-connected"></i></div>
+                    <h3>For Admins</h3>
+                    <p>Manage the entire system. Add or remove doctors, search patient records, and oversee all appointments and departments.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

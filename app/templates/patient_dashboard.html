@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<div class="card-container">
+    <h1 class="text-center">Patient Dashboard</h1>
+    <hr>
+    <p>Hello, {{ current_user.full_name }}!</p>
+    <p>From here you can book appointments and view your medical history.</p>
+</div>
+{% endblock %}

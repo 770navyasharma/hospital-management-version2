@@ -1,0 +1,124 @@
+/* app/static/css/main.css */
+
+/* Use a modern, clean font */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f6; /* A very light, soft gray */
+    color: #333;
+}
+
+/* --- Navigation Bar --- */
+.navbar-brand {
+    font-weight: 600;
+    color: #0056b3 !important; /* A professional blue */
+}
+
+.navbar .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.navbar .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.navbar .nav-link:not(.btn) {
+    font-weight: 500;
+    color: #555 !important;
+}
+
+.navbar .nav-link:not(.btn):hover {
+    color: #0056b3 !important;
+}
+
+
+/* --- Hero Section (on index.html) --- */
+.hero-section {
+    display: flex;
+    align-items: center;
+    padding: 6rem 0;
+    min-height: 80vh;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #222;
+}
+
+.hero-text .lead {
+    font-size: 1.25rem;
+    color: #555;
+    margin: 1.5rem 0;
+}
+
+.hero-buttons .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+
+/* --- Role Info Section (on index.html) --- */
+.role-section {
+    padding: 4rem 0;
+    background-color: #ffffff;
+}
+
+.role-section h2 {
+    text-align: center;
+    font-weight: 600;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.role-card {
+    background-color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    text-align: center;
+    height: 100%;
+}
+
+.role-card .icon {
+    font-size: 3rem;
+    color: #007bff;
+    margin-bottom: 1.5rem;
+}
+
+.role-card h3 {
+    font-weight: 600;
+    color: #333;
+}
+
+.role-card p {
+    color: #666;
+}

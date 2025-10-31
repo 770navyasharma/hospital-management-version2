@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "bootstrap/form.html" import render_form %}
+
+{% block page_content %}
+<div class="card-container">
+    <h2 class="text-center mb-4">Login</h2>
+    <p class="text-center text-muted">
+        Admin, Doctor, and Patient login.
+    </p>
+    <hr>
+    
+    {{ render_form(security.login_form, action=url_for('security.login'), method="POST") }}
+    
+    <div class="text-center mt-3">
+        <p>New patient? <a href="{{ url_for('main.patient_register') }}">Register here</a></p>
+    </div>
+</div>
+{% endblock %}

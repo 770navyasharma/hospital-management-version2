@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "bootstrap/form.html" import render_field %}
+
+{% block page_content %}
+<div class="card-container">
+    <h2 class="text-center mb-4">Patient Registration</h2>
+    
+    <form action="{{ url_for('main.patient_register') }}" method="POST">
+        <div class="mb-3">
+            {{ render_field(security.register_form.full_name, class='form-control', placeholder='Full Name') }}
+        </div>
+        <div class="mb-3">
+            {{ render_field(security.register_form.email, class='form-control', placeholder='Email') }}
+        </div>
+        <div class="mb-3">
+            <label for="contact_number" class="form-label">Contact Number</label>
+            <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+        </div>
+        <div class="mb-3">
+            {{ render_field(security.register_form.password, class='form-control', placeholder='Password') }}
+        </div>
+        
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg">Register</button>
+        </div>
+    </form>
+    
+</div>
+{% endblock %}

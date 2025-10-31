@@ -2,20 +2,32 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
+from flask_security import Security, SQLAlchemyUserDatastore
+from flask_bootstrap import Bootstrap
 
-# Initialize the database extension
 db = SQLAlchemy()
+datastore = None 
 
 def create_app():
-    app = Flask(__name__)
+    global datastore 
+    
+    # --- UPDATE THIS LINE ---
+    # Point 'static_folder' to our new static directory
+    app = Flask(__name__, template_folder='templates', static_folder='static')
+    
     app.config.from_object(Config)
-
-    # Initialize the db with our app
+    Bootstrap(app)
     db.init_app(app)
 
-    # We'll create the models file next
+    from . import models 
+    
+    datastore = SQLAlchemyUserDatastore(db, models.User, models.Role)
+    app.security = Security(app, datastore)
+    
+    from .routes import main as main_blueprint
+    app.register_blueprint(main_blueprint)
+
     with app.app_context():
-        from . import models  # Import models
-        db.create_all()     # Create database tables for our models
+        pass 
 
     return app
