@@ -1,0 +1,122 @@
+/* app/static/css/auth.css */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 90vh; /* 100vh minus navbar height */
+    padding: 2rem 0;
+}
+
+.auth-card {
+    display: flex;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    width: 100%;
+    max-width: 900px; /* Card width */
+}
+
+/* --- Left Side (Image) --- */
+.auth-image-side {
+    flex: 1;
+    padding: 2rem; /* Reduced padding for image */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* These classes will be added to the HTML */
+.login-bg {
+    background-color: #f0f8ff; /* Light blue */
+}
+.register-bg {
+    background-color: #f0f8ff; /* Light green */
+}
+
+.auth-image-side img {
+    max-width: 100%;
+    max-height: 400px; /* Stop SVG from being too tall */
+    height: auto;
+    object-fit: contain; /* Fixes distortion */
+}
+
+.auth-image-side .welcome-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #004d40; /* Dark green theme color */
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* --- Right Side (Form) --- */
+.auth-form-side {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-form-side h2 {
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 0.5rem; /* Tighter spacing */
+}
+
+.auth-form-side .text-muted {
+    margin-bottom: 2rem; /* More space below subtitle */
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.form-control {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    transition: all 0.2s ease-in-out; /* Added transition */
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.25rem rgba(0,123,255,.25);
+}
+
+.form-check-label {
+    font-weight: 500;
+}
+
+.btn-auth {
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-auth:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.auth-switch-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: 500;
+}
+
+/* Cleaner link style */
+.auth-switch-link a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+.auth-switch-link a:hover {
+    text-decoration: underline;
+}

@@ -3,7 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from flask_security import Security, SQLAlchemyUserDatastore
-from flask_bootstrap import Bootstrap
+# from flask_bootstrap import Bootstrap  <-- REMOVE THIS LINE
 
 db = SQLAlchemy()
 datastore = None 
@@ -11,12 +11,10 @@ datastore = None
 def create_app():
     global datastore 
     
-    # --- UPDATE THIS LINE ---
-    # Point 'static_folder' to our new static directory
     app = Flask(__name__, template_folder='templates', static_folder='static')
-    
     app.config.from_object(Config)
-    Bootstrap(app)
+    
+    
     db.init_app(app)
 
     from . import models 

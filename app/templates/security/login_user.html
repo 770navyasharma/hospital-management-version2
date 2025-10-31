@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block page_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        
+        <div class="auth-image-side login-bg">
+            <img src="{{ url_for('static', filename='images/undraw_enter-password_1kl4.svg') }}" 
+                 alt="Login Graphic" 
+                 style="object-fit: contain;"> <div class="welcome-text">
+                Welcome Back!
+            </div>
+        </div>
+
+        <div class="auth-form-side">
+            <h2>Sign In</h2>
+            <p class="text-muted">For Admins, Doctors, and Patients.</p>
+            
+            <form action="{{ url_for('security.login') }}" method="POST">
+                {{ login_user_form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    {{ login_user_form.email(class="form-control", placeholder="you@email.com") }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    {{ login_user_form.password(class="form-control", placeholder="Your Password") }}
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ login_user_form.remember(class="form-check-input") }}
+                    {{ login_user_form.remember.label(class="form-check-label") }}
+                </div>
+
+                {% if login_user_form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    Invalid email or password.
+                </div>
+                {% endif %}
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-auth">Login</button>
+                </div>
+            </form>
+
+            <div class="auth-switch-link">
+                New Patient? <a href="{{ url_for('main.patient_register') }}">Register here</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

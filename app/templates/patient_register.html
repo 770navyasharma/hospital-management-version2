@@ -1,33 +1,62 @@
 {% extends "base.html" %}
-{% from "bootstrap/form.html" import render_field %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
 
 {% block page_content %}
-<div class="card-container">
-    <h2 class="text-center mb-4">Patient Registration</h2>
-    
-    <form action="{{ url_for('main.patient_register') }}" method="POST">
-        <div class="mb-3">
-            {{ render_field(security.register_form.full_name, class='form-control', placeholder='Full Name') }}
-        </div>
-        <div class="mb-3">
-            {{ render_field(security.register_form.email, class='form-control', placeholder='Email') }}
-        </div>
-        <div class="mb-3">
-            <label for="contact_number" class="form-label">Contact Number</label>
-            <input type="text" class="form-control" id="contact_number" name="contact_number" required>
-        </div>
-        <div class="mb-3">
-            {{ render_field(security.register_form.password, class='form-control', placeholder='Password') }}
-        </div>
+<div class="auth-container">
+    <div class="auth-card">
         
-        {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        
-        <div class="d-grid">
-            <button type="submit" class="btn btn-primary btn-lg">Register</button>
+        <div class="auth-image-side register-bg"> 
+            <img src="{{ url_for('static', filename='images/undraw_secure-login_m11a.svg') }}" 
+                 alt="Register Graphic" 
+                 style="object-fit: contain;"> <div class="welcome-text">
+                Create Your Account
+            </div>
         </div>
-    </form>
-    
+
+        <div class="auth-form-side">
+            <h2>Patient Registration</h2>
+            <p class="text-muted">Create an account to book appointments.</p>
+            
+            <form action="{{ url_for('main.patient_register') }}" method="POST">
+                
+                <div class="mb-3">
+                    <label for="full_name" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="contact_number" class="form-label">Contact Number</label>
+                    <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-auth">Create Account</button>
+                </div>
+            </form>
+
+            <div class="auth-switch-link">
+                Already have an account? <a href="{{ url_for('security.login') }}">Login here</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
