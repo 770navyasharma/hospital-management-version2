@@ -1,0 +1,203 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_page_content %}
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 admin-header" style="animation: slideInUp 0.5s ease-out;">
+        <h1 class="h2">Doctor Management</h1>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
+            <i class="bi bi-plus-lg"></i> Add New Doctor
+        </button>
+    </div>
+
+    <div class="row align-items-start">
+        <div class="col-lg-8">
+            <div class="card manage-card border-top-blue" style="animation-delay: 0.2s;">
+                <div class="card-body p-4">
+                    <form method="GET" action="{{ url_for('main.admin_doctors') }}" class="search-bar mb-4">
+                        <div class="row g-2">
+                            <div class="col-md-5"><input type="text" class="form-control" name="name" placeholder="Search by name..." value="{{ request.args.get('name', '') }}"></div>
+                            <div class="col-md-5"><input type="text" class="form-control" name="specialization" placeholder="Search by specialization..." value="{{ request.args.get('specialization', '') }}"></div>
+                            <div class="col-md-2 d-grid"><button type="submit" class="btn btn-outline-secondary">Search</button></div>
+                        </div>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%;">Name</th>
+                                    <th style="width: 20%;">Department</th>
+                                    <th style="width: 15%;">Status</th>
+                                    <th style="width: 30%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doctor in doctors %}
+                                <tr class="{{ 'blacklisted' if not doctor.user.active else '' }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ doctor.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" alt="Profile" class="table-profile-pic">
+                                            <div>
+                                                <strong>{{ doctor.user.full_name }}</strong>
+                                                <div class="small text-muted" title="{{ doctor.user.email }}">{{ doctor.user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ doctor.department.name }}</td>
+                                    <td>
+                                        {% if doctor.user.active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Blacklisted</span>{% endif %}
+                                    </td>
+                                    <td class="table-actions">
+                                        <span data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Doctor">
+                                            <button class="btn btn-outline-primary action-btn-icon" data-bs-toggle="modal" data-bs-target="#editDoctorModal-{{ doctor.id }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </span>
+                                        <form action="{{ url_for('main.admin_toggle_blacklist', user_id=doctor.user.id) }}" method="POST" class="d-inline">
+                                            {% if doctor.user.active %}
+                                            <button type="submit" class="btn btn-outline-warning action-btn-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Blacklist Doctor" onclick="return confirm('Are you sure you want to blacklist this doctor?');"><i class="bi bi-person-x"></i></button>
+                                            {% else %}
+                                            <button type="submit" class="btn btn-outline-success action-btn-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Activate Doctor" onclick="return confirm('Are you sure you want to re-activate this doctor?');"><i class="bi bi-person-check"></i></button>
+                                            {% endif %}
+                                        </form>
+                                        <form action="{{ url_for('main.admin_delete_doctor', doctor_id=doctor.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger action-btn-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Doctor" onclick="return confirm('DANGER: This will permanently delete the doctor. Are you sure?');"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4" class="text-center">No doctors found.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card manage-card border-top-green" style="animation-delay: 0.4s;">
+                <div class="card-body p-4 d-flex flex-column">
+                    <h5 class="card-title">Manage Departments</h5>
+                    <p class="card-text small text-muted">Add or view hospital departments.</p>
+                    <form action="{{ url_for('main.admin_add_department') }}" method="POST">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text"><i class="bi bi-building-add"></i></span>
+                            <input type="text" class="form-control" id="dept_name" name="name" placeholder="New Department Name" required>
+                        </div>
+                        <div class="d-grid"><button type="submit" class="btn btn-success"><i class="bi bi-plus-lg me-2"></i>Add Department</button></div>
+                    </form>
+                    <hr class="my-4">
+                    <h6 class="mb-3">Existing Departments</h6>
+                    <div class="list-group list-group-flush dept-list-scroll">
+                        {% for dept in departments %}<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-tag me-2 text-primary"></i>{{ dept.name }}</span><span class="badge bg-primary rounded-pill">{{ dept.doctors | length }}</span></li>{% else %}<li class="list-group-item">No departments added yet.</li>{% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="modal fade" id="addDoctorModal" tabindex="-1" aria-labelledby="addDoctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDoctorModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Add New Doctor Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.admin_add_doctor') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center d-flex flex-column justify-content-center align-items-center border-end pe-4">
+                            <h5 class="fw-bold mb-3">Profile Picture</h5>
+                            <img src="{{ url_for('static', filename='images/default-profile.svg') }}" id="add-pic-preview" class="img-thumbnail-preview mb-3" alt="Profile Preview">
+                            <input class="form-control" type="file" id="add-profile-pic-input" name="profile_pic" accept="image/*">
+                        </div>
+                        <div class="col-md-8 ps-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="full_name" class="form-label">Full Name</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input type="text" class="form-control" id="full_name" name="full_name" required></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-envelope"></i></span><input type="email" class="form-control" id="email" name="email" required></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label">Temporary Password</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-key"></i></span><input type="password" class="form-control" id="password" name="password" required></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone_number" class="form-label">Phone Number</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-telephone"></i></span><input type="tel" class="form-control" id="phone_number" name="phone_number"></div>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="department" class="form-label">Department / Specialization</label>
+                                    <div class="input-group"><span class="input-group-text"><i class="bi bi-building"></i></span><select class="form-select" id="department" name="department_id" required><option value="" disabled selected>Select a department</option>{% for dept in departments %}<option value="{{ dept.id }}">{{ dept.name }}</option>{% endfor %}</select></div>
+                                </div>
+                                <div class="col-12 mb-3"><label for="bio" class="form-label">Short Bio</label><textarea class="form-control" id="bio" name="bio" rows="2" placeholder="A short bio about the doctor..."></textarea></div>
+                                <div class="col-12 mb-3">
+                                    <label for="availability" class="form-label">Availability (JSON format)</label>
+                                    <input type="text" class="form-control" id="availability" name="availability" placeholder='{"Monday": "10:00-14:00"}'>
+                                    <div class="form-text">Must be valid JSON or empty. E.g., <strong>{"Monday": "10:00-14:00"}</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Create Doctor Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for doctor in doctors %}
+<div class="modal fade" id="editDoctorModal-{{ doctor.id }}" tabindex="-1" aria-labelledby="editDoctorModalLabel-{{ doctor.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDoctorModalLabel-{{ doctor.id }}"><i class="bi bi-pencil-square me-2"></i>Edit: {{ doctor.user.full_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('main.admin_edit_doctor', doctor_id=doctor.id) }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                         <div class="col-md-4 text-center d-flex flex-column justify-content-center align-items-center border-end pe-4">
+                            <h5 class="fw-bold mb-3">Update Profile Picture</h5>
+                            <img src="{{ doctor.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" id="edit-pic-preview-{{ doctor.id }}" class="img-thumbnail-preview mb-3" alt="Current Profile">
+                            <input class="form-control" type="file" id="edit_profile_pic_{{ doctor.id }}" name="profile_pic" accept="image/*">
+                        </div>
+                        <div class="col-md-8 ps-4">
+                             <div class="mb-3"><label class="form-label">Full Name</label><div class="input-group"><span class="input-group-text"><i class="bi bi-person"></i></span><input type="text" class="form-control" name="full_name" value="{{ doctor.user.full_name }}" required></div></div>
+                             <div class="mb-3"><label class="form-label">Email Address</label><div class="input-group"><span class="input-group-text"><i class="bi bi-envelope"></i></span><input type="email" class="form-control" name="email" value="{{ doctor.user.email }}" required></div></div>
+                             <div class="row">
+                                <div class="col-md-6 mb-3"><label class="form-label">Phone Number</label><div class="input-group"><span class="input-group-text"><i class="bi bi-telephone"></i></span><input type="tel" class="form-control" name="phone_number" value="{{ doctor.phone_number or '' }}"></div></div>
+                                <div class="col-md-6 mb-3"><label class="form-label">Department</label><div class="input-group"><span class="input-group-text"><i class="bi bi-building"></i></span><select class="form-select" name="department_id" required>{% for dept in departments %}<option value="{{ dept.id }}" {% if doctor.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>{% endfor %}</select></div></div>
+                             </div>
+                             <div class="mb-3"><label class="form-label">Account Status</label><div class="input-group"><span class="input-group-text"><i class="bi bi-shield-check"></i></span><select class="form-select" name="status"><option value="active" {% if doctor.user.active %}selected{% endif %}>Active</option><option value="blacklisted" {% if not doctor.user.active %}selected{% endif %}>Blacklisted</option></select></div></div>
+                             <div class="mb-3"><label class="form-label">Short Bio</label><textarea class="form-control" name="bio" rows="2">{{ doctor.bio or '' }}</textarea></div>
+                             <div class="mb-3">
+                                <label class="form-label">Availability (JSON format)</label>
+                                <input type="text" class="form-control" name="availability" value='{{ doctor.availability | tojson | safe if doctor.availability else "" }}' placeholder='{"Mon": "9am-5pm"}'>
+                                <div class="form-text">Must be valid JSON or empty. E.g., Example: <strong>{"Monday": "10:00-14:00"}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+
+{% block admin_scripts %}
+{% endblock %}

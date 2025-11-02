@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block page_content %}
+<div class="admin-wrapper">
+    <nav class="admin-sidebar">
+        <a class="sidebar-brand" href="{{ url_for('main.admin_dashboard') }}">
+            <span class="sidebar-brand-icon"><i class="bi bi-hospital-fill"></i></span>
+            <span class="sidebar-brand-text">HMS Admin</span>
+        </a>
+        <div>
+            <span class="sidebar-heading">Analytics</span>
+            <ul class="sidebar-nav-list">
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="{{ 'active' if request.path == url_for('main.admin_dashboard') else '' }}">
+                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div>
+            <span class="sidebar-heading">Management</span>
+            <ul class="sidebar-nav-list">
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('main.admin_doctors') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_doctors')) else '' }}">
+                        <i class="bi bi-clipboard2-pulse"></i> Doctors
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('main.admin_patients') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_patients')) else '' }}">
+                        <i class="bi bi-people-fill"></i> Patients
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('main.admin_appointments') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_appointments')) else '' }}">
+                        <i class="bi bi-calendar-check"></i> Appointments
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="admin-content">
+        {% block admin_page_content %}{% endblock %}
+    </main>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% block admin_scripts %}{% endblock %}
+{% endblock %}

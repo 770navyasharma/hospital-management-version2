@@ -26,3 +26,6 @@ class Config:
     
     SECURITY_HASHING_SCHEMES = ['bcrypt']
     SECURITY_DEPRECATED_HASHING_SCHEMES = []
+    # --- File Upload Settings ---
+    UPLOAD_FOLDER = os.path.join(basedir, 'app/static/uploads')
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}

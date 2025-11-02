@@ -3,10 +3,11 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from flask_security import Security, SQLAlchemyUserDatastore
-# from flask_bootstrap import Bootstrap  <-- REMOVE THIS LINE
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
 datastore = None 
+migrate = Migrate()
 
 def create_app():
     global datastore 
@@ -16,6 +17,7 @@ def create_app():
     
     
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from . import models 
     

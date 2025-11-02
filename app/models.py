@@ -3,6 +3,12 @@ from . import db
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 import uuid
+import json 
+import os 
+from werkzeug.utils import secure_filename 
+from sqlalchemy.dialects.sqlite import JSON as SQLiteJSON
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.mutable import MutableDict
 
 # Association table for the many-to-many relationship between Users and Roles
 roles_users = db.Table('roles_users',
@@ -43,7 +49,10 @@ class Doctor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
-    availability = db.Column(db.JSON) # Store availability, e.g., {"Mon": "9am-5pm", ...}
+    phone_number = db.Column(db.String(20))
+    bio = db.Column(db.Text)
+    profile_pic_url = db.Column(db.String(255), default='/static/images/default-profile.svg')
+    availability = db.Column(MutableDict.as_mutable(SQLiteJSON))
     
     # Define the 1-to-1 relationship with User
     user = db.relationship('User', back_populates='doctor_profile')

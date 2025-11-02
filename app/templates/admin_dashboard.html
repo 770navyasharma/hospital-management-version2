@@ -1,10 +1,77 @@
-{% extends "base.html" %}
+{% extends "admin/admin_base.html" %}
 
-{% block page_content %}
-<div class="card-container">
-    <h1 class="text-center">Admin Dashboard</h1>
-    <hr>
-    <p>Hello, {{ current_user.full_name }}!</p>
-    <p>From here you will manage doctors, patients, and all appointments.</p>
-</div>
+{% block admin_page_content %}
+    
+    <h1 class="h2 mb-4">Admin Dashboard</h1>
+    
+    <section class="mb-4">
+        <div class="stats-grid">
+            
+            <div class="stat-card" style="animation-delay: 0.1s;">
+                <div class="stat-card-icon patients">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-card-info">
+                    <h5>Total Patients</h5>
+                    <span class="stat-number">{{ patient_count }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card" style="animation-delay: 0.2s;">
+                <div class="stat-card-icon doctors">
+                    <i class="bi bi-clipboard2-pulse"></i>
+                </div>
+                <div class="stat-card-info">
+                    <h5>Total Doctors</h5>
+                    <span class="stat-number">{{ doctor_count }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card" style="animation-delay: 0.3s;">
+                <div class="stat-card-icon appointments">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-card-info">
+                    <h5>Appointments</h5>
+                    <span class="stat-number">{{ appointment_count }}</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <hr class="my-4">
+
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card manage-card border-top-blue h-100" style="animation-delay: 0.4s;">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Manage Doctors</h5>
+                    <p class="card-text">Add new doctors, update profiles, and manage specializations.</p>
+                    <a href="{{ url_for('main.admin_doctors') }}" class="btn btn-primary mt-2">Go to Doctor Management</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card manage-card border-top-green h-100" style="animation-delay: 0.5s;">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Manage Patients</h5>
+                    <p class="card-text">Search for patients by name, ID, or contact number. View profiles and history.</p>
+                    <a href="{{ url_for('main.admin_patients') }}" class="btn btn-success mt-2">Go to Patient Management</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card manage-card border-top-yellow" style="animation-delay: 0.6s;">
+                <div class="card-body p-4">
+                    <h5 class="card-title">All Appointments</h5>
+                    <p class="card-text">View and manage all upcoming and past appointments in the system.</p>
+                    <a href="{{ url_for('main.admin_appointments') }}" class="btn btn-warning mt-2">Go to Appointment Management</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 {% endblock %}
