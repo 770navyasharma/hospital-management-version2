@@ -1,0 +1,226 @@
+/* app/static/css/admin_doctors.css */
+
+/* --- Doctor Page Search Bar --- */
+.search-bar .form-control {
+    background-color: #f4f7f6;
+}
+.search-bar .btn {
+    width: 100%;
+}
+
+/* --- Doctor Table --- */
+.table-custom {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    table-layout: fixed;
+}
+.table-custom thead th {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+.table-custom tbody tr {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease-in-out;
+    opacity: 0.9;
+}
+.table-custom tbody tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.07);
+    opacity: 1;
+}
+.table-custom tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+.table-custom tbody td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+.table-custom tbody td:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+.table-profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+.table-custom tbody td.table-actions {
+    white-space: nowrap;
+    width: 150px;
+}
+.action-btn-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 3px;
+    transition: all 0.2s ease;
+}
+.action-btn-icon i {
+    margin: 0;
+}
+
+/* --- Blacklisted Row Styling --- */
+.table-custom tbody tr.blacklisted {
+    background-color: #f8f9fa;
+    opacity: 0.3;
+}
+.table-custom tbody tr.blacklisted td {
+    color: #888;
+}
+.table-custom tbody tr.blacklisted:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.table-custom tbody tr.blacklisted .btn-outline-success {
+    background-color: #aff7ba;
+    font-weight: 600;
+}
+
+/* --- Doctor Modal Styling --- */
+.modal-content {
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+.modal-header .modal-title {
+    font-weight: 600;
+    color: #333;
+}
+.modal-body {
+    padding: 2rem;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23007bff' fill-opacity='0.03'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm1ci0 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+.img-thumbnail-preview {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.form-file-input {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.form-file-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+
+/* --- Department Card (on Doctor Page) --- */
+.list-group-flush .list-group-item {
+    background-color: transparent;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.85rem 0.75rem; /* Added padding */
+}
+.list-group-flush .list-group-item:last-child {
+    border-bottom: 0;
+}
+.dept-list-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #007bff #f4f7f6;
+}
+
+/* --- DEPARTMENT EDIT/DELETE STYLES --- */
+.dept-display-view {
+    display: flex;
+    align-items: center;
+    flex-grow: 1; /* Allow it to take up space */
+}
+.dept-display-view .dept-name {
+    font-weight: 500;
+}
+.dept-edit-view {
+    flex-grow: 1; /* Make the input group fill the space */
+    margin-right: 10px;
+}
+.dept-actions .btn {
+    padding: 0.15rem 0.4rem; /* Make icons smaller */
+    font-size: 0.85rem;
+}
+
+/* Hide actions by default, show on hover */
+.list-group-item .dept-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.list-group-item:hover .dept-actions {
+    opacity: 1;
+}
+.list-group-item:hover .dept-display-view {
+    /* Optional: slightly fade the name when actions are visible */
+    opacity: 0.8;
+}
+
+/* === NEW: Background SVG for Doctor Table Card === */
+
+.manage-card.border-top-blue {
+    position: relative; /* Establishes stacking context */
+    overflow: hidden; /* Clips the pseudo-element */
+}
+
+.manage-card.border-top-blue .card-body {
+    position: relative; /* Make sure card-body content is on top */
+    z-index: 1;
+    background-color: transparent; /* Make card-body see-through */
+}
+
+/* This is the new background layer */
+.manage-card.border-top-blue::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 350px; /* Adjust size as needed */
+    height: 350px;
+    
+    /* Embedded, transparent, blue caduceus SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23007bff' d='M54.7 3.6c-2.4-2.4-6-3.6-9.7-3.6-3.6 0-7.2 1.3-9.7 3.6-5.1 5.1-5.1 13.3 0 18.4l-1.9 1.9-10.9-10.9c-2.4-2.4-6-3.6-9.7-3.6s-7.2 1.3-9.7 3.6c-5.1 5.1-5.1 13.3 0 18.4l10.9 10.9-2.9 2.9c-.1.1-.1.2-.2.3v.1c-2.4 2.4-3.6 6-3.6 9.7s1.3 7.2 3.6 9.7c2.4 2.4 6 3.6 9.7 3.6s7.2-1.3 9.7-3.6c2.3-2.3 3.5-5.8 3.6-9.4.1-.1.1-.2.2-.3l2.8-2.8 10.9 10.9c2.4 2.4 6 3.6 9.7 3.6s7.2-1.3 9.7-3.6c5.1-5.1 5.1-13.3 0-18.4l-10.9-10.9 1.9-1.9c5.1-5.1 5.1-13.3 0-18.4zm-2.1 16.3c-4 4-10.6 4-14.6 0-4-4-4-10.6 0-14.6 2-2 4.7-3.1 7.3-3.1 2.6 0 5.3 1 7.3 3.1 4 4 4 10.6 0 14.6zM11.4 19.9c-4 4-4 10.6 0 14.6 2 2 4.7 3.1 7.3 3.1 2.6 0 5.3-1 7.3-3.1 4-4 4-10.6 0-14.6-4-4-10.6-4-14.6 0zM23 41l-2.9 2.9c-.1.1-.1.2-.2.3-2.2 3.8-1.9 8.9.8 12.6 1.4 1.4 3.2 2.1 5.1 2.1s3.7-.7 5.1-2.1c2.7-2.7 3-7.2.8-10.7v-.1l-.2-.3-2.9-2.9-5.7 5.7zM32 37.7l-5.7-5.7 10.9-10.9c4 4 4 10.6 0 14.6-2 2-4.7 3.1-7.3 3.1-1.1 0-2.3-.2-3.4-.6l5.5-5.5zm10.9-10.9l-10.9 10.9-5.5-5.5c1.2-1.1 2.3-2.3 3.4-.6 2.6 0 5.3 1 7.3 3.1 4 4 4 10.6 0 14.6l-5.7-5.7 5.7-5.7 10.9 10.9c4-4 4-10.6 0-14.6-4-4-10.6-4-14.6 0z'/%3E%3C/svg%3E");
+    
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 0.1; /* This controls the transparency. 0.05 is very faint. */
+    z-index: 0; /* Sits behind the card-body content */
+}

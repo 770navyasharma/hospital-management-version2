@@ -1,4 +1,3 @@
-# app/routes.py
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_security import login_required, roles_required, current_user, utils
 from .models import db, Patient, Role, Doctor, Appointment, Department, User
@@ -94,7 +93,7 @@ def admin_dashboard():
     appointment_count = Appointment.query.count()
     
     return render_template(
-        'admin_dashboard.html',
+        'admin/admin_dashboard.html',
         patient_count=patient_count,
         doctor_count=doctor_count,
         appointment_count=appointment_count
@@ -115,7 +114,8 @@ def admin_doctors():
         query = query.filter(Department.name.ilike(f'%{search_spec}%'))
         
     doctors = query.all()
-    departments = Department.query.all()
+    # 🩵 Order departments by name for a clean list
+    departments = Department.query.order_by(Department.name).all()
     
     return render_template('admin/admin_doctors.html', doctors=doctors, departments=departments)
 
@@ -152,7 +152,6 @@ def admin_add_doctor():
             roles=[doctor_role], active=True
         )
 
-        # 🩵 JSON Handling Fix
         availability_json = None
         if availability_str:
             try:
@@ -222,7 +221,7 @@ def admin_edit_doctor(doctor_id):
         flash(f'Error updating doctor: {e}', 'danger')
 
     return redirect(url_for('main.admin_doctors'))
-# --- (Blacklist, Delete, Department routes are unchanged) ---
+
 @main.route('/admin/user/toggle_blacklist/<int:user_id>', methods=['POST'])
 @login_required
 @roles_required('Admin')
@@ -249,7 +248,6 @@ def admin_delete_doctor(doctor_id):
         
         user = doctor.user 
         
-        # Try to delete the profile picture file
         try:
             if doctor.profile_pic_url and not doctor.profile_pic_url.endswith('default-profile.svg'):
                 file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(doctor.profile_pic_url))
@@ -284,6 +282,54 @@ def admin_add_department():
             db.session.add(new_dept)
             db.session.commit()
             flash('Department added successfully.', 'success')
+    return redirect(url_for('main.admin_doctors'))
+
+# === NEW ROUTE TO FIX THE ERROR ===
+@main.route('/admin/department/edit/<int:dept_id>', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def admin_edit_department(dept_id):
+    try:
+        dept = Department.query.get_or_404(dept_id)
+        new_name = request.form.get('name')
+
+        if not new_name:
+            flash('Department name cannot be empty.', 'danger')
+            return redirect(url_for('main.admin_doctors'))
+
+        # Check if another department with this new name already exists
+        existing_dept = Department.query.filter(Department.name == new_name, Department.id != dept_id).first()
+        if existing_dept:
+            flash(f'A department with the name "{new_name}" already exists.', 'warning')
+        else:
+            dept.name = new_name
+            db.session.commit()
+            flash('Department name updated successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating department: {str(e)}', 'danger')
+        
+    return redirect(url_for('main.admin_doctors'))
+
+# === NEW ROUTE THAT WAS ALSO MISSING ===
+@main.route('/admin/department/delete/<int:dept_id>', methods=['POST'])
+@login_required
+@roles_required('Admin')
+def admin_delete_department(dept_id):
+    try:
+        dept = Department.query.get_or_404(dept_id)
+        
+        # Check if any doctors are linked to this department (as requested)
+        if dept.doctors:  # This checks if the 'doctors' relationship list is not empty
+            flash(f'Cannot delete department "{dept.name}". It is still assigned to {len(dept.doctors)} doctor(s).', 'danger')
+        else:
+            db.session.delete(dept)
+            db.session.commit()
+            flash(f'Department "{dept.name}" deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting department: {str(e)}', 'danger')
+        
     return redirect(url_for('main.admin_doctors'))
 
 # --- Placeholder Routes (unchanged) ---

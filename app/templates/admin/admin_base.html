@@ -3,6 +3,7 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% block admin_styles %}{% endblock %}
 {% endblock %}
 
 {% block navbar %}{% endblock %}
@@ -40,6 +41,16 @@
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('main.admin_appointments') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_appointments')) else '' }}">
                         <i class="bi bi-calendar-check"></i> Appointments
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="sidebar-logout-section">
+            <ul class="sidebar-nav-list">
+                <li class="sidebar-nav-item">
+                    <a href="{{ url_for('security.logout') }}" class="logout-link">
+                        <i class="bi bi-box-arrow-left"></i> Logout
                     </a>
                 </li>
             </ul>
