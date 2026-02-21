@@ -1,33 +1,37 @@
 # Hospital Management System V2 (MAD-II)
 
-A modern, Flask-based web application for managing hospital operations. This system provides a clean interface for booking appointments, managing patient histories, and streamlining hospital workflows for patients, doctors, and admins.
+A premium, Flask-based enterprise web application for hospital operations. Featuring a high-end Admin Portal with real-time analytics, dynamic data visualization, and professional clinical reporting.
 
-This project is being developed for the Modern Application Development II (MAD-II) course.
+This project is developed for the Modern Application Development II (MAD-II) course.
 
 ## 🚀 Tech Stack
 
 ![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
-* **Backend:** Flask
+* **Backend:** Flask (Python)
 * **Database:** SQLite with Flask-SQLAlchemy
-* **Authentication:** Flask-Security-Too (with passlib & bcrypt)
-* **Frontend:** HTML, Bootstrap 5, Jinja2
+* **Analytics:** Chart.js with dynamic API integration
+* **Authentication:** Flask-Security-Too (RBAC enabled)
+* **Reporting:** html2pdf.js for professional medical exports
 
-## ✨ Features Implemented (So Far)
+## ✨ Features Implemented
 
-* **Secure Authentication:** Full login, logout, "Remember Me" functionality, and strong session protection.
-* **Role-Based Access Control (RBAC):** Three distinct user roles:
-    * **Admin:** Can access all system functionalities (future).
-    * **Doctor:** Can manage appointments and patient history (future).
-    * **Patient:** Can book appointments and view their history.
-* **Patient Self-Registration:** A custom, aesthetic, and secure registration page for new patients.
-* **Secure Admin Creation:** Admin user is pre-created via a secure script (`create_admin.py`).
-* **Role-Specific Redirects:** Users are automatically redirected to their correct dashboard upon login.
-* **Protected Routes:** Logged-in users are prevented from accessing public pages (like login/register) and vice-versa.
-* **Modern UI/UX:** A clean, responsive landing page and authentication flow using custom CSS and SVGs.
+### 🛡️ Secure Admin Portal (New!)
+* **Advanced Analytics Dashboard:** Real-time visualization of appointment volume, patient intake mix, and doctor workload using high-performance Chart.js components.
+* **Dynamic Global Filtering:** Centralized date-range picker that instantly updates all dashboard metrics via asynchronous API calls.
+* **Medical Case Management:** Complete oversight of patient profiles, clinical histories, and appointment logs.
+* **Professional PDF Exports:** Automated generation of Clinical Visit Reports with A4-optimized layouts, medical typography, and secure data mapping.
+* **Staff Performance Tracking:** Multi-bar comparative charts showing recovery rates and patient load per specialist.
+* **Administrative Control:** Full Blacklist/Restore functionality for user accounts with secure confirmation flows.
+
+### 🔐 Security & Core
+* **Role-Based Access Control (RBAC):** Strict partitioning between Admin, Doctor, and Patient views.
+* **Self-Registration:** Custom aesthetic registration flow for new patients.
+* **Admin Shield:** Secure script-based administrator initialization.
 
 ## ⚙️ Setup and Installation
 
@@ -37,60 +41,41 @@ This project is being developed for the Modern Application Development II (MAD-I
     cd <your-repo-name>
     ```
 
-2.  **Create and activate a virtual environment:**
+2.  **Activate Virtual Environment:**
     ```bash
-    # For macOS/Linux
-    python3 -m venv venv
+    # macOS/Linux
     source venv/bin/activate
-
-    # For Windows
-    python -m venv venv
+    # Windows
     .\venv\Scripts\activate
     ```
 
-3.  **Create a `requirements.txt` file** in your root directory and add the following:
-    ```txt
-    Flask
-    Flask-SQLAlchemy
-    Flask-Security-Too
-    Flask-Bcrypt
-    passlib
-    bcrypt
-    ```
-
-4.  **Install the dependencies:**
+3.  **Install Dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
-5.  **Initialize the Database & Admin:**
-    This step creates the `hospital.db` file and your pre-defined admin user.
+4.  **Initialize Database & Admin:**
     ```bash
     python create_admin.py
     ```
-    *You will see messages confirming the database and users are created.*
 
-6.  **Run the Application:**
+5.  **Run the Application:**
     ```bash
     python run.py
     ```
-    The application will be running at `http://127.0.0.1:5000/`.
 
 ## 🔑 Default Credentials
 
-You can log in as the pre-built administrator to get started:
-
-* **Email:** `admin@hms.com`
-* **Password:** `admin123`
+* **Admin Email:** `admin@hms.com`
+* **Admin Password:** `admin123`
 
 ## 📊 Milestone Progress
 
--   [x] **Milestone 0:** GitHub Repository Setup
--   [x] **Milestone:** Database Models and Schema Setup
--   [x] **Milestone:** Authentication and Role-Based Access
--   [ ] **Milestone:** Admin Dashboard and Management
--   [ ] **Milestone:** Doctor Dashboard & Management
--   [ ] **Milestone:** Patient Dashboard and Appointment System
--   [ ] **Milestone:** Appointment History and Conflict Prevention
--   [ ] **Milestone:** Backend Jobs (Celery + Redis)
--   [ ] **Milestone:** API Performance Optimization (Redis Cache)
+- [x] **Milestone 0:** GitHub Repository Setup
+- [x] **Milestone 1:** Database Models and Schema Setup
+- [x] **Milestone 2:** Authentication and Role-Based Access
+- [x] **Milestone 3:** Admin Portal & Analytics Engine
+- [ ] **Milestone 4:** Doctor Dashboard & Consultation Tools
+- [ ] **Milestone 5:** Patient Appointment System & Self-Service
+- [ ] **Milestone 6:** Backend Jobs (Celery + Redis)
+- [ ] **Milestone 7:** API Performance Optimization
