@@ -1,7 +1,33 @@
-// app/static/js/admin_doctors.js
 document.addEventListener('DOMContentLoaded', (event) => {
 
-    // --- 3. Activate Image Previews (DOCTOR-PAGE-SPECIFIC) ---
+    // --- 1. CSV EXPORT LOGIC ---
+    const downloadBtn = document.getElementById('downloadDoctorCSV');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            const table = document.getElementById('doctorTable');
+            const rows = table.querySelectorAll('tr');
+            let csvContent = "Full Name,Email,Department,Status\n";
+
+            for (let i = 1; i < rows.length; i++) {
+                const name = rows[i].querySelector('strong').textContent.replace(',', '');
+                const email = rows[i].querySelector('.text-muted').textContent.replace(',', '');
+                const dept = rows[i].querySelectorAll('td')[1].textContent.trim().replace(',', '');
+                const status = rows[i].querySelector('.badge').textContent.trim();
+                csvContent += `${name},${email},${dept},${status}\n`;
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `HMS_Doctor_List_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+
+    // --- 2. IMAGE PREVIEWS ---
     function setupImagePreview(inputId, previewId) {
         const inputElement = document.getElementById(inputId);
         const previewElement = document.getElementById(previewId);
@@ -9,138 +35,145 @@ document.addEventListener('DOMContentLoaded', (event) => {
             inputElement.addEventListener('change', function(e) {
                 if (e.target.files && e.target.files[0]) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
-                        previewElement.src = event.target.result;
-                    }
+                    reader.onload = (event) => previewElement.src = event.target.result;
                     reader.readAsDataURL(e.target.files[0]);
                 }
             });
         }
     }
 
-    // --- 4. Automatically find and attach all image previews (DOCTOR-PAGE-SPECIFIC) ---
-    document.querySelectorAll('input[type="file"][name="profile_pic"]').forEach(inputEl => {
-        let previewId;
-        if (inputEl.id === 'add-profile-pic-input') {
-            previewId = 'add-pic-preview';
-        } else if (inputEl.id.startsWith('edit_profile_pic_')) {
-            // This finds the matching preview ID for each edit modal
-            previewId = inputEl.id.replace('edit_profile_pic_', 'edit-pic-preview-');
-        }
-
-        if (previewId) {
-            setupImagePreview(inputEl.id, previewId);
-        }
+    document.querySelectorAll('input[type="file"]').forEach(inputEl => {
+        let previewId = null;
+        if (inputEl.id === 'add-profile-pic-input') previewId = 'add-pic-preview';
+        else if (inputEl.id.startsWith('edit_profile_pic_')) previewId = inputEl.id.replace('edit_profile_pic_', 'edit-pic-preview-');
+        if (previewId) setupImagePreview(inputEl.id, previewId);
     });
 
+    // --- 3. CONFIRMATION MODAL ---
+    const confModal = document.getElementById('confirmationModal');
+    if (confModal) {
+        const confirmBtn = document.getElementById('confirmActionButton');
+        let formToSubmit = null;
 
-    // --- 5. Handle Confirmation Modal (NOW WITH DEPT LOGIC) ---
-    const confirmationModal = document.getElementById('confirmationModal');
-    if (confirmationModal) {
-        const modalTitle = document.getElementById('confirmationModalLabel');
-        const modalBody = document.getElementById('confirmationModalText');
-        const confirmButton = document.getElementById('confirmActionButton');
-        let formToSubmit = null; // Holds the ID of the form to submit
-
-        // When the modal is about to be shown
-        confirmationModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget; // The button that triggered the modal
-            
-            // Get data from the button's data-* attributes
-            const actionType = button.getAttribute('data-action-type');
-            
-            // Reset button to be enabled and clear old form
-            confirmButton.disabled = false;
-            confirmButton.className = 'btn';
-            formToSubmit = button.getAttribute('data-form-id');
-
-            // --- DOCTOR ACTIONS ---
-            if (actionType === 'Delete') {
-                const doctorName = button.getAttribute('data-doctor-name');
-                modalTitle.textContent = 'Confirm Deletion';
-                modalBody.innerHTML = `Are you sure you want to <strong>permanently delete</strong> Dr. ${doctorName}? This action cannot be undone.`;
-                confirmButton.classList.add('btn-danger');
-                confirmButton.textContent = 'Yes, Delete';
-            } else if (actionType === 'Blacklist') {
-                const doctorName = button.getAttribute('data-doctor-name');
-                modalTitle.textContent = 'Confirm Blacklist';
-                modalBody.innerHTML = `Are you sure you want to <strong>blacklist</strong> Dr. ${doctorName}? They will not be able to log in.`;
-                confirmButton.classList.add('btn-warning');
-                confirmButton.textContent = 'Yes, Blacklist';
-            } else if (actionType === 'Activate') {
-                const doctorName = button.getAttribute('data-doctor-name');
-                modalTitle.textContent = 'Confirm Activation';
-                modalBody.innerHTML = `Are you sure you want to <strong>re-activate</strong> Dr. ${doctorName}? They will regain system access.`;
-                confirmButton.classList.add('btn-success');
-                confirmButton.textContent = 'Yes, Activate';
-
-            // --- NEW DEPARTMENT DELETE ACTION ---
-            } else if (actionType === 'DeleteDept') {
-                const deptName = button.getAttribute('data-dept-name');
-                const doctorCount = parseInt(button.getAttribute('data-doctor-count') || 0);
-
-                if (doctorCount > 0) {
-                    // CANNOT DELETE - Show error message
-                    modalTitle.textContent = 'Cannot Delete Department';
-                    modalBody.innerHTML = `Cannot delete <strong>${deptName}</strong>. <br><br>This department is assigned to <strong>${doctorCount}</strong> doctor(s). Please re-assign them first.`;
-                    confirmButton.classList.add('btn-secondary');
-                    confirmButton.textContent = 'Understood';
-                    // confirmButton.disabled = true; // <-- THIS WAS THE BUG. REMOVED.
-                    formToSubmit = null; // Prevent any submission
-                } else {
-                    // CAN DELETE - Show confirmation
-                    modalTitle.textContent = 'Confirm Deletion';
-                    modalBody.innerHTML = `Are you sure you want to permanently delete the <strong>${deptName}</strong> department? This action cannot be undone.`;
-                    confirmButton.classList.add('btn-danger');
-                    confirmButton.textContent = 'Yes, Delete';
-                }
-            }
+        confModal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const type = btn.getAttribute('data-action-type');
+            formToSubmit = btn.getAttribute('data-form-id');
+            confirmBtn.className = 'btn ' + (type === 'Delete' ? 'btn-danger' : type === 'Blacklist' ? 'btn-warning' : 'btn-success');
+            document.getElementById('confirmationModalText').innerHTML = `Are you sure you want to <strong>${type}</strong> this item?`;
         });
 
-        // Add a click listener to the (single) confirm button in the modal
-        confirmButton.addEventListener('click', function() {
-            if (formToSubmit) {
-                const form = document.getElementById(formToSubmit);
-                if (form) {
-                    form.submit(); // Submit the stored form
-                }
-            } else if (!confirmButton.disabled) {
-                // If no form (e.g., "Understood" button), just close the modal
-                bootstrap.Modal.getInstance(confirmationModal).hide();
-            }
+        confirmBtn.addEventListener('click', () => {
+            if (formToSubmit) document.getElementById(formToSubmit).submit();
         });
     }
 
-    // --- 6. NEW: Handle Department Inline Edit ---
-    document.querySelectorAll('.btn-edit-dept').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const listItem = this.closest('.list-group-item');
-            listItem.querySelector('.dept-display-view').style.display = 'none';
-            listItem.querySelector('.dept-actions').style.display = 'none';
-            
-            const editView = listItem.querySelector('.dept-edit-view');
-            editView.style.display = 'flex';
-            editView.querySelector('input').focus();
+    // --- 4. DEPT INLINE EDIT ---
+    document.querySelectorAll('.btn-edit-dept').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const li = this.closest('li');
+            li.querySelector('.dept-display-view').style.display = 'none';
+            li.querySelector('.dept-edit-view').style.display = 'flex';
         });
     });
 
-    document.querySelectorAll('.btn-cancel-edit').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const listItem = this.closest('.list-group-item');
-            const editView = listItem.querySelector('.dept-edit-view');
-            const displayView = listItem.querySelector('.dept-display-view');
-            
-            // Reset value in input to original
-            const originalName = displayView.querySelector('.dept-name').textContent;
-            editView.querySelector('input').value = originalName;
-
-            // Toggle visibility
-            editView.style.display = 'none';
-            displayView.style.display = 'flex';
-            listItem.querySelector('.dept-actions').style.display = 'block';
+    document.querySelectorAll('.btn-cancel-edit').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const li = this.closest('li');
+            li.querySelector('.dept-display-view').style.display = 'flex';
+            li.querySelector('.dept-edit-view').style.display = 'none';
         });
     });
 
+    // --- 5. INITIALIZE SCHEDULERS ---
+    document.querySelectorAll('.scheduler-container').forEach(container => {
+        new AvailabilityScheduler(container);
+    });
 });
+
+// Class Logic for Scheduler
+class AvailabilityScheduler {
+    constructor(container) {
+        this.container = container;
+        this.hiddenInput = container.closest('.col-12').querySelector('.real-availability-input');
+        this.data = this.hiddenInput.value ? JSON.parse(this.hiddenInput.value) : {};
+        this.activeDate = null;
+
+        this.dateInput = container.querySelector('.date-selector');
+        this.dateDisplay = container.querySelector('.selected-date-display');
+        this.slotsWrapper = container.querySelector('.slots-wrapper');
+        this.addBtn = container.querySelector('.add-slot-btn');
+        this.copyBtn = container.querySelector('.copy-btn');
+        this.previewArea = container.querySelector('.schedule-preview');
+
+        this.init();
+    }
+
+    init() {
+        flatpickr(this.dateInput, {
+            dateFormat: "Y-m-d",
+            onChange: (dates, str) => {
+                this.activeDate = str;
+                this.dateDisplay.textContent = `Selected: ${str}`;
+                this.addBtn.style.display = 'block';
+                this.copyBtn.style.display = 'block';
+                this.renderSlots();
+            }
+        });
+        this.addBtn.addEventListener('click', () => {
+            if (!this.data[this.activeDate]) this.data[this.activeDate] = [];
+            this.data[this.activeDate].push("09:00-17:00");
+            this.save();
+        });
+        this.copyBtn.addEventListener('click', () => this.copySchedule());
+        this.updatePreview();
+    }
+
+    renderSlots() {
+        this.slotsWrapper.innerHTML = '';
+        const slots = this.data[this.activeDate] || [];
+        slots.forEach((range, i) => {
+            const [s, e] = range.split('-');
+            const div = document.createElement('div');
+            div.className = 'slot-entry';
+            div.innerHTML = `<input type="time" class="form-control form-control-sm start-v" value="${s}"> to <input type="time" class="form-control form-control-sm end-v" value="${e}"> <button type="button" class="btn btn-sm text-danger remove-s"><i class="bi bi-x-circle"></i></button>`;
+            div.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => this.syncSlots()));
+            div.querySelector('.remove-s').addEventListener('click', () => {
+                this.data[this.activeDate].splice(i, 1);
+                if (!this.data[this.activeDate].length) delete this.data[this.activeDate];
+                this.save();
+            });
+            this.slotsWrapper.appendChild(div);
+        });
+    }
+
+    syncSlots() {
+        this.data[this.activeDate] = Array.from(this.slotsWrapper.querySelectorAll('.slot-entry')).map(div => `${div.querySelector('.start-v').value}-${div.querySelector('.end-v').value}`);
+        this.save();
+    }
+
+    save() {
+        this.hiddenInput.value = JSON.stringify(this.data);
+        this.renderSlots();
+        this.updatePreview();
+    }
+
+    updatePreview() {
+        this.previewArea.innerHTML = '';
+        Object.keys(this.data).sort().forEach(d => {
+            const tag = document.createElement('span');
+            tag.className = 'schedule-tag';
+            tag.innerHTML = `${d} (${this.data[d].length}) <i class="bi bi-x-circle-fill"></i>`;
+            tag.querySelector('i').addEventListener('click', () => { delete this.data[d]; this.save(); });
+            this.previewArea.appendChild(tag);
+        });
+    }
+
+    copySchedule() {
+        const dates = prompt("Target dates (YYYY-MM-DD), comma separated:");
+        if (dates) {
+            dates.split(',').forEach(d => this.data[d.trim()] = [...this.data[this.activeDate]]);
+            this.save();
+        }
+    }
+}

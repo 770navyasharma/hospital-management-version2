@@ -1,0 +1,59 @@
+/* Existing card and chart styles */
+.chart-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.chart-card:hover { transform: translateY(-5px); }
+
+.date-filter-group .form-control, 
+.date-filter-group .form-select {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Table styling */
+.table thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: #888;
+    padding: 1.25rem 1rem;
+    border: none;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-color: #f8f9fa;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.status-booked { background: #e3f2fd; color: #1976d2; }
+.status-completed { background: #e8f5e9; color: #2e7d32; }
+.status-cancelled { background: #ffebee; color: #c62828; }
+
+/* 🟢 New: Pagination Styling */
+.pagination .page-link {
+    border: none;
+    color: #4e73df;
+    padding: 0.4rem 0.75rem;
+    margin: 0 2px;
+    border-radius: 6px;
+}
+.pagination .page-item.active .page-link {
+    background-color: #4e73df;
+    color: white;
+}
+.pagination .page-link:hover {
+    background-color: #f8f9fa;
+}

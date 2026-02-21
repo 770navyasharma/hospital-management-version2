@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 db = SQLAlchemy()
 datastore = None 
@@ -13,6 +14,7 @@ def create_app():
     global datastore 
     
     app = Flask(__name__, template_folder='templates', static_folder='static')
+    CORS(app)
     app.config.from_object(Config)
     
     

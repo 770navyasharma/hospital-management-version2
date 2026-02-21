@@ -29,3 +29,24 @@ class Config:
     # --- File Upload Settings ---
     UPLOAD_FOLDER = os.path.join(basedir, 'app/static/uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg'}
+    
+    # --- Recovery Features ---
+    SECURITY_RECOVERABLE = True  # Enables /forgot-password route
+    SECURITY_EMAIL_SENDER = "no-reply@hms.com"
+    
+    
+    # This makes the "email" content print to your terminal for testing
+    # instead of actually trying to connect to a mail server
+    MAIL_BACKEND = 'console' 
+    SECURITY_EMAIL_SUBJECT_PASSWORD_RESET = "Password Reset Request - HMS"
+    
+    # Keep Bcrypt for passwords
+    SECURITY_PASSWORD_HASH = 'bcrypt'
+    
+    # 🟢 FIX: This tells Flask-Security to use SHA512 for internal tokens 
+    # instead of trying to Bcrypt an already hashed password.
+    SECURITY_HASHING_SCHEMES = ['sha256_crypt', 'bcrypt']
+    SECURITY_DEPRECATED_HASHING_SCHEMES = []
+
+    # This is also helpful to prevent the 72-byte error during reset
+    SECURITY_PASSWORD_SINGLE_HASH = True

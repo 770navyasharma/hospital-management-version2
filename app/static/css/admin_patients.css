@@ -1,0 +1,136 @@
+/* ==========================================================================
+   1. LAYOUT & GRID
+   ========================================================================== */
+.chart-container {
+    position: relative;
+    height: 350px !important; /* 🟢 Forces visibility */
+    width: 100%;
+}
+
+.modal.fade.show, .modal-backdrop.show {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* ==========================================================================
+   2. PATIENT CARDS (Premium Glassmorphism)
+   ========================================================================== */
+.patient-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.patient-card {
+    border: none !important;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.patient-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(13, 110, 253, 0.1);
+}
+
+.patient-profile-pic {
+    width: 60px; height: 60px;
+    border-radius: 14px; object-fit: cover;
+    margin-right: 15px; border: 2px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 🟢 Fixed Status Badge Containment */
+.patient-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+
+.badge {
+    font-size: 0.75rem; padding: 6px 12px;
+    border-radius: 8px; font-weight: 700;
+    max-width: fit-content; white-space: normal; /* Wraps long text */
+    display: inline-block;
+}
+
+.status-new { color: #004dc0; background-color: #e6f0ff; }
+.status-under-treatment { color: #856404; background-color: #fff3cd; }
+.status-recovered { color: #155724; background-color: #d4edda; }
+
+/* ==========================================================================
+   3. MODALS & HISTORY SLIDER
+   ========================================================================== */
+.modal-content { border-radius: 24px; border: none; overflow: hidden; }
+.modal-xl .modal-content { border-top: 8px solid #0d6efd !important; }
+#visitDetailModal .modal-content { border-top: 8px solid #212529 !important; }
+
+.history-slider {
+    display: flex; overflow-x: auto;
+    gap: 1.25rem; padding: 20px 5px;
+    scrollbar-width: thin; scrollbar-color: #0d6efd #f1f1f1;
+}
+
+.history-card {
+    flex: 0 0 280px; background: #fff;
+    border-radius: 18px; padding: 1.5rem;
+    border: 1px solid #edf2f7; cursor: pointer;
+    transition: 0.3s; position: relative;
+}
+
+.history-card:hover { border-color: #0d6efd; transform: translateY(-5px); }
+
+/* Status Dot indicators */
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.status-done { background: #198754; }
+.status-pending { background: #ffc107; }
+.bg-soft-primary { background-color: #e7f1ff; color: #0d6efd; }
+
+/* Beautiful Pagination */
+.pagination .page-link {
+    border: none;
+    color: #0d6efd;
+    padding: 10px 18px;
+    margin: 0 4px;
+    border-radius: 10px;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    transition: 0.2s;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    color: white;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+}
+
+/* Blacklisted State Styling */
+.patient-blacklisted {
+    background-color: #fdf2f2 !important;
+    border: 1px solid #f8d7da !important;
+    opacity: 0.8;
+}
+
+.grayscale {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
+.patient-blacklisted:hover {
+    transform: none; /* Disable hover lift for blacklisted users */
+}
+
+.bg-light-success { background-color: #f0fff4; }
+.section-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    color: #4a5568;
+}
+.min-vh-10 { min-height: 80px; }
+
+@media print {
+    .modal-header, .modal-footer, .btn-close { display: none !important; }
+    .modal-content { border: none !important; }
+    .printable-report { padding: 0 !important; }
+}

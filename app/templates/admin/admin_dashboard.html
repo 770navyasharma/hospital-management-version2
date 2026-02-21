@@ -1,81 +1,101 @@
 {% extends "admin/admin_base.html" %}
 
 {% block admin_styles %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 {% endblock %}
 
 {% block admin_page_content %}
-    
-    <h1 class="h2 mb-4">Admin Dashboard</h1>
-    
-    <section class="mb-4">
-        <div class="stats-grid">
-            
-            <div class="stat-card" style="animation-delay: 0.1s;">
-                <div class="stat-card-icon patients">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div class="stat-card-info">
-                    <h5>Total Patients</h5>
-                    <span class="stat-number">{{ patient_count }}</span>
-                </div>
-            </div>
-            
-            <div class="stat-card" style="animation-delay: 0.2s;">
-                <div class="stat-card-icon doctors">
-                    <i class="bi bi-clipboard2-pulse"></i>
-                </div>
-                <div class="stat-card-info">
-                    <h5>Total Doctors</h5>
-                    <span class="stat-number">{{ doctor_count }}</span>
-                </div>
-            </div>
-            
-            <div class="stat-card" style="animation-delay: 0.3s;">
-                <div class="stat-card-icon appointments">
-                    <i class="bi bi-calendar-check"></i>
-                </div>
-                <div class="stat-card-info">
-                    <h5>Appointments</h5>
-                    <span class="stat-number">{{ appointment_count }}</span>
-                </div>
-            </div>
-
+    <div class="dashboard-header-main d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h2 m-0">Admin Analytics</h1>
+            <p class="text-muted small mb-0">Hospital performance overview and data insights</p>
         </div>
-    </section>
-
-    <hr class="my-4">
-
-    <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card manage-card border-top-blue h-100" style="animation-delay: 0.4s;">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Manage Doctors</h5>
-                    <p class="card-text">Add new doctors, update profiles, and manage specializations.</p>
-                    <a href="{{ url_for('main.admin_doctors') }}" class="btn btn-primary mt-2">Go to Doctor Management</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-6 mb-4">
-            <div class="card manage-card border-top-green h-100" style="animation-delay: 0.5s;">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Manage Patients</h5>
-                    <p class="card-text">Search for patients by name, ID, or contact number. View profiles and history.</p>
-                    <a href="{{ url_for('main.admin_patients') }}" class="btn btn-success mt-2">Go to Patient Management</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12">
-            <div class="card manage-card border-top-yellow" style="animation-delay: 0.6s;">
-                <div class="card-body p-4">
-                    <h5 class="card-title">All Appointments</h5>
-                    <p class="card-text">View and manage all upcoming and past appointments in the system.</p>
-                    <a href="{{ url_for('main.admin_appointments') }}" class="btn btn-warning mt-2">Go to Appointment Management</a>
-                </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="filter-label d-none d-md-block">Analysis Period</span>
+            <div class="date-filter-box shadow-sm">
+                <i class="bi bi-calendar3 me-2 text-primary"></i>
+                <input type="text" id="dashboardRange" class="border-0 bg-transparent" style="width: 190px; font-weight: 700; outline: none;">
             </div>
         </div>
     </div>
     
+    <section class="mb-5">
+        <div class="stats-grid">
+            <div class="stat-card card-patients">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stat-card-icon patients"><i class="bi bi-people-fill"></i></div>
+                    <h5 class="text-primary mb-0 ms-3 fw-bold">Total Patients</h5>
+                </div>
+                <div class="stat-number text-dark">{{ patient_count }}</div>
+            </div>
+            
+            <div class="stat-card card-doctors">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stat-card-icon doctors"><i class="bi bi-hospital"></i></div>
+                    <h5 class="text-success mb-0 ms-3 fw-bold">Total Doctors</h5>
+                </div>
+                <div class="stat-number text-dark">{{ doctor_count }}</div>
+            </div>
+            
+            <div class="stat-card card-appointments">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="stat-card-icon appointments"><i class="bi bi-calendar-check"></i></div>
+                    <h5 class="text-warning mb-0 ms-3 fw-bold">Total appointments</h5>
+                </div>
+                <div class="stat-number text-dark">{{ appointment_count }}</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card chart-card h-100">
+                <div class="card-header border-0 d-flex justify-content-between align-items-center bg-white p-4">
+                    <div class="chart-title-area">
+                        <h6 class="fw-bold mb-0 text-dark">Appointment Trends</h6>
+                        <span class="text-muted smallest">Daily volume fluctuations</span>
+                    </div>
+                    <button class="btn btn-export-premium" onclick="exportToCSV('appointments')">
+                        <i class="bi bi-file-earmark-arrow-down me-2"></i>Export CSV
+                    </button>
+                </div>
+                <div class="card-body px-4 pb-4"><canvas id="lineChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card chart-card h-100">
+                <div class="card-header border-0 d-flex justify-content-between align-items-center bg-white p-4">
+                    <div class="chart-title-area">
+                        <h6 class="fw-bold mb-0 text-dark">Patient Mix</h6>
+                        <span class="text-muted smallest">Intake distribution</span>
+                    </div>
+                    <button class="btn btn-export-circle" onclick="exportToCSV('patients')"><i class="bi bi-download"></i></button>
+                </div>
+                <div class="card-body px-4 pb-4"><canvas id="doughnutChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card chart-card">
+                <div class="card-header border-0 d-flex justify-content-between align-items-center bg-white p-4">
+                    <div class="chart-title-area">
+                        <h6 class="fw-bold mb-0 text-dark">Medical Staff Workload</h6>
+                        <span class="text-muted smallest">Appointments grouped by patient recovery status</span>
+                    </div>
+                    <button class="btn btn-export-premium" onclick="exportToCSV('doctors')">
+                        <i class="bi bi-table me-2"></i>Detailed Data
+                    </button>
+                </div>
+                <div class="card-body px-4 pb-4" style="height: 380px;"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block admin_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
 {% endblock %}

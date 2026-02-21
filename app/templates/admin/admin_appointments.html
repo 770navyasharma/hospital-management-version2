@@ -1,0 +1,160 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_appointments.css') }}">
+<style>
+    /* Prevent page breaks inside the notes box */
+    .no-break { page-break-inside: avoid !important; break-inside: avoid !important; }
+</style>
+{% endblock %}
+
+{% block admin_page_content %}
+<div id="analyticsReportArea"> 
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Appointment Analytics</h1>
+        <div class="d-flex gap-2">
+            <button id="downloadCSV" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export to CSV
+            </button>
+            <div class="date-filter-group d-flex gap-2">
+                <select id="presetFilters" class="form-select form-select-sm" style="width: auto;">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 3 Months</option>
+                </select>
+                <input type="text" id="dateRangePicker" class="form-control form-control-sm" placeholder="Select Date Range">
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card chart-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Appointment Trends</h5>
+                    <div style="height: 300px;"><canvas id="trendChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card chart-card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Status Breakdown</h5>
+                    <div style="height: 300px;"><canvas id="statusChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card manage-card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Detailed Log</h5>
+            <div class="input-group" style="width: 300px;">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="patientSearch" class="form-control bg-light border-0" placeholder="Search patient name...">
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="apptTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apptTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <div class="small text-muted" id="paginationInfo">Showing 0 to 0 of 0 entries</div>
+            <nav aria-label="Table navigation">
+                <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="apptDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div id="modalContentLoader" class="p-5 text-center"><div class="spinner-border text-primary"></div></div>
+            <div id="modalActualContent" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="pdfExportTemplate" style="display: none; background: #fff; width: 794px; margin: 0 auto;">
+    <div style="padding: 40px 60px; color: #333; line-height: 1.5;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4e73df; padding-bottom: 15px; margin-bottom: 25px;">
+            <div style="flex: 1;">
+                <h1 style="color: #4e73df; margin: 0; font-size: 24px; font-weight: 800;">CLINICAL VISIT REPORT</h1>
+                <p style="color: #666; margin: 5px 0; font-size: 13px;">Generated on: {{ date.today().strftime('%d %b %Y') }}</p>
+            </div>
+            <div style="text-align: right; flex: 1; padding-right: 10px;">
+                <p style="margin: 0; font-weight: bold; font-size: 16px;">HMS MEDICAL PORTAL</p>
+                <p style="margin: 0; font-size: 12px; color: #888;">Report ID: #<span id="pdfApptId"></span></p>
+            </div>
+        </div>
+
+        <div style="background: #f8f9fc; padding: 12px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-between; font-size: 13px; border: 1px solid #e3e6f0;">
+            <span><strong>Visit Date:</strong> <span id="pdfDate"></span></span>
+            <span><strong>Status:</strong> <span id="pdfStatus" style="color: #e74a3b; font-weight: bold; text-transform: uppercase;"></span></span>
+        </div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+            <div style="flex: 1; border: 1px solid #e3e6f0; border-radius: 10px; overflow: hidden;">
+                <div style="background: #eaecf4; padding: 8px; font-weight: bold; font-size: 11px; text-align: center; letter-spacing: 1px;">PATIENT</div>
+                <div style="padding: 15px; text-align: center;">
+                    <img id="pdfPatientImg" src="" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h6 id="pdfPatientName" style="margin: 0; color: #333; font-size: 14px; font-weight: 700;"></h6>
+                    <p id="pdfPatientEmail" style="margin: 2px 0; font-size: 11px; color: #666;"></p>
+                    <p id="pdfPatientContact" style="margin: 0; font-size: 11px; color: #666;"></p>
+                </div>
+            </div>
+            <div style="flex: 1; border: 1px solid #e3e6f0; border-radius: 10px; overflow: hidden;">
+                <div style="background: #eaecf4; padding: 8px; font-weight: bold; font-size: 11px; text-align: center; letter-spacing: 1px;">DOCTOR</div>
+                <div style="padding: 15px; text-align: center;">
+                    <img id="pdfDocImg" src="" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h6 id="pdfDocName" style="margin: 0; color: #333; font-size: 14px; font-weight: 700;"></h6>
+                    <p id="pdfDocEmail" style="margin: 2px 0; font-size: 11px; color: #666;"></p>
+                    <p id="pdfDocDept" style="margin: 0; font-size: 11px; font-weight: bold; color: #4e73df;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <h6 style="border-left: 4px solid #4e73df; padding-left: 12px; margin-bottom: 12px; font-weight: 800; font-size: 14px;">EXAMINATION DETAILS</h6>
+            <div style="padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; font-size: 13px;">
+                <p><strong>Diagnosis:</strong></p>
+                <p id="pdfDiagnosis" style="color: #444; margin-bottom: 10px;"></p>
+                <p><strong>Prescription:</strong></p>
+                <p id="pdfPrescription" style="color: #1cc88a; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <div style="page-break-inside: auto;">
+            <h6 style="border-left: 4px solid #f6c23e; padding-left: 12px; margin-bottom: 12px; font-weight: 800; font-size: 14px;">GENERAL CLINICAL NOTES</h6>
+            <div style="padding: 20px; background: #fffdf5; border: 1px solid #fdf2d0; border-radius: 8px; font-size: 13px; color: #555; font-style: italic;">
+                <p id="pdfClinicalNotes" style="margin: 0; white-space: pre-wrap; word-break: break-word;"></p>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 20px;">
+            This is a computer-generated medical record. Confidential documentation generated via HMS Portal.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin_appointments.js') }}"></script>
+{% endblock %}

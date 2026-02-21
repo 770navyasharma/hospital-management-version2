@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.dialects.sqlite import JSON as SQLiteJSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableDict
+from datetime import date # <-- ADD THIS IMPORT
 
 # Association table for the many-to-many relationship between Users and Roles
 roles_users = db.Table('roles_users',
@@ -31,7 +32,7 @@ class User(db.Model, UserMixin): # Add UserMixin
     active = db.Column(db.Boolean())
     # This is required by Flask-Security-Too
     fs_uniquifier = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
-
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # Relationships
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
@@ -66,8 +67,24 @@ class Patient(db.Model):
     contact_number = db.Column(db.String(20))
     medical_history = db.Column(db.Text) # Simple medical history
     
+    # --- NEW FIELDS ---
+    profile_pic_url = db.Column(db.String(255), default='/static/images/default-profile.svg')
+    gender = db.Column(db.String(10)) # Male, Female, Other
+    date_of_birth = db.Column(db.Date)
+    status = db.Column(db.String(50), default='New') # New, Under Treatment, Recovered
+    # --- END NEW FIELDS ---
+
     # Define the 1-to-1 relationship with User
     user = db.relationship('User', back_populates='patient_profile')
+
+    # --- NEW HELPER PROPERTY TO CALCULATE AGE ---
+    @property
+    def age(self):
+        if not self.date_of_birth:
+            return None
+        today = date.today()
+        return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+
 
 class Appointment(db.Model):
     __tablename__ = 'appointment'

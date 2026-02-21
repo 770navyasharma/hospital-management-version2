@@ -59,6 +59,15 @@
     justify-content: center;
 }
 
+/* NEW: Style for the registration image preview */
+.auth-img-preview {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #e9ecef;
+}
+
 .auth-form-side h2 {
     font-weight: 700;
     color: #222;
@@ -78,6 +87,11 @@
     border-radius: 8px;
     border: 1px solid #ddd;
     transition: all 0.2s ease-in-out; /* Added transition */
+}
+
+/* Fix for file input padding */
+.form-control[type="file"] {
+    padding: 0.6rem 1rem;
 }
 
 .form-control:focus {
