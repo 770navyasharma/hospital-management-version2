@@ -43,8 +43,6 @@ This project is developed for the Modern Application Development II (MAD-II) cou
 * **Admin Shield:** Secure script-based administrator initialization.
 
 ## 📊 Milestone: Doctor Dashboard & Appointment/Treatment Management
-* ✅ **Expected Time:** 7 days
-* 📊 **Completion Progress:** 15%
 
 - [x] **Milestone 0:** GitHub Repository Setup
 - [x] **Milestone 1:** Database Models and Schema Setup
