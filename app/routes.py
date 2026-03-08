@@ -84,8 +84,11 @@ def patient_register():
         db.session.add(patient_profile)
         db.session.commit()
 
-        utils.login_user(user)
-        return redirect(url_for('main.dashboard'))
+        # --- SEND CONFIRMATION EMAIL ---
+        current_app.extensions['security'].confirmable_model.send_confirmation_instructions(user)
+        
+        flash("Registration successful! Please check your email and click the confirmation link to activate your account.", "success")
+        return redirect(url_for('security.login'))
 
     return render_template('patient_register.html')
 
@@ -96,7 +99,7 @@ def dashboard():
     if current_user.has_role('Admin'):
         return redirect(url_for('main.admin_dashboard'))
     elif current_user.has_role('Doctor'):
-        return redirect(url_for('main.doctor_dashboard'))
+        return redirect(url_for('doctor.doctor_dashboard'))
     elif current_user.has_role('Patient'):
         return redirect(url_for('main.patient_dashboard'))
     else:
@@ -216,6 +219,7 @@ def admin_add_doctor():
         department_id = request.form.get('department_id')
         phone_number = request.form.get('phone_number')
         bio = request.form.get('bio')
+        fees = float(request.form.get('fees', 0.0))
         availability_str = (request.form.get('availability') or '').strip()
 
         profile_pic = request.files.get('profile_pic')
@@ -253,6 +257,7 @@ def admin_add_doctor():
             department_id=department_id,
             phone_number=phone_number,
             bio=bio,
+            fees=fees,
             profile_pic_url=profile_pic_path,
             availability=availability_json
         )
@@ -275,13 +280,19 @@ def admin_edit_doctor(doctor_id):
         doctor = Doctor.query.get_or_404(doctor_id)
         doctor.user.full_name = request.form.get('full_name')
         doctor.user.email = request.form.get('email')
-        doctor.user.active = (request.form.get('status') == 'active')
+        if request.form.get('status'):
+            doctor.user.active = (request.form.get('status') == 'active')
         doctor.phone_number = request.form.get('phone_number')
         doctor.department_id = request.form.get('department_id')
         doctor.bio = request.form.get('bio')
+        doctor.fees = float(request.form.get('fees', 0.0))
 
         profile_pic = request.files.get('profile_pic')
-        if profile_pic and allowed_file(profile_pic.filename):
+        remove_pic = request.form.get('remove_pic') == 'true'
+
+        if remove_pic:
+            doctor.profile_pic_url = url_for('static', filename='images/default-profile.svg')
+        elif profile_pic and allowed_file(profile_pic.filename):
             filename = secure_filename(f"doctor_{doctor.user.email}_" + profile_pic.filename)
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             profile_pic.save(upload_path)
@@ -301,7 +312,10 @@ def admin_edit_doctor(doctor_id):
                 flash('Invalid JSON format. Availability not updated.', 'danger')
 
         db.session.commit()
-        flash(f"Dr. {doctor.user.full_name}'s profile updated successfully.", 'success')
+        display_name = doctor.user.full_name
+        if not display_name.lower().startswith('dr.'):
+            display_name = f"Dr. {display_name}"
+        flash(f"{display_name}'s profile updated successfully.", 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error updating doctor: {e}', 'danger')
@@ -647,16 +661,149 @@ def appointment_details_api(appt_id):
         }
     })
     
-    
-# --- Doctor & Patient Routes (unchanged) ---
-@main.route('/doctor/dashboard')
-@login_required
-@roles_required('Doctor')
-def doctor_dashboard():
-    return f"<h1>Doctor Dashboard</h1><p>Hello, Dr. {current_user.full_name}!</p><a href='/logout'>Logout</a>"
 
 @main.route('/patient/dashboard')
 @login_required
 @roles_required('Patient')
 def patient_dashboard():
-    return f"<h1>Patient Dashboard</h1><p>Hello, {current_user.full_name}!</p><a href='/logout'>Logout</a>"
+    departments = Department.query.all()
+    doctors = Doctor.query.all()
+    return render_template('patient/patient_dashboard.html', user=current_user, departments=departments, doctors=doctors)
+
+def is_doctor_available(doctor, dt):
+    """Helper to check if a doctor is available at a specific datetime."""
+    if not doctor.availability:
+        return False
+    
+    date_str = dt.strftime('%Y-%m-%d')
+    appt_time = dt.time()
+    
+    # Get slots for the specific date
+    slots = doctor.availability.get(date_str, [])
+    
+    for slot in slots:
+        try:
+            # Handle "HH:MM-HH:MM" or "HH:MM - HH:MM"
+            parts = slot.replace(' ', '').split('-')
+            if len(parts) != 2: continue
+            
+            start_time = datetime.strptime(parts[0], '%H:%M').time()
+            end_time = datetime.strptime(parts[1], '%H:%M').time()
+            
+            if start_time <= appt_time <= end_time:
+                return True
+        except (ValueError, TypeError):
+            continue
+            
+    return False
+
+@main.route('/api/patient/book', methods=['POST'])
+@login_required
+@roles_required('Patient')
+def book_appointment():
+    data = request.json
+    doctor_id = data.get('doctor_id')
+    dt_str = data.get('datetime')
+    is_urgent = data.get('is_urgent', False)
+    urgent_note = data.get('note', '')
+
+    if not all([doctor_id, dt_str]):
+        return jsonify({"status": "error", "message": "Missing doctor or date/time"}), 400
+
+    try:
+        dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid date/time format"}), 400
+
+    doctor = Doctor.query.get_or_404(doctor_id)
+    
+    # --- STATUS OVERRIDE CHECK ---
+    if doctor.status_override in ['break', 'offline', 'busy']:
+        status_names = {'break': 'On Break', 'offline': 'Offline', 'busy': 'Busy'}
+        return jsonify({
+            "status": "error", 
+            "message": f"Doctor is currently {status_names.get(doctor.status_override)}. Please try again later or choose another doctor."
+        }), 400
+    
+    # --- AVAILABILITY ENFORCEMENT ---
+    if not is_urgent:
+        if not is_doctor_available(doctor, dt):
+            return jsonify({
+                "status": "error", 
+                "message": "Doctor is not available at this time. Only urgent appointments can be booked outside available hours."
+            }), 400
+    else:
+        if not urgent_note:
+            return jsonify({
+                "status": "error", 
+                "message": "A reason is required for urgent appointments."
+            }), 400
+
+    # --- DOUBLE-BOOKING INTERVAL PRECHECK ---
+    new_start = dt
+    new_end = new_start + timedelta(minutes=30) # Default tentative 30m block for checking
+
+    existing_appts = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.status.in_(['Booked', 'Ongoing'])
+    ).all()
+
+    for ex in existing_appts:
+        ex_start = ex.appointment_datetime
+        ex_end = ex_start + timedelta(minutes=ex.duration or 30)
+        
+        if ex_start < new_end and new_start < ex_end:
+            return jsonify({
+                "status": "error", 
+                "message": f"Doctor is already busy during this timeframe ({ex_start.strftime('%I:%M %p')} - {ex_end.strftime('%I:%M %p')}). Please choose another slot."
+            }), 400
+
+    # Create the appointment
+    appt = Appointment(
+        patient_id=current_user.patient_profile.id,
+        doctor_id=doctor_id,
+        appointment_datetime=dt,
+        status='Requested',
+        is_urgent=is_urgent,
+        urgent_note=urgent_note
+    )
+    
+    db.session.add(appt)
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Appointment requested successfully!"})
+    
+@main.route('/api/patient/appointments')
+@login_required
+@roles_required('Patient')
+def get_patient_appointments():
+    patient_id = current_user.patient_profile.id
+    appts = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.appointment_datetime.desc()).all()
+    
+    return jsonify([{
+        "id": a.id,
+        "doctor_name": a.doctor.user.full_name,
+        "doctor_pic": a.doctor.profile_pic_url,
+        "datetime": a.appointment_datetime.strftime("%d %b %Y at %I:%M %p"),
+        "status": a.status,
+        "is_urgent": a.is_urgent,
+        "note": a.urgent_note
+    } for a in appts])
+
+@main.route('/api/patient/cancel/<int:appt_id>', methods=['POST'])
+@login_required
+@roles_required('Patient')
+def patient_cancel_appointment(appt_id):
+    appt = Appointment.query.get_or_404(appt_id)
+    if appt.patient_id != current_user.patient_profile.id:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    
+    reason = request.json.get('reason', 'Cancelled by patient')
+    appt.status = 'Cancelled'
+    appt.urgent_note = f"CANCELLED BY PATIENT: {reason}"
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Appointment cancelled successfully."})
+
+
+

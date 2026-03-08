@@ -37,7 +37,7 @@ class Config:
     
     # This makes the "email" content print to your terminal for testing
     # instead of actually trying to connect to a mail server
-    MAIL_BACKEND = 'console' 
+    MAIL_SUPPRESS_SEND = True
     SECURITY_EMAIL_SUBJECT_PASSWORD_RESET = "Password Reset Request - HMS"
     
     # Keep Bcrypt for passwords
@@ -50,3 +50,11 @@ class Config:
 
     # This is also helpful to prevent the 72-byte error during reset
     SECURITY_PASSWORD_SINGLE_HASH = True
+
+    # --- Confirmation & Recovery Settings ---
+    SECURITY_CONFIRMABLE = False
+    SECURITY_RECOVERABLE = False
+    SECURITY_SEND_CONFIRMATION_OK_EMAIL = False
+    SECURITY_EMAIL_CONFIRM_TEMPLATE = 'security/send_confirmation.html'
+    SECURITY_FORGOT_PASSWORD_TEMPLATE = 'security/forgot_password.html'
+    SECURITY_RESET_PASSWORD_TEMPLATE = 'security/reset_password.html'

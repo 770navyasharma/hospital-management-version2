@@ -5,10 +5,21 @@ from config import Config
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_mail import Mail, email_dispatched
 
 db = SQLAlchemy()
 datastore = None 
 migrate = Migrate()
+mail = Mail()
+
+def log_mail(message, app):
+    print("\n" + "="*50)
+    print("📩  EMAIL SENT TO CONSOLE")
+    print(f"To: {message.recipients}")
+    print(f"Subject: {message.subject}")
+    print("-" * 50)
+    print(message.body)
+    print("="*50 + "\n")
 
 def create_app():
     global datastore 
@@ -20,6 +31,8 @@ def create_app():
     
     db.init_app(app)
     migrate.init_app(app, db)
+    mail.init_app(app)
+    email_dispatched.connect(log_mail, app)
 
     from . import models 
     
@@ -28,6 +41,10 @@ def create_app():
     
     from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    # 🟢 CRITICAL: Import and register the doctor blueprint
+    from .doctor_routes import doctor_blueprint
+    app.register_blueprint(doctor_blueprint, url_prefix='/doctor')
 
     with app.app_context():
         pass 

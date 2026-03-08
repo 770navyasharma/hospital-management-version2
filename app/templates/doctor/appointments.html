@@ -1,0 +1,227 @@
+{% extends "doctor/doctor_base.html" %}
+
+{% block doctor_content %}
+<div id="appointments-page" class="animate-fade-in">
+    <!-- Search & Filter Header -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="search-container w-100">
+                <i class="bi bi-search"></i>
+                <input type="text" v-model="searchQuery" placeholder="Search by name, disease, or message..." class="shadow-sm">
+            </div>
+        </div>
+        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+            <div class="input-group shadow-sm rounded-4 overflow-hidden" style="width: 250px;">
+                <span class="input-group-text bg-white border-0"><i class="bi bi-calendar-event text-primary"></i></span>
+                <input type="text" id="apptDateFilter" class="form-control border-0 bg-white" placeholder="Filter by date...">
+            </div>
+            <button v-if="dateRange" @click="clearFilter" class="btn btn-light rounded-pill px-3 shadow-sm"><i class="bi bi-x"></i></button>
+        </div>
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div class="d-flex gap-2 mb-4 overflow-auto pb-2 custom-scroll">
+        <button v-for="s in statusOptions" :key="s" 
+                @click="toggleStatusFilter(s)"
+                class="btn rounded-pill px-4 py-2 fw-bold smallest transition-all"
+                :class="activeStatusFilters.includes(s) ? 'btn-primary shadow-blue' : 'btn-white border-0 text-muted shadow-sm'">
+            [[ s.toUpperCase() ]]
+        </button>
+    </div>
+
+    <!-- Advanced Collapsible Table -->
+    <div class="card border-0 shadow-sm rounded-5 overflow-hidden bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover border-0 m-0 premium-table">
+                <thead class="bg-light-subtle text-muted smallest fw-bold text-uppercase ls-1">
+                    <tr>
+                        <th class="ps-4 py-3">Patient</th>
+                        <th class="py-3">Date & Time</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3">Primary Concern</th>
+                        <th class="pe-4 py-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template v-for="appt in filteredAppointments" :key="appt.id">
+                        <!-- Main Row -->
+                        <tr class="align-middle transition-all cursor-pointer" @click="toggleRow(appt)" :class="{'row-expanded': expandedId === appt.id}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <img :src="appt.patient_pic" class="rounded-circle me-3 border border-2 border-white shadow-sm" width="45" height="45" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold text-dark">[[ appt.patient_name ]]</div>
+                                        <div class="smallest text-muted">ID: #[[ appt.patient_id + 5000 ]]</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold">[[ appt.datetime ]]</div>
+                                <div v-if="appt.is_urgent" class="smallest text-danger fw-bold"><i class="bi bi-lightning-fill me-1"></i>URGENT</div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-3" :class="getStatusBadgeClass(appt.status)">
+                                    [[ appt.status ]]
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="small text-truncate fw-bold text-primary" style="max-width: 250px;">[[ appt.primary_concern ]]</div>
+                                    <div v-if="appt.attachments && appt.attachments.length > 0" class="badge bg-light text-muted border smallest rounded-pill px-2">
+                                        <i class="bi bi-paperclip me-1"></i>[[ appt.attachments.length ]]
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <i class="bi fs-5 text-primary transition-all" :class="expandedId === appt.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            </td>
+                        </tr>
+                        
+                        <!-- Collapsible Detail Row -->
+                        <tr v-if="expandedId === appt.id" class="animate-fade-in bg-light-subtle border-0">
+                            <td colspan="6" class="p-4 border-0">
+                                <div class="fixed-expanded-row bg-white rounded-5 shadow-sm border overflow-hidden">
+                                    <div class="row g-0 h-100">
+                                        <!-- Profile Section (Left) -->
+                                        <div class="col-md-4 border-end h-100 p-5 custom-scroll overflow-auto">
+                                            <div class="d-flex flex-column align-items-center text-center">
+                                                <img :src="appt.patient_pic" class="rounded-circle mb-4 border border-5 border-white shadow-lg" width="140" height="140" style="object-fit: cover;">
+                                                <h3 class="fw-black mb-1">[[ appt.patient_name ]]</h3>
+                                                <div class="d-flex gap-2 mb-4">
+                                                    <span class="badge bg-primary-soft text-primary rounded-pill border border-primary-subtle px-3">[[ appt.patient_gender ]]</span>
+                                                    <span class="badge bg-light text-dark rounded-pill border px-3">[[ calculateAge(appt.patient_dob) ]] Yrs</span>
+                                                </div>
+                                                
+                                                <div class="w-100 text-start mt-3">
+                                                    <label class="smallest fw-bold text-muted text-uppercase d-block mb-2 ls-1">Patient History</label>
+                                                    <div class="p-3 bg-light rounded-4 border-start border-3 border-primary shadow-sm mb-4">
+                                                        <p class="small text-secondary italic mb-0">[[ appt.patient_history || 'No established history recorded.' ]]</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mt-auto w-100 pt-4 border-top">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <label class="smallest fw-bold text-muted text-uppercase ls-1">Direct Contact</label>
+                                                        <span v-if="copyStatus === appt.id" class="badge bg-success-soft text-success smallest border border-success-subtle animate-bounce-in">Copied!</span>
+                                                    </div>
+                                                    <div class="row g-2 align-items-stretch">
+                                                        <div class="col">
+                                                            <a :href="'tel:' + appt.patient_phone" class="btn btn-primary rounded-pill h-100 w-100 py-3 fw-bold shadow-blue d-flex align-items-center justify-content-center gap-2 small">
+                                                                <i class="bi bi-telephone-fill"></i> CALL
+                                                            </a>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <button @click="copyToClipboard(appt.patient_email, appt.id)" class="btn bg-light border rounded-pill h-100 px-4 shadow-sm hover-bg-primary-soft transition-all" title="Copy Email">
+                                                                <i class="bi bi-envelope-paper-fill text-primary fs-5"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="smallest text-center mt-3 text-muted fw-bold text-truncate px-2" :title="appt.patient_email">[[ appt.patient_email ]]</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- History Section (Right) -->
+                                        <div class="col-md-8 h-100 p-5 bg-light-soft custom-scroll overflow-auto">
+                                            <div class="mb-5">
+                                                <h6 class="fw-black text-primary mb-4 text-uppercase ls-1 small d-flex align-items-center">
+                                                    <i class="bi bi-chat-quote-fill me-2 fs-5"></i> Current Case Notes
+                                                </h6>
+                                                <div class="p-4 bg-white rounded-5 shadow-sm border-start border-4 border-primary">
+                                                    <div class="row g-4">
+                                                        <div class="col-md-6 border-end">
+                                                            <div class="smallest fw-black text-primary text-uppercase ls-1 mb-2">Final Diagnosis</div>
+                                                            <div class="small fw-black text-dark mb-4">[[ appt.diagnosis || 'Pending' ]]</div>
+                                                            
+                                                            <div class="smallest fw-black text-warning text-uppercase ls-1 mb-2">Clinical Notes</div>
+                                                            <p class="smallest text-muted mb-0 italic fw-medium">"[[ appt.clinical_notes || 'No notes yet.' ]]"</p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="smallest fw-black text-success text-uppercase ls-1 mb-2">Prescriptions</div>
+                                                            <div v-if="appt.prescriptions && appt.prescriptions.length > 0">
+                                                                <div v-for="(med, i) in appt.prescriptions" :key="i" class="smallest fw-bold text-dark mb-1">
+                                                                    <i class="bi bi-capsule text-success me-1"></i> [[ med ]]
+                                                                </div>
+                                                            </div>
+                                                            <div v-else class="smallest text-muted opacity-50 italic">None provided.</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div v-if="appt.attachments && appt.attachments.length > 0" class="mt-4">
+                                                    <div class="smallest fw-black text-secondary text-uppercase ls-1 mb-2">Attachments</div>
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        <div v-for="att in appt.attachments" :key="att.id" 
+                                                             @click.stop="sharedMethods.openPreview(att)"
+                                                             class="badge bg-light text-dark border p-2 rounded-3 cursor-pointer hover-bg-primary-soft transition-all d-flex align-items-center gap-2">
+                                                            <i v-if="att.type === 'image'" class="bi bi-image text-info"></i>
+                                                            <i v-else-if="att.type === 'pdf'" class="bi bi-file-pdf text-danger"></i>
+                                                            <i v-else class="bi bi-paperclip"></i>
+                                                            <span class="smallest">[[ att.name ]]</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                                    <h6 class="fw-black text-primary m-0 text-uppercase ls-1 small d-flex align-items-center">
+                                                        <i class="bi bi-clock-history me-2 fs-5"></i> Clinical History
+                                                    </h6>
+                                                    <span class="badge bg-white text-muted shadow-sm rounded-pill border px-3">[[ patientHistory.length ]] VISITS</span>
+                                                </div>
+                                                
+                                                <!-- Vertical History Grid -->
+                                                <div class="row g-3">
+                                                    <div v-for="h in patientHistory" :key="h.id" class="col-sm-12 col-xl-6">
+                                                        <div @click="sharedMethods.viewPastAppt(h.id)"
+                                                             class="history-card bg-white p-4 rounded-5 border-0 shadow-sm transition-all cursor-pointer h-100 border-start border-3 border-transparent hover-border-primary">
+                                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                <div class="smallest fw-black text-primary text-uppercase ls-1">[[ h.date ]]</div>
+                                                                <div class="badge bg-primary-soft text-primary smallest fw-bold rounded-pill px-3">Completed</div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="smallest fw-bold text-muted text-uppercase d-block ls-1 mb-1">Final Diagnosis</label>
+                                                                <div class="small fw-black text-dark text-truncate">[[ h.diagnosis || 'Diagnosis Pending' ]]</div>
+                                                            </div>
+                                                            <div>
+                                                                <label class="smallest fw-bold text-muted text-uppercase d-block ls-1 mb-1">Chief Complaint</label>
+                                                                <p class="smallest text-muted mb-0 line-clamp-2 italic">"[[ h.notes || h.primary_concern || 'No specific notes.' ]]"</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div v-if="historyLoading" class="col-12 py-5 text-center">
+                                                        <div class="spinner-border text-primary"></div>
+                                                    </div>
+                                                    <div v-if="!historyLoading && patientHistory.length === 0" class="col-12">
+                                                        <div class="text-center py-4 bg-white rounded-5 opacity-50">
+                                                            <i class="bi bi-journal-x fs-2 mb-2 d-block"></i>
+                                                            <span class="smallest fw-bold text-uppercase ls-1">No Previous Records</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    
+                    <tr v-if="filteredAppointments.length === 0">
+                        <td colspan="5" class="py-5 text-center opacity-50">
+                            <i class="bi bi-search fs-1 mb-3 d-block"></i>
+                            <p class="fw-bold">No appointments match your criteria.</p>
+                            <button @click="resetFilters" class="btn btn-sm btn-outline-primary rounded-pill px-4">Clear All Filters</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block doctor_scripts %}
+<script src="{{ url_for('static', filename='js/doctor_appointments.js') }}?v=3.0"></script>
+{% endblock %}

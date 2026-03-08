@@ -1,0 +1,15 @@
+.appointment-card {
+    border: 1px solid transparent;
+}
+.appointment-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(78, 115, 223, 0.2);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05) !important;
+}
+
+.bg-success-soft { background-color: rgba(28, 200, 138, 0.1); }
+.bg-warning-soft { background-color: rgba(246, 194, 62, 0.1); }
+.btn-soft-primary { background: rgba(78, 115, 223, 0.1); color: #4e73df; }
+
+.outline-none { outline: none; }
+.transition-all { transition: all 0.3s ease; }

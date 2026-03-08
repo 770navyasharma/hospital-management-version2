@@ -1,0 +1,251 @@
+{% extends "doctor/doctor_base.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+:root {
+    --hms-professional-blue: #2d4a8a;
+    --hms-slate: #475569;
+}
+
+.profile-container {
+    height: calc(100vh - 120px);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.shadow-premium {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+.profile-frame {
+    transition: all 0.3s ease;
+}
+
+.profile-frame:hover {
+    transform: translateY(-5px);
+}
+
+.contact-pill {
+    transition: all 0.2s ease;
+    border: 1px solid #f1f5f9;
+}
+
+.contact-pill:hover {
+    background-color: #fff !important;
+    border-color: var(--hms-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.btn-action {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    color: var(--hms-slate);
+    transition: 0.2s;
+}
+
+.btn-action:hover {
+    background: var(--hms-primary);
+    color: #fff;
+    border-color: var(--hms-primary);
+}
+
+.bg-professional-light {
+    background-color: #fbfcfe !important;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    color: var(--hms-professional-blue);
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+</style>
+{% endblock %}
+
+{% block doctor_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script src="{{ url_for('static', filename='js/doctor_profile.js') }}"></script>
+{% endblock %}
+
+{% block doctor_content %}
+<div class="profile-container animate-fade-in">
+    <div class="row g-0 h-100 overflow-hidden rounded-5 shadow-premium bg-white">
+        <!-- Left Section (40%): The Profile Image Area -->
+        <div class="col-md-5 col-lg-5 p-0 border-end bg-professional-light position-relative d-flex flex-column align-items-center justify-content-center" style="min-height: 80vh;">
+            <div class="mb-5 position-relative">
+                <div class="profile-frame">
+                    <img :src="profileData.profile_pic" class="img-fluid rounded-circle border border-4 border-white shadow-sm" 
+                         width="280" height="280" style="object-fit: cover; aspect-ratio: 1/1;">
+                    
+                    <div class="position-absolute bottom-0 end-0 d-flex gap-2 mb-3 me-3">
+                        <button v-if="editing" @click="removeProfilePic" class="btn-action shadow-sm" title="Remove Photo">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                        <button @click="triggerImageUpload" class="btn-action shadow-sm text-primary" title="Update Photo">
+                            <i class="bi bi-camera"></i>
+                        </button>
+                    </div>
+                    <input type="file" ref="imageInput" class="d-none" @change="onImageSelect" accept="image/*">
+                </div>
+            </div>
+            
+            <div class="text-center px-4 w-100 mt-2">
+                <h3 class="fw-bold text-dark mb-1">[[ profileData.full_name ]]</h3>
+                <p class="text-muted fw-medium text-uppercase ls-1 smallest mb-4">[[ profileData.degree ]] • [[ profileData.department ]]</p>
+                
+                <div class="d-flex flex-column gap-3 align-items-center w-100 px-5">
+                    <div class="contact-pill w-100 bg-white shadow-sm p-3 rounded-4 d-flex align-items-center gap-3 border-transparent hover-border-primary transition-all">
+                        <i class="bi bi-envelope-at-fill text-primary fs-5"></i>
+                        <div class="text-start overflow-hidden">
+                            <label class="smallest text-muted fw-bold text-uppercase d-block mb-0">Email Address</label>
+                            <span class="small fw-bold text-dark text-truncate d-block">[[ profileData.email ]]</span>
+                        </div>
+                    </div>
+                    <div class="contact-pill w-100 bg-white shadow-sm p-3 rounded-4 d-flex align-items-center gap-3 border-transparent hover-border-primary transition-all">
+                        <i class="bi bi-phone-fill text-primary fs-5"></i>
+                        <div class="text-start">
+                            <label class="smallest text-muted fw-bold text-uppercase d-block mb-0">Contact Number</label>
+                            <span class="small fw-bold text-dark">[[ profileData.phone_number ]]</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-5">
+                    <button @click="editing = !editing" class="btn btn-outline-primary rounded-pill px-5 py-2 fw-black transition-all">
+                        [[ editing ? 'DISCARD CHANGES' : 'EDIT PROFILE' ]]
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section (60%): Detailed Editable Information -->
+        <div class="col-md-7 col-lg-7 p-5 custom-scroll overflow-auto bg-white" style="max-height: 80vh;">
+            <div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom border-light">
+                <h4 class="section-title fw-bold m-0 text-dark">Professional Identity</h4>
+                <div v-if="editing" class="animate-bounce-in">
+                    <button @click="saveProfile" class="btn btn-primary rounded-pill px-5 py-3 fw-black shadow-blue hover-lift">
+                        <i class="bi bi-check-circle-fill me-2"></i> SAVE CHANGES
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Highlight -->
+            <div class="p-4 bg-professional-light rounded-4 mb-5 d-flex align-items-center border border-light shadow-sm">
+                <div class="display-6 me-4">🩺</div>
+                <div>
+                    <h4 class="fw-bold text-primary mb-0">[[ profileData.unique_patients ]]</h4>
+                    <p class="text-muted fw-medium smallest text-uppercase ls-1 mb-0">Total Unique Patients Managed</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Editable Fields Layer -->
+                <div class="col-md-12">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-professional-light border-light">
+                        <label class="smallest fw-bold text-muted text-uppercase ls-1 mb-3">Professional Tagline</label>
+                        <input v-if="editing" v-model="profileData.tagline" class="form-control form-control-lg rounded-3 border border-light shadow-sm fw-medium text-dark mb-3 py-3" placeholder="Enter your professional tagline">
+                        <h6 v-else class="fw-bold text-dark italic mb-3 opacity-75">"[[ profileData.tagline ]]"</h6>
+                        
+                        <textarea v-if="editing" v-model="profileData.about_me" class="form-control border border-light shadow-sm rounded-3 p-4 small fw-normal text-muted" rows="5" placeholder="Share a few words about your practice..."></textarea>
+                        <p v-else class="small fw-normal text-muted">[[ profileData.about_me || 'No professional description provided yet.' ]]</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="text" :disabled="!editing" v-model="profileData.full_name" class="form-control border-0 shadow-sm rounded-4 fw-bold" id="p-name" placeholder="Full Name">
+                        <label for="p-name" class="fw-bold text-muted">Full Name</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="email" :disabled="!editing" v-model="profileData.email" class="form-control border-0 shadow-sm rounded-4 fw-bold" id="p-email" placeholder="Email">
+                        <label for="p-email" class="fw-bold text-muted">Email Address</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="text" :disabled="!editing" v-model="profileData.phone_number" class="form-control border-0 shadow-sm rounded-4 fw-bold" id="p-phone" placeholder="Phone">
+                        <label for="p-phone" class="fw-bold text-muted">Contact Number</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="number" step="0.01" disabled v-model="profileData.fees" class="form-control border-0 shadow-sm rounded-4 fw-bold bg-white opacity-75" id="p-fees" placeholder="Fees">
+                        <label for="p-fees" class="fw-bold text-muted">Consultation Fees (₹) <span class="smallest fw-normal opacity-50">• Admin Managed</span></label>
+                    </div>
+                </div>
+
+                <div class="col-md-12 mt-4">
+                    <div class="form-floating mb-3">
+                        <input type="text" disabled v-model="profileData.department" class="form-control border-0 shadow-sm rounded-4 fw-bold bg-white opacity-75" id="p-dept">
+                        <label for="p-dept" class="fw-bold text-muted opacity-50">Department (Fixed)</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="text" :disabled="!editing" v-model="profileData.degree" class="form-control border-0 shadow-sm rounded-4 fw-bold" id="p-degree" placeholder="Degree">
+                        <label for="p-degree" class="fw-bold text-muted">Professional Degree</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                        <input type="number" :disabled="!editing" v-model="profileData.experience" class="form-control border-0 shadow-sm rounded-4 fw-bold" id="p-exp" placeholder="Experience">
+                        <label for="p-exp" class="fw-bold text-muted">Years of Experience</label>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <label class="smallest fw-bold text-muted text-uppercase ls-1 mb-3 d-block">Detailed Bio (Points)</label>
+                    <textarea :disabled="!editing" v-model="profileData.bio" class="form-control border-0 shadow-sm rounded-5 p-4 small fw-medium" rows="4" placeholder="Mention key achievements, specialties, or certifications..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Cropper Modal -->
+    <div v-if="showCropModal" class="modal-backdrop d-flex align-items-center justify-content-center" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); z-index: 5000;">
+        <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate-scale-in" style="width: 500px; background: #fff;">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-light-soft text-dark">
+                <h5 class="fw-black m-0">Crop Profile Picture</h5>
+                <button @click="showCropModal = false" class="btn-close"></button>
+            </div>
+            <div class="p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div style="height: 350px; background: #eee; border-radius: 20px; overflow: hidden;">
+                            <img ref="cropImg" :src="cropImageSrc" style="max-width: 100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 d-flex gap-2">
+                <button @click="showCropModal = false" class="btn btn-light rounded-pill flex-grow-1 py-3 fw-bold text-muted">CANCEL</button>
+                <button @click="applyCrop" class="btn btn-primary rounded-pill flex-grow-1 py-3 fw-black shadow-blue">
+                    <i class="bi bi-crop me-2"></i> APPLY & SAVE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -3,14 +3,16 @@
 /* Use a modern, clean font */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f4f7f6; /* A very light, soft gray */
+    background-color: #f4f7f6;
+    /* A very light, soft gray */
     color: #333;
 }
 
 /* --- Navigation Bar --- */
 .navbar-brand {
     font-weight: 600;
-    color: #0056b3 !important; /* A professional blue */
+    color: #0056b3 !important;
+    /* A professional blue */
 }
 
 .navbar .btn-primary {
@@ -68,7 +70,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-right: 1rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .hero-image {
@@ -103,7 +105,7 @@ body {
     border: none;
     border-radius: 10px;
     padding: 2rem;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     text-align: center;
     height: 100%;
 }

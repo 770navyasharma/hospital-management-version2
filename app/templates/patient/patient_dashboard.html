@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/patient_dashboard.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block page_content %}
+<div id="patient-app" v-cloak class="container py-5">
+    <div class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <h1 class="fw-black text-primary mb-1">Welcome, {{ user.full_name }}</h1>
+            <p class="text-muted">Find the best care and book your appointment in seconds.</p>
+        </div>
+        <div class="col-md-6">
+            <div class="search-box glass shadow-sm p-1 rounded-pill d-flex align-items-center">
+                <i class="bi bi-search ms-3 text-muted"></i>
+                <input type="text" v-model="searchQuery" class="form-control border-0 bg-transparent shadow-none" placeholder="Search doctors by name or department...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Filters -->
+    <div class="d-flex gap-2 mb-5 overflow-auto pb-2 custom-scroll flex-nowrap">
+        <button 
+            @click="selectedDept = null" 
+            :class="selectedDept === null ? 'btn-primary' : 'btn-outline-primary'" 
+            class="btn rounded-pill px-4 fw-bold text-nowrap">
+            All Specialities
+        </button>
+        {% for dept in departments %}
+        <button 
+            @click="selectedDept = '{{ dept.name }}'" 
+            :class="selectedDept === '{{ dept.name }}' ? 'btn-primary' : 'btn-outline-primary'" 
+            class="btn rounded-pill px-4 fw-bold text-nowrap">
+            {{ dept.name }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- My Appointments Section -->
+    <div v-if="myAppointments.length > 0" class="mb-5 animate-fade-in">
+        <h4 class="fw-black mb-4"><i class="bi bi-calendar-event me-2 text-primary"></i>My Appointments</h4>
+        <div class="card glass border-0 shadow-sm rounded-5 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0">
+                    <thead class="bg-light bg-opacity-50">
+                        <tr>
+                            <th class="ps-4 py-3 smallest fw-black text-muted text-uppercase ls-1">Doctor</th>
+                            <th class="py-3 smallest fw-black text-muted text-uppercase ls-1">Date & Time</th>
+                            <th class="py-3 smallest fw-black text-muted text-uppercase ls-1">Status</th>
+                            <th class="py-3 smallest fw-black text-muted text-uppercase ls-1">Type</th>
+                            <th class="pe-4 text-end py-3 smallest fw-black text-muted text-uppercase ls-1">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="appt in myAppointments" :key="appt.id" class="border-bottom border-light">
+                            <td class="ps-4 py-4">
+                                <div class="d-flex align-items-center">
+                                    <img :src="appt.doctor_pic" class="rounded-circle me-3 border shadow-sm" width="45" height="45" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold small">Dr. [[ appt.doctor_name ]]</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 small fw-medium text-muted">[[ appt.datetime ]]</td>
+                            <td class="py-4">
+                                <span class="badge rounded-pill px-3 py-2" :class="{
+                                    'bg-success-soft text-success': appt.status === 'Completed',
+                                    'bg-primary-soft text-primary': appt.status === 'Booked' || appt.status === 'Ongoing',
+                                    'bg-danger-soft text-danger': appt.status === 'Cancelled' || appt.status === 'Rejected',
+                                    'bg-warning-soft text-warning': appt.status === 'Expired',
+                                    'bg-info-soft text-info': appt.status === 'Requested'
+                                }">[[ appt.status ]]</span>
+                            </td>
+                            <td class="py-4">
+                                <span v-if="appt.is_urgent" class="badge bg-danger-soft text-danger smallest fw-bold rounded-pill border border-danger-subtle px-3 py-2">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>URGENT
+                                </span>
+                                <span v-else class="badge bg-light text-muted smallest fw-bold rounded-pill px-3 py-2">REGULAR</span>
+                            </td>
+                            <td class="pe-4 text-end py-4">
+                                <button v-if="['Requested', 'Booked'].includes(appt.status)" @click="cancelAppointment(appt.id)" class="btn btn-sm btn-soft-danger rounded-pill px-4 fw-bold shadow-sm">Cancel</button>
+                                <span v-else class="smallest fw-bold text-muted text-uppercase ls-1 opacity-50">Locked</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Grid -->
+    <div class="row g-4">
+        <div class="col-md-4" v-for="doctor in filteredDoctors" :key="doctor.id">
+            <div class="card doctor-card border-0 shadow-sm rounded-5 overflow-hidden h-100">
+                <div class="p-4 text-center">
+                    <img :src="doctor.pic" class="rounded-circle mb-3 border border-4 border-white shadow" width="100" height="100" style="object-fit: cover;">
+                    <h5 class="fw-bold mb-1">[[ doctor.name ]]</h5>
+                    <p class="smallest fw-black text-primary text-uppercase ls-1 mb-3">[[ doctor.dept ]]</p>
+                    <p class="small text-muted mb-4 text-truncate-2">[[ doctor.bio ]]</p>
+                    <button @click="openBookingModal(doctor)" class="btn btn-primary w-100 rounded-pill py-2 fw-bold shadow-sm">BOOK APPOINTMENT</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="filteredDoctors.length === 0" class="col-12 text-center py-5">
+            <i class="bi bi-person-x fs-1 text-muted mb-3 d-block"></i>
+            <h4 class="text-muted">No doctors found matching your criteria.</h4>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div v-if="showBookingModal" class="modal-backdrop d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.6); z-index: 2000;">
+        <div class="card border-0 shadow-lg rounded-5 p-0 overflow-hidden" style="width: 500px; max-width: 95%;">
+            <div class="bg-primary p-4 text-white d-flex justify-content-between">
+                <div>
+                    <h5 class="fw-bold m-0">Book Appointment</h5>
+                    <p class="smallest mb-0 opacity-75">Dr. [[ selectedDoctor?.name ]]</p>
+                </div>
+                <button @click="showBookingModal = false" class="btn-close btn-close-white shadow-none"></button>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block">Select Date & Time</label>
+                    <input id="bookingDatetime" type="text" class="form-control rounded-4 bg-light border-0 py-3" placeholder="Select your preferred slot">
+                </div>
+
+                <div class="form-check form-switch mb-4 p-0 d-flex align-items-center gap-3">
+                    <input class="form-check-input ms-0" type="checkbox" v-model="isUrgent" id="urgentSwitch">
+                    <label class="form-check-label fw-bold text-danger" for="urgentSwitch">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> THIS IS AN URGENT REQUEST
+                    </label>
+                </div>
+
+                <div v-if="isUrgent" class="mb-4 animate-fade-in">
+                    <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block">Reason for Urgency</label>
+                    <textarea v-model="urgentNote" class="form-control rounded-4 bg-light border-0" rows="3" placeholder="Describe clinical urgency..."></textarea>
+                </div>
+
+                <button @click="submitBooking" :disabled="loading" class="btn btn-primary w-100 rounded-pill py-3 fw-black shadow">
+                    <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                    [[ loading ? 'BOOKING...' : 'CONFIRM REQUEST' ]]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.doctorData = [
+        {% for doctor in doctors %}
+        {
+            id: {{ doctor.id }},
+            name: "{{ doctor.user.full_name }}",
+            dept: "{{ doctor.department.name }}",
+            pic: "{{ doctor.profile_pic_url }}",
+            bio: "{{ doctor.bio or '' }}".replace(/\n/g, ' ')
+        },
+        {% endfor %}
+    ];
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="{{ url_for('static', filename='js/patient_dashboard.js') }}"></script>
+{% endblock %}

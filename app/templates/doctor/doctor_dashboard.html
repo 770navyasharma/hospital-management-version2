@@ -1,0 +1,304 @@
+{% extends "doctor/doctor_base.html" %}
+
+{% block doctor_content %}
+    <!-- Aesthetic Background Blobs -->
+    <div class="bg-blur-blob" id="blob-1"></div>
+    <div class="bg-blur-blob" id="blob-2"></div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4" v-for="card in statCards">
+            <div class="card metric-card shadow-sm p-4 h-100">
+                <div class="d-flex align-items-center">
+                    <div class="metric-icon-circle shadow-sm" :style="{ background: card.bgColor, color: card.iconColor }">
+                        <i :class="'bi ' + card.icon"></i>
+                    </div>
+                    <div class="ms-4">
+                        <h2 class="fw-black mb-0">[[ card.value ]]</h2>
+                        <p class="text-muted smallest fw-bold text-uppercase mb-0 ls-1">[[ card.title ]]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4">
+            <div class="card shadow-sm rounded-5 p-4 h-100 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold m-0"><i class="bi bi-activity me-2 text-primary"></i>Patient Workflow</h6>
+                    <span class="smallest fw-bold text-muted text-uppercase">LAST 24H</span>
+                </div>
+                <div class="d-flex flex-column align-items-center">
+                    <div class="chart-container w-100" style="height: 190px;">
+                        <canvas id="summaryChart"></canvas>
+                    </div>
+                    <div class="mt-4 w-100 px-2 custom-scroll" style="max-height: 180px; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded-4 hover-lift" style="background: #fbfbfc;">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" style="width: 10px; height: 10px; background: #1cc88a;"></div>
+                                <span class="smallest fw-bold text-muted text-uppercase">Treated</span>
+                            </div>
+                            <span class="small fw-black">[[ treatedCount ]]</span> 
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded-4 hover-lift" style="background: #fbfbfc;">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" style="width: 10px; height: 10px; background: #e74a3b;"></div>
+                                <span class="smallest fw-bold text-muted text-uppercase">Cancelled</span>
+                            </div>
+                            <span class="small fw-black">[[ cancelledCount ]]</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded-4 hover-lift" style="background: #fbfbfc;">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" style="width: 10px; height: 10px; background: #4e73df;"></div>
+                                <span class="smallest fw-bold text-muted text-uppercase">In Queue</span>
+                            </div>
+                            <span class="small fw-black">[[ queueCount ]]</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm rounded-5 h-100 bg-white overflow-hidden">
+                <div class="p-4 d-flex justify-content-between align-items-center bg-light-subtle border-bottom border-light">
+                    <h6 class="fw-bold m-0"><i class="bi bi-calendar-check me-2 text-primary"></i>Today's Schedule</h6>
+                    <a href="{{ url_for('doctor.appointments_page') }}" class="smallest fw-bold text-primary text-decoration-none ls-1">VIEW ALL <i class="bi bi-arrow-right small ms-1"></i></a>
+                </div>
+                <div class="px-4 py-4 custom-scroll" style="max-height: 400px; overflow-y: auto;">
+                    <div v-for="appt in appointments" :key="appt.id" @click="viewPatientDetail(appt)" class="d-flex align-items-center mb-3 p-3 rounded-4 appointment-item cursor-pointer hover-lift transition-all" 
+                        :class="[
+                            appt.status === 'Ongoing' ? 'bg-primary-soft border-primary-subtle shadow-sm' : 'bg-light border border-transparent hover-border-primary',
+                            appt.is_urgent ? 'border border-danger border-2 shadow-sm' : ''
+                        ]">
+                        <img :src="appt.patient_pic" class="rounded-circle me-3 border border-2 border-white shadow-sm" width="45" height="45" style="object-fit: cover;">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="fw-bold small d-flex align-items-center">
+                                    [[ appt.patient_name ]]
+                                    <span v-if="appt.is_urgent" class="ms-2 badge bg-danger smallest animate-pulse">URGENT</span>
+                                </div>
+                                <div v-if="appt.status !== 'Ongoing'" class="text-end ms-2">
+                                    <span class="fw-black text-primary smallest ls-1">[[ appt.start_time ]] - [[ appt.end_time ]]</span>
+                                </div>
+                                <div v-else class="badge bg-primary animate-pulse shadow-sm smallest">ONGOING</div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="smallest text-muted italic line-clamp-1 flex-grow-1">"[[ appt.diagnosis || 'Routine Followup' ]]"</div>
+                                <button @click.stop="sharedMethods.openRejectModal(appt.id)" class="btn btn-link p-0 text-danger opacity-50 hover-opacity-100 ms-3" title="Reject Appointment">
+                                    <i class="bi bi-x-circle smallest"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm rounded-5 p-4 h-100 text-white gradient-card-primary">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold m-0"><i class="bi bi-person-badge me-2"></i>Patient Spotlight</h6>
+                    <span class="smallest fw-bold opacity-75 text-uppercase">UP NEXT</span>
+                </div>
+                <div v-if="nextPatient">
+                    <div class="text-center mb-4">
+                        <img :src="nextPatient.pic" class="rounded-circle mb-3 border border-4 border-white shadow-lg" width="100" height="100" style="object-fit: cover;">
+                        <h4 class="fw-black mb-1 ls-1">[[ nextPatient.name ]]</h4>
+                        <div class="smallest fw-bold opacity-75 text-uppercase mb-1">Case ID: #[[ nextPatient.appt_id + 1000 ]]</div>
+                        <div class="badge bg-white bg-opacity-25 rounded-pill px-3 py-1 smallest fw-bold">
+                            <i class="bi bi-clock me-1"></i> [[ nextPatient.start_time ]] - [[ nextPatient.end_time ]]
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-5 p-4 text-dark mb-4 shadow-sm">
+                        <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block">CHIEF COMPLAINT</label>
+                        <p class="small mb-0 text-truncate-2 italic fw-medium">"[[ nextPatient.history ]]"</p>
+                    </div>
+                    <button @click="startVisit(nextPatient.appt_id)" class="btn btn-light w-100 rounded-pill py-3 fw-black text-primary shadow hover-lift">
+                        <i class="bi bi-play-fill me-1"></i> INITIATE VISIT
+                    </button>
+                </div>
+                <div v-else class="text-center my-auto py-5">
+                    <div class="bg-white bg-opacity-10 rounded-circle d-inline-flex p-4 mb-3">
+                        <i class="bi bi-cup-hot fs-1"></i>
+                    </div>
+                    <p class="small fw-bold opacity-75">All appointments completed.<br>Time for a quick break!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm rounded-5 p-4 bg-white fixed-height-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold m-0"><i class="bi bi-inbox me-2 text-primary"></i>Incoming Requests</h6>
+                    <span class="badge bg-primary-soft text-primary smallest rounded-pill" v-if="requests.length > 0">[[ requests.length ]] NEW</span>
+                </div>
+                <div class="pe-2 custom-scroll flex-grow-1" style="max-height: 380px; overflow-y: auto;">
+                    <div v-for="req in requests" :key="req.id" class="position-relative mb-3 overflow-hidden rounded-4">
+                        <!-- Swipe Action Overlays (Background) -->
+                        <div v-if="globalState.swipingId === req.id" 
+                             class="position-absolute w-100 h-100 d-flex align-items-center justify-content-between px-4 transition-all"
+                             :class="globalState.swipeOffset > 0 ? 'bg-success' : 'bg-danger'"
+                             style="top:0; left:0; z-index: 1;">
+                            <div class="text-white fw-black smallest ls-1 d-flex align-items-center gap-2" :style="{ opacity: globalState.swipeOffset > 20 ? 1 : 0.3 }">
+                                <i class="bi bi-check-circle-fill fs-5"></i> ACCEPT
+                            </div>
+                            <div class="text-white fw-black smallest ls-1 d-flex align-items-center gap-2" :style="{ opacity: globalState.swipeOffset < -20 ? 1 : 0.3 }">
+                                DISMISS <i class="bi bi-x-circle-fill fs-5"></i>
+                            </div>
+                        </div>
+
+                        <!-- Main Request Card -->
+                        <div @click="viewRequestDetail(req)" 
+                             @touchstart="sharedMethods.handleTouchStart($event, req.id)"
+                             @touchmove="sharedMethods.handleTouchMove($event, req.id)"
+                             @touchend="sharedMethods.handleTouchEnd(req.id)"
+                             class="p-3 rounded-4 border shadow-sm cursor-pointer hover-lift animate-fade-in position-relative bg-white" 
+                             :class="[
+                                req.is_urgent ? 'border-danger bg-danger-soft' : 'bg-light',
+                                globalState.swipingId === req.id ? 'shadow-lg' : ''
+                             ]"
+                             :style="{ 
+                                transform: globalState.swipingId === req.id ? 'translateX(' + globalState.swipeOffset + 'px)' : 'none', 
+                                transition: globalState.swipingId === req.id ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                zIndex: 2
+                             }">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center">
+                                    <img :src="req.pic" class="rounded-circle me-2 border border-2 border-white shadow-sm" width="38" height="38" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold small">[[ req.name ]]</div>
+                                        <div class="smallest text-primary fw-bold text-uppercase ls-1" style="font-size: 0.65rem;">[[ req.proposed_time ]]</div>
+                                    </div>
+                                </div>
+                                <span v-if="req.is_urgent" class="badge bg-danger smallest animate-pulse" style="font-size: 0.6rem;">URGENT</span>
+                            </div>
+                            <p class="smallest text-muted mb-3 italic px-1 line-clamp-2">"[[ req.note ]]"</p>
+                            <div class="d-flex gap-2">
+                                <button @click.stop="sharedMethods.processReq(req.id, 'Booked')" class="btn btn-sm btn-primary rounded-pill flex-grow-1 fw-bold shadow-sm">Accept</button>
+                                <button @click.stop="sharedMethods.openRejectModal(req.id)" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="requests.length === 0" class="text-center py-5">
+                        <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                            <i class="bi bi-check2-all fs-2 text-success"></i>
+                        </div>
+                        <p class="small text-muted fw-bold">No pending requests.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm rounded-5 p-4 bg-white fixed-height-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold m-0"><i class="bi bi-clock-history me-2 text-primary"></i>Availability Scheduler</h6>
+                    <span class="smallest fw-bold text-muted text-uppercase">BETA</span>
+                </div>
+                <div class="row h-100">
+                    <div class="col-md-6 border-end">
+                        <div id="inlineCalendar"></div>
+                    </div>
+                    <div class="col-md-6 ps-md-4 d-flex flex-column h-100">
+                        <div v-if="activeSchedDates.length > 0" class="flex-grow-1 overflow-hidden d-flex flex-column">
+                            <label class="smallest fw-bold text-muted text-uppercase mb-3 ls-1">CONFIGURING [[ activeSchedDates.length ]] DATE(S):</label>
+                            
+                            <div class="custom-scroll pe-2 flex-grow-1" style="overflow-y: auto;">
+                                <div v-for="date in activeSchedDates" :key="date" class="mb-4 animate-fade-in">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 bg-light p-2 rounded-4">
+                                        <span class="smallest fw-bold text-primary text-uppercase ls-1">[[ formatDate(date) ]]</span>
+                                        <button @click="addSlot(date)" class="btn btn-sm btn-soft-primary rounded-circle" style="width: 24px; height: 24px; padding: 0;">
+                                            <i class="bi bi-plus small"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div v-for="(slot, index) in activeConfigs[date]" :key="index" class="d-flex gap-2 mb-2 p-2 bg-white border rounded-4 align-items-center shadow-sm">
+                                        <input type="time" v-model="slot.start" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary p-0" style="font-size: 0.8rem;">
+                                        <span class="text-muted smallest">to</span>
+                                        <input type="time" v-model="slot.end" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary p-0" style="font-size: 0.8rem;">
+                                        <button @click="removeSlot(date, index)" class="btn btn-sm text-danger p-0 ms-auto"><i class="bi bi-dash-circle-fill"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-3">
+                                <button @click="saveAvailability" class="btn btn-primary w-100 rounded-pill py-3 fw-black shadow hover-lift mt-2">
+                                    SAVE ALL CONFIGURATIONS
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="text-center my-auto py-5">
+                            <i class="bi bi-calendar-range fs-1 text-primary opacity-25 mb-3 d-block"></i>
+                            <p class="small text-muted fw-bold">Select one or more dates to<br>update your schedule individually.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_body %}
+    <!-- Patient Detail Modal -->
+    <div v-if="showPatientModal" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 5000;">
+        <div class="card border-0 shadow-lg rounded-5 overflow-hidden scale-in" style="width: 850px; max-width: 95%; background: #fff;">
+            <div class="row g-0">
+                <!-- Left: Profile Info -->
+                <div class="col-md-4 p-5 text-center border-end bg-light-soft">
+                    <img :src="selectedPatient.pic" class="rounded-circle mb-4 border border-4 border-white shadow-lg" width="140" height="140" style="object-fit: cover;">
+                    <h3 class="fw-black mb-1">[[ selectedPatient.name ]]</h3>
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <span class="badge bg-primary-soft text-primary rounded-pill px-3">[[ selectedPatient.age ]] Years</span>
+                        <span class="badge bg-info-soft text-info rounded-pill px-3">[[ selectedPatient.gender ]]</span>
+                    </div>
+                    <div class="p-3 bg-white rounded-4 shadow-sm text-start mb-4">
+                        <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block">CHIEF COMPLAINT</label>
+                        <p class="small mb-0 italic">"[[ selectedPatient.note ]]"</p>
+                    </div>
+                    <button @click="showPatientModal = false" class="btn btn-outline-secondary w-100 rounded-pill py-2 fw-bold">Close Portal</button>
+                </div>
+                
+                <!-- Right: Visit History -->
+                <div class="col-md-8 p-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0"><i class="bi bi-clock-history me-2 text-primary"></i>Visit History</h5>
+                        <span class="smallest fw-bold text-muted text-uppercase">[[ patientHistory.length ]] TOTAL VISITS</span>
+                    </div>
+                    
+                    <div class="custom-scroll pe-2" style="max-height: 400px; overflow-y: auto;">
+                        <div v-if="patientHistory.length > 0" class="row row-cols-3 g-3">
+                            <div v-for="visit in patientHistory" :key="visit.id" class="col">
+                                <div @click="sharedMethods.viewPastAppt(visit.id)" class="p-3 bg-white rounded-4 border h-100 transition-all hover-lift history-card border-start border-3 border-transparent hover-border-primary cursor-pointer shadow-sm">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="smallest fw-bold text-primary text-uppercase">[[ visit.date ]]</div>
+                                        <div class="smallest text-muted fw-bold opacity-50">Visit</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="smallest fw-bold text-muted text-uppercase d-block ls-1 mb-0 opacity-50 font-monospaced" style="font-size: 0.65rem;">Diagnosis</label>
+                                        <div class="small fw-black text-dark text-truncate">[[ visit.diagnosis || 'Pending' ]]</div>
+                                    </div>
+                                    <div>
+                                        <label class="smallest fw-bold text-muted text-uppercase d-block ls-1 mb-0 opacity-50 font-monospaced" style="font-size: 0.65rem;">Main Concern</label>
+                                        <p class="smallest text-muted mb-0 line-clamp-2 italic">"[[ visit.notes || visit.primary_concern || 'No notes.' ]]"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-center py-5 opacity-50">
+                            <i class="bi bi-folder-x fs-1 mb-2 d-block"></i>
+                            <p class="small fw-bold mb-0">No past medical records found.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block doctor_scripts %}
+<script src="{{ url_for('static', filename='js/doctor_dashboard.js') }}?v=3.1"></script>
+{% endblock %}

@@ -1,0 +1,128 @@
+/* Patient Dashboard Styles */
+.fw-black {
+    font-weight: 900;
+}
+
+.ls-1 {
+    letter-spacing: 1px;
+}
+
+.smallest {
+    font-size: 0.72rem;
+}
+
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.doctor-card {
+    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+    border: 1px solid transparent !important;
+}
+
+.doctor-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    border-color: #4e73df !important;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+[v-cloak] {
+    display: none;
+}
+
+.custom-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.rounded-5 {
+    border-radius: 2rem !important;
+}
+
+/* Flatpickr Customization */
+.flatpickr-calendar {
+    border-radius: 20px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #f0f2f5 !important;
+}
+
+.flatpickr-day.selected {
+    background: #4e73df !important;
+    border-color: #4e73df !important;
+}
+
+/* Soft Badge Colors */
+.bg-success-soft {
+    background: #e6fffa;
+    color: #2d3748;
+}
+
+.bg-primary-soft {
+    background: #ebf4ff;
+    color: #2d3748;
+}
+
+.bg-danger-soft {
+    background: #fff5f5;
+    color: #2d3748;
+}
+
+.bg-warning-soft {
+    background: #fffaf0;
+    color: #2d3748;
+}
+
+.bg-info-soft {
+    background: #e6fffa;
+    color: #2d3748;
+}
+
+.btn-soft-danger {
+    background: #fff5f5;
+    color: #e53e3e;
+    border: 1px solid #fed7d7;
+}
+
+.btn-soft-danger:hover {
+    background: #feb2b2;
+    color: #fff;
+}

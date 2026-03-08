@@ -1,37 +1,102 @@
 /* app/static/css/admin.css */
 
 /* --- Keyframe Animations (COMMON) --- */
-@keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-@keyframes toast-timer { from { width: 100%; } to { width: 0%; } }
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-timer {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0%;
+    }
+}
+
 /* NEW "COOL" ANIMATION */
-@keyframes slideInDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
 /* --- Upgraded Toast Styling (COMMON) --- */
-.toast-container { z-index: 1090; }
+.toast-container {
+    z-index: 1090;
+}
+
 .toast {
     animation: slideInRight 0.5s ease-out;
     border-radius: 8px !important;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
     color: #fff !important;
     position: relative;
     overflow: hidden;
 }
-.toast-body { font-weight: 500; padding: 1rem; }
-.toast .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+
+.toast-body {
+    font-weight: 500;
+    padding: 1rem;
+}
+
+.toast .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
 .toast::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     height: 5px;
-    background-color: rgba(0,0,0,0.25);
+    background-color: rgba(0, 0, 0, 0.25);
     animation: toast-timer 5s linear forwards;
 }
-.toast.bg-success { background-color: #198754 !important; }
-.toast.bg-danger { background-color: #dc3545 !important; }
-.toast.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
-.toast.bg-warning .btn-close { filter: none; }
+
+.toast.bg-success {
+    background-color: #198754 !important;
+}
+
+.toast.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.toast.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.toast.bg-warning .btn-close {
+    filter: none;
+}
 
 /* --- Main Layout (COMMON) --- */
 .admin-wrapper {
@@ -53,6 +118,7 @@
     overflow-y: auto;
     flex-shrink: 0;
 }
+
 .sidebar-brand {
     display: flex;
     align-items: center;
@@ -62,8 +128,19 @@
     border-bottom: 1px solid #e9ecef;
     text-decoration: none;
 }
-.sidebar-brand-icon { color: #007bff; font-size: 2rem; }
-.sidebar-brand-text { font-size: 1.25rem; font-weight: 700; color: #333; margin-left: 10px; }
+
+.sidebar-brand-icon {
+    color: #007bff;
+    font-size: 2rem;
+}
+
+.sidebar-brand-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin-left: 10px;
+}
+
 .sidebar-heading {
     font-size: 0.8rem;
     font-weight: 600;
@@ -74,7 +151,12 @@
     margin-top: 1rem;
     margin-bottom: 0.75rem;
 }
-.sidebar-nav-list { list-style: none; padding-left: 0; }
+
+.sidebar-nav-list {
+    list-style: none;
+    padding-left: 0;
+}
+
 .sidebar-nav-item a {
     display: flex;
     align-items: center;
@@ -87,12 +169,18 @@
     transition: all 0.2s ease-in-out;
     margin: 0.25rem 0;
 }
-.sidebar-nav-item a:hover { background-color: #f0f8ff; color: #0056b3; }
+
+.sidebar-nav-item a:hover {
+    background-color: #f0f8ff;
+    color: #0056b3;
+}
+
 .sidebar-nav-item a.active {
     background: linear-gradient(90deg, #007bff, #0056b3);
     color: #ffffff;
     box-shadow: 0 4px 12px rgba(0, 90, 180, 0.25);
 }
+
 .sidebar-nav-item a i {
     margin-right: 12px;
     font-size: 1.2rem;
@@ -106,10 +194,26 @@
     padding-top: 0.75rem;
     border-top: 1px solid #e9ecef;
 }
-.sidebar-nav-item a.logout-link { color: #dc3545; }
-.sidebar-nav-item a.logout-link:hover { background-color: #fce8e9; color: #a51e2a; }
-.sidebar-nav-item a.logout-link.active { background: transparent; color: #dc3545; box-shadow: none; }
-.sidebar-nav-item a.logout-link.active:hover { background-color: #fce8e9; color: #a51e2a; }
+
+.sidebar-nav-item a.logout-link {
+    color: #dc3545;
+}
+
+.sidebar-nav-item a.logout-link:hover {
+    background-color: #fce8e9;
+    color: #a51e2a;
+}
+
+.sidebar-nav-item a.logout-link.active {
+    background: transparent;
+    color: #dc3545;
+    box-shadow: none;
+}
+
+.sidebar-nav-item a.logout-link.active:hover {
+    background-color: #fce8e9;
+    color: #a51e2a;
+}
 
 
 /* --- Main Content (COMMON) --- */
@@ -118,10 +222,12 @@
     padding: 2.5rem;
     overflow-y: auto;
 }
+
 .admin-header .btn {
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
     transition: all 0.3s ease;
 }
+
 .admin-header .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
@@ -136,20 +242,38 @@
     opacity: 0;
     animation: slideInUp 0.5s ease-out forwards;
 }
+
 .manage-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
-.manage-card .card-title { font-weight: 600; }
-.card.border-top-blue { border-top: 4px solid #007bff !important; }
-.card.border-top-green { border-top: 4px solid #28a745 !important; }
-.card.border-top-yellow { border-top: 4px solid #ffc107 !important; } /* Added from dashboard */
+
+.manage-card .card-title {
+    font-weight: 600;
+}
+
+.card.border-top-blue {
+    border-top: 4px solid #007bff !important;
+}
+
+.card.border-top-green {
+    border-top: 4px solid #28a745 !important;
+}
+
+.card.border-top-yellow {
+    border-top: 4px solid #ffc107 !important;
+}
+
+/* Added from dashboard */
 
 .input-group-text {
     background-color: #e9ecef;
     border: 1px solid #ced4da;
 }
-.table-responsive { overflow-x: hidden; }
+
+.table-responsive {
+    overflow-x: hidden;
+}
 
 /* --- Tooltips (COMMON, activated by admin.js) --- */
 .tooltip-inner {
@@ -160,22 +284,31 @@
     font-size: 0.8rem;
     font-weight: 500;
 }
-.tooltip.bs-tooltip-top .tooltip-arrow::before { border-top-color: #222; }
+
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #222;
+}
 
 .modal.fade .modal-dialog {
     transition: transform 0.3s ease-out;
 }
+
 .modal.show .modal-dialog {
-    animation: slideInDown 0.3s ease-out; /* This is your "pop from top" animation */
+    animation: slideInDown 0.3s ease-out;
+    /* This is your "pop from top" animation */
 }
+
 /* Style for our specific confirmation modal */
 #confirmationModal .modal-dialog {
-    max-width: 450px; /* A nice size for a confirmation */
+    max-width: 450px;
+    /* A nice size for a confirmation */
 }
+
 #confirmationModal .modal-body {
     padding: 1.5rem 2rem;
     font-size: 1.05rem;
 }
+
 #confirmationModal .modal-body strong {
     font-weight: 600;
 }
@@ -185,26 +318,35 @@
     width: 150px;
     height: 150px;
     object-fit: cover;
-    border-radius: 50%; /* Make it circular */
-    border: 4px solid #fff; /* White border */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Softer shadow */
+    border-radius: 50%;
+    /* Make it circular */
+    border: 4px solid #fff;
+    /* White border */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* Softer shadow */
 }
 
 /* --- NEW: Confirmation Modal Styling (COMMON) --- */
 .modal.fade .modal-dialog {
     transition: transform 0.3s ease-out;
 }
+
 .modal.show .modal-dialog {
-    animation: slideInDown 0.3s ease-out; /* This is your "pop from top" animation */
+    animation: slideInDown 0.3s ease-out;
+    /* This is your "pop from top" animation */
 }
+
 /* Style for our specific confirmation modal */
 #confirmationModal .modal-dialog {
-    max-width: 450px; /* A nice size for a confirmation */
+    max-width: 450px;
+    /* A nice size for a confirmation */
 }
+
 #confirmationModal .modal-body {
     padding: 1.5rem 2rem;
     font-size: 1.05rem;
 }
+
 #confirmationModal .modal-body strong {
     font-weight: 600;
 }

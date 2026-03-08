@@ -4,6 +4,7 @@
 .search-bar .form-control {
     background-color: #f4f7f6;
 }
+
 .search-bar .btn {
     width: 100%;
 }
@@ -15,6 +16,7 @@
     border-spacing: 0 10px;
     table-layout: fixed;
 }
+
 .table-custom thead th {
     font-size: 0.9rem;
     font-weight: 600;
@@ -24,6 +26,7 @@
     padding: 0.75rem 1rem;
     border-bottom: 2px solid #e9ecef;
 }
+
 .table-custom tbody tr {
     background-color: #ffffff;
     border-radius: 8px;
@@ -31,26 +34,31 @@
     transition: all 0.2s ease-in-out;
     opacity: 0.9;
 }
+
 .table-custom tbody tr:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.07);
     opacity: 1;
 }
+
 .table-custom tbody td {
-    padding: 1rem;
+    padding: 1rem 0.75rem;
     vertical-align: middle;
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+
 .table-custom tbody td:first-child {
     border-top-left-radius: 8px;
     border-bottom-left-radius: 8px;
 }
+
 .table-custom tbody td:last-child {
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
 }
+
 .table-profile-pic {
     width: 40px;
     height: 40px;
@@ -58,10 +66,12 @@
     object-fit: cover;
     margin-right: 10px;
 }
+
 .table-custom tbody td.table-actions {
     white-space: nowrap;
     width: 150px;
 }
+
 .action-btn-icon {
     width: 38px;
     height: 38px;
@@ -73,6 +83,7 @@
     margin: 0 3px;
     transition: all 0.2s ease;
 }
+
 .action-btn-icon i {
     margin: 0;
 }
@@ -82,13 +93,16 @@
     background-color: #f8f9fa;
     opacity: 0.3;
 }
+
 .table-custom tbody tr.blacklisted td {
     color: #888;
 }
+
 .table-custom tbody tr.blacklisted:hover {
     transform: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
+
 .table-custom tbody tr.blacklisted .btn-outline-success {
     background-color: #aff7ba;
     font-weight: 600;
@@ -98,21 +112,25 @@
 .modal-content {
     border: 0;
     border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
 }
+
 .modal-header {
     background-color: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
 }
+
 .modal-header .modal-title {
     font-weight: 600;
     color: #333;
 }
+
 .modal-body {
     padding: 2rem;
     background-color: #ffffff;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23007bff' fill-opacity='0.03'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm1ci0 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
+
 .modal-footer {
     background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
@@ -130,23 +148,27 @@
     background-clip: padding-box;
     border: 1px solid #ced4da;
     border-radius: 0.375rem;
-    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
+
 .form-file-input:focus {
     border-color: #86b7fe;
     outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
 }
 
 /* --- Department Card (on Doctor Page) --- */
 .list-group-flush .list-group-item {
     background-color: transparent;
     border-bottom: 1px solid #e9ecef;
-    padding: 0.85rem 0.75rem; /* Added padding */
+    padding: 0.85rem 0.75rem;
+    /* Added padding */
 }
+
 .list-group-flush .list-group-item:last-child {
     border-bottom: 0;
 }
+
 .dept-list-scroll {
     max-height: 300px;
     overflow-y: auto;
@@ -158,17 +180,23 @@
 .dept-display-view {
     display: flex;
     align-items: center;
-    flex-grow: 1; /* Allow it to take up space */
+    flex-grow: 1;
+    /* Allow it to take up space */
 }
+
 .dept-display-view .dept-name {
     font-weight: 500;
 }
+
 .dept-edit-view {
-    flex-grow: 1; /* Make the input group fill the space */
+    flex-grow: 1;
+    /* Make the input group fill the space */
     margin-right: 10px;
 }
+
 .dept-actions .btn {
-    padding: 0.15rem 0.4rem; /* Make icons smaller */
+    padding: 0.15rem 0.4rem;
+    /* Make icons smaller */
     font-size: 0.85rem;
 }
 
@@ -177,9 +205,11 @@
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
 }
+
 .list-group-item:hover .dept-actions {
     opacity: 1;
 }
+
 .list-group-item:hover .dept-display-view {
     /* Optional: slightly fade the name when actions are visible */
     opacity: 0.8;
@@ -188,14 +218,18 @@
 /* === NEW: Background SVG for Doctor Table Card === */
 
 .manage-card.border-top-blue {
-    position: relative; /* Establishes stacking context */
-    overflow: hidden; /* Clips the pseudo-element */
+    position: relative;
+    /* Establishes stacking context */
+    overflow: hidden;
+    /* Clips the pseudo-element */
 }
 
 .manage-card.border-top-blue .card-body {
-    position: relative; /* Make sure card-body content is on top */
+    position: relative;
+    /* Make sure card-body content is on top */
     z-index: 1;
-    background-color: transparent; /* Make card-body see-through */
+    background-color: transparent;
+    /* Make card-body see-through */
 }
 
 /* This is the new background layer */
@@ -205,17 +239,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 350px; /* Adjust size as needed */
+    width: 350px;
+    /* Adjust size as needed */
     height: 350px;
-    
+
     /* Embedded, transparent, blue caduceus SVG */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23007bff' d='M54.7 3.6c-2.4-2.4-6-3.6-9.7-3.6-3.6 0-7.2 1.3-9.7 3.6-5.1 5.1-5.1 13.3 0 18.4l-1.9 1.9-10.9-10.9c-2.4-2.4-6-3.6-9.7-3.6s-7.2 1.3-9.7 3.6c-5.1 5.1-5.1 13.3 0 18.4l10.9 10.9-2.9 2.9c-.1.1-.1.2-.2.3v.1c-2.4 2.4-3.6 6-3.6 9.7s1.3 7.2 3.6 9.7c2.4 2.4 6 3.6 9.7 3.6s7.2-1.3 9.7-3.6c2.3-2.3 3.5-5.8 3.6-9.4.1-.1.1-.2.2-.3l2.8-2.8 10.9 10.9c2.4 2.4 6 3.6 9.7 3.6s7.2-1.3 9.7-3.6c5.1-5.1 5.1-13.3 0-18.4l-10.9-10.9 1.9-1.9c5.1-5.1 5.1-13.3 0-18.4zm-2.1 16.3c-4 4-10.6 4-14.6 0-4-4-4-10.6 0-14.6 2-2 4.7-3.1 7.3-3.1 2.6 0 5.3 1 7.3 3.1 4 4 4 10.6 0 14.6zM11.4 19.9c-4 4-4 10.6 0 14.6 2 2 4.7 3.1 7.3 3.1 2.6 0 5.3-1 7.3-3.1 4-4 4-10.6 0-14.6-4-4-10.6-4-14.6 0zM23 41l-2.9 2.9c-.1.1-.1.2-.2.3-2.2 3.8-1.9 8.9.8 12.6 1.4 1.4 3.2 2.1 5.1 2.1s3.7-.7 5.1-2.1c2.7-2.7 3-7.2.8-10.7v-.1l-.2-.3-2.9-2.9-5.7 5.7zM32 37.7l-5.7-5.7 10.9-10.9c4 4 4 10.6 0 14.6-2 2-4.7 3.1-7.3 3.1-1.1 0-2.3-.2-3.4-.6l5.5-5.5zm10.9-10.9l-10.9 10.9-5.5-5.5c1.2-1.1 2.3-2.3 3.4-.6 2.6 0 5.3 1 7.3 3.1 4 4 4 10.6 0 14.6l-5.7-5.7 5.7-5.7 10.9 10.9c4-4 4-10.6 0-14.6-4-4-10.6-4-14.6 0z'/%3E%3C/svg%3E");
-    
+
     background-repeat: no-repeat;
     background-position: center center;
     background-size: contain;
-    opacity: 0.1; /* This controls the transparency. 0.05 is very faint. */
-    z-index: 0; /* Sits behind the card-body content */
+    opacity: 0.1;
+    /* This controls the transparency. 0.05 is very faint. */
+    z-index: 0;
+    /* Sits behind the card-body content */
 }
 
 
@@ -254,11 +291,20 @@
     font-size: 0.7rem;
 }
 
-.schedule-tag i:hover { color: #dc3545; }
+.schedule-tag i:hover {
+    color: #dc3545;
+}
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 
@@ -271,19 +317,252 @@
     border-radius: 6px;
     font-weight: 500;
 }
+
 .pagination .page-item.active .page-link {
     background-color: #007bff;
     color: white;
 }
+
 #downloadDoctorCSV {
     border-radius: 8px;
     font-weight: 500;
     transition: all 0.2s;
 }
-#downloadDoctorCSV:hover { transform: scale(1.05); }
 
-/* --- Scheduler --- */
-.scheduler-container { background-color: #fdfdfe !important; border: 1px solid #dee2e6 !important; }
-.slot-entry { background: #fff; border: 1px solid #ced4da; border-radius: 6px; padding: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-.schedule-tag { background: #e7f1ff; color: #0d6efd; border: 1px solid #0d6efd; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
-.schedule-tag i { cursor: pointer; }
+#downloadDoctorCSV:hover {
+    transform: scale(1.05);
+}
+
+/* --- Collapsible Rows --- */
+.doctor-main-row {
+    cursor: pointer;
+    border-left: 4px solid transparent;
+}
+
+.doctor-main-row:hover {
+    background-color: rgba(0, 123, 255, 0.02) !important;
+}
+
+.doctor-main-row[aria-expanded="true"] {
+    background-color: #fbfdff !important;
+    border-left-color: #007bff;
+}
+
+/* Snappy Chevron Rotation based on aria-expanded (instant trigger) */
+.doctor-main-row[aria-expanded="true"] .toggle-icon {
+    transform: rotate(90deg);
+    color: #007bff !important;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.18s ease-out, color 0.18s ease;
+    color: #adb5bd;
+}
+
+/* Speed up Bootstrap's collapse animation */
+.collapsing {
+    transition: height 0.18s ease-out !important;
+}
+
+.doctor-details-row {
+    border: none;
+}
+
+.doctor-details-row td {
+    padding: 0 !important;
+    border: none !important;
+}
+
+.bg-light-blue {
+    background-color: #f0f7ff;
+}
+
+.shadow-inner {
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.details-content {
+    border: 1px solid #e1e9f1;
+    border-top: none;
+    margin-bottom: 20px !important;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.smallest {
+    font-size: 0.75rem;
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.about-me-text {
+    line-height: 1.6;
+    font-style: italic;
+    border-left: 3px solid #dee2e6;
+    padding-left: 15px;
+}
+
+/* Fix for table actions propagation */
+.doctor-main-row .table-actions button,
+.doctor-main-row .table-actions form {
+    position: relative;
+    z-index: 2;
+}
+
+/* --- Calendar Viewer --- */
+.calendar-viewer-container [class^="admin-view-calendar-inline-"] {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px dashed #dee2e6;
+    margin-bottom: 0 !important;
+}
+
+.calendar-viewer-container .view-slots-wrapper {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom Scrollbar for Slots */
+.calendar-viewer-container .view-slots-wrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+.calendar-viewer-container .view-slots-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.calendar-viewer-container .view-slots-wrapper::-webkit-scrollbar-thumb {
+    background: #e1e9f1;
+    border-radius: 10px;
+}
+
+.calendar-viewer-container .view-slots-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e0;
+}
+
+.date-group-header {
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(0, 123, 255, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background-color: #f0f7ff !important;
+}
+
+.flatpickr-calendar.inline {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+
+
+.border-left-blue {
+    border-left: 4px solid #007bff;
+    transition: all 0.2s ease;
+}
+
+.border-left-blue:hover {
+    transform: translateX(5px);
+    background-color: #f8fbff !important;
+}
+
+/* --- Confirmation Modal Polish --- */
+#confirmationModal .modal-content {
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+#confirmationModal .modal-header {
+    border: none;
+    padding: 2rem 2rem 0.5rem;
+    justify-content: center;
+}
+
+#confirmationModal .modal-title {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.1rem;
+}
+
+#confirmationModal .modal-body {
+    padding: 1rem 3rem 2rem;
+    text-align: center;
+    color: #4b5563;
+}
+
+#confirmationModal .modal-footer {
+    border: none;
+    padding: 0 2rem 2.5rem;
+    justify-content: center;
+    gap: 15px;
+}
+
+#confirmationModal .btn {
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 700;
+}
+
+/* --- Toast Perfection --- */
+.toast-container {
+    padding: 2rem;
+}
+
+.toast {
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+    background: white !important;
+    overflow: hidden;
+}
+
+.toast-header {
+    background: transparent !important;
+    border: none !important;
+    padding: 1rem 1.25rem 0.5rem !important;
+}
+
+.toast-body {
+    padding: 0.5rem 1.25rem 1.25rem !important;
+    font-weight: 500;
+}
+
+/* Scheduler refinement */
+.scheduler-container {
+    background-color: #fdfdfe !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.slot-entry {
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.schedule-tag {
+    background: #e7f1ff;
+    color: #0d6efd;
+    border: 1px solid #0d6efd;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}

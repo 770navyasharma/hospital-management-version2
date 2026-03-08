@@ -35,29 +35,34 @@
                         <table class="table-custom" id="doctorTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 35%;">Name</th>
-                                    <th style="width: 20%;">Department</th>
-                                    <th style="width: 15%;">Status</th>
-                                    <th style="width: 30%;">Actions</th>
+                                    <th style="width: 5%;"></th>
+                                    <th style="width: 30%;">Name</th>
+                                    <th style="width: 15%;">Department</th>
+                                    <th style="width: 12%;">Fees</th>
+                                    <th style="width: 13%;">Status</th>
+                                    <th style="width: 25%;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for doctor in doctors %}
-                                <tr class="{{ 'blacklisted' if not doctor.user.active else '' }}">
+                                <tr class="doctor-main-row {{ 'blacklisted' if not doctor.user.active else '' }}" data-bs-target="#doctor-details-{{ doctor.id }}" aria-expanded="false">
+                                    <td class="text-center expand-toggle-cell">
+                                        <i class="bi bi-chevron-right toggle-icon"></i>
+                                    </td>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <img src="{{ doctor.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" alt="Profile" class="table-profile-pic">
                                             <div>
                                                 <strong>{{ doctor.user.full_name }}</strong>
-                                                <div class="small text-muted">{{ doctor.user.email }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td>{{ doctor.department.name }}</td>
+                                    <td class="fw-bold text-primary">₹{{ "%.2f"|format(doctor.fees or 0) }}</td>
                                     <td>
                                         {% if doctor.user.active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Blacklisted</span>{% endif %}
                                     </td>
-                                    <td class="table-actions">
+                                    <td class="table-actions" onclick="event.stopPropagation();">
                                         <button class="btn btn-outline-primary action-btn-icon" data-bs-toggle="modal" data-bs-target="#editDoctorModal-{{ doctor.id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
@@ -79,6 +84,40 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+                                    </td>
+                                </tr>
+                                <tr class="collapse doctor-details-row" id="doctor-details-{{ doctor.id }}" data-bs-parent="#doctorTable">
+                                    <td colspan="6">
+                                        <div class="p-4 details-content bg-light-blue rounded-3 mx-2 my-1 shadow-inner">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-7 border-end">
+                                                    <h6 class="text-uppercase smallest fw-bold text-muted mb-3"><i class="bi bi-info-circle me-1"></i> Professional Bio & Tagline</h6>
+                                                    <div class="p-3 bg-white rounded-3 border border-dashed text-primary-emphasis mb-3">
+                                                        <span class="fw-bold">"{{ doctor.tagline or 'No tagline provided' }}"</span>
+                                                    </div>
+                                                    <div class="about-me-text small text-secondary">
+                                                        {{ doctor.about_me or 'No detailed description available.' }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <h6 class="text-uppercase smallest fw-bold text-muted mb-3"><i class="bi bi-mortarboard me-1"></i> Qualifications</h6>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        <div class="badge-item d-flex align-items-center gap-2">
+                                                            <div class="badge-dot bg-primary"></div>
+                                                            <span class="small fw-semibold">{{ doctor.degree or 'Degree not specified' }}</span>
+                                                        </div>
+                                                        <div class="badge-item d-flex align-items-center gap-2">
+                                                            <div class="badge-dot bg-info"></div>
+                                                            <span class="small fw-semibold text-muted">{{ doctor.experience_years or 0 }} Years Experience</span>
+                                                        </div>
+                                                        <div class="badge-item d-flex align-items-center gap-2 mt-2">
+                                                            <i class="bi bi-telephone mb-0 small text-muted"></i>
+                                                            <span class="small">{{ doctor.phone_number or 'No phone number' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% else %}
@@ -164,46 +203,82 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url_for('main.admin_add_doctor') }}" method="POST" enctype="multipart/form-data">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center border-end">
-                                <img src="{{ url_for('static', filename='images/default-profile.svg') }}" id="add-pic-preview" class="img-thumbnail-preview mb-3" style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-                                <input class="form-control" type="file" id="add-profile-pic-input" name="profile_pic" accept="image/*">
-                            </div>
-                            <div class="col-md-8">
-                                <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" class="form-control" name="full_name" required></div>
-                                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
-                                    <div class="col-md-6"><label class="form-label">Password</label><input type="password" class="form-control" name="password" required></div>
-                                    <div class="col-md-6"><label class="form-label">Phone</label><input type="tel" class="form-control" name="phone_number"></div>
-                                    <div class="col-12"><label class="form-label">Department</label>
-                                        <select class="form-select" name="department_id" required>
-                                            {% for dept in departments %}<option value="{{ dept.id }}">{{ dept.name }}</option>{% endfor %}
-                                        </select>
+                    <div class="modal-body bg-light-soft p-0 overflow-hidden">
+                        <div class="row g-0">
+                            <!-- Left Sidebar: Initial Profile -->
+                            <div class="col-md-4 border-end bg-white p-4 text-center">
+                                <div class="position-relative d-inline-block mb-4">
+                                    <div class="profile-preview-wrapper shadow-sm rounded-circle border border-4 border-white overflow-hidden" style="width: 180px; height: 180px; margin: 0 auto;">
+                                        <img src="{{ url_for('static', filename='images/default-profile.svg') }}" id="add-pic-preview" class="w-100 h-100" style="object-fit: cover;">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold">Availability Scheduler</label>
-                                        <div class="scheduler-container border rounded p-3 bg-light">
-                                            <div class="row g-3">
-                                                <div class="col-md-5 border-end">
-                                                    <input type="text" class="form-control date-selector mb-2" placeholder="Pick a date">
-                                                    <div class="selected-date-display small fw-bold text-primary">No date selected</div>
-                                                    <button type="button" class="btn btn-sm btn-outline-info w-100 copy-btn mt-2" style="display:none;">Copy slots</button>
-                                                </div>
-                                                <div class="col-md-7">
-                                                    <div class="slots-wrapper"></div>
-                                                    <button type="button" class="btn btn-sm btn-primary add-slot-btn mt-2" style="display:none;">Add Range</button>
-                                                </div>
-                                            </div>
-                                            <hr><div class="schedule-preview d-flex flex-wrap gap-2"></div>
-                                        </div>
-                                        <input type="hidden" name="availability" class="real-availability-input">
+                                    <div class="position-absolute bottom-0 end-0">
+                                        <label for="add-profile-pic-input" class="btn btn-sm btn-primary shadow-sm rounded-circle p-2 mb-0 cursor-pointer" title="Upload Photo">
+                                            <i class="bi bi-camera fs-6"></i>
+                                        </label>
+                                    </div>
+                                    <input type="file" class="d-none profile-pic-input" id="add-profile-pic-input" name="profile_pic" accept="image/*" data-preview-id="add-pic-preview">
+                                </div>
+                                <div class="px-3">
+                                    <h5 class="fw-bold text-dark mb-1">New Doctor Entry</h5>
+                                    <p class="text-muted smallest text-uppercase fw-bold ls-1 mb-4">Initial setup</p>
+                                    <div class="alert alert-info py-2 px-3 smallest rounded-4 border-0 shadow-sm">
+                                        <i class="bi bi-shield-lock me-1"></i> A secure password will be set during creation.
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Right Side: Extensive Details -->
+                            <div class="col-md-8 p-4 bg-white custom-scroll" style="max-height: 80vh; overflow-y: auto;">
+                                <h6 class="text-primary fw-bold text-uppercase smallest ls-2 mb-4">Account Credentials</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control bg-light border-0 shadow-sm rounded-4" name="full_name" placeholder="Full Name" required>
+                                            <label class="fw-bold text-muted">Full Name</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="email" class="form-control bg-light border-0 shadow-sm rounded-4" name="email" placeholder="Email" required>
+                                            <label class="fw-bold text-muted">Email Address</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="password" class="form-control bg-light border-0 shadow-sm rounded-4" name="password" placeholder="Password" required>
+                                            <label class="fw-bold text-muted">Set Password</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="tel" class="form-control bg-light border-0 shadow-sm rounded-4" name="phone_number" placeholder="Phone">
+                                            <label class="fw-bold text-muted">Phone Number</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select bg-light border-0 shadow-sm rounded-4" name="department_id" required>
+                                                {% for dept in departments %}<option value="{{ dept.id }}">{{ dept.name }}</option>{% endfor %}
+                                            </select>
+                                            <label class="fw-bold text-muted">Assigned Department</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="number" step="0.01" class="form-control bg-light border-0 shadow-sm rounded-4 fw-bold" name="fees" placeholder="Fees" required>
+                                            <label class="fw-bold text-muted text-primary">Consultation Fees (₹)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Create Doctor</button></div>
+                    <div class="modal-footer bg-white border-0 p-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success rounded-pill px-5 shadow-sm">Initialize Doctor Account</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -218,60 +293,145 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ url_for('main.admin_edit_doctor', doctor_id=doctor.id) }}" method="POST" enctype="multipart/form-data">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-4 text-center border-end">
-                                <img src="{{ doctor.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" id="edit-pic-preview-{{ doctor.id }}" class="img-thumbnail-preview mb-3" style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-                                <input class="form-control" type="file" id="edit_profile_pic_{{ doctor.id }}" name="profile_pic" accept="image/*">
-                            </div>
-                            <div class="col-md-8">
-                                <div class="row g-3">
-                                    <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" class="form-control" name="full_name" value="{{ doctor.user.full_name }}" required></div>
-                                    <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" name="email" value="{{ doctor.user.email }}" required></div>
-                                    <div class="col-md-6"><label class="form-label">Phone</label><input type="tel" class="form-control" name="phone_number" value="{{ doctor.phone_number or '' }}"></div>
-                                    <div class="col-md-6"><label class="form-label">Dept</label>
-                                        <select class="form-select" name="department_id">
-                                            {% for dept in departments %}<option value="{{ dept.id }}" {{ 'selected' if doctor.department_id == dept.id }}>{{ dept.name }}</option>{% endfor %}
-                                        </select>
+                    <div class="modal-body bg-light-soft p-0 overflow-hidden">
+                        <div class="row g-0">
+                            <!-- Left Sidebar: Profile & Status -->
+                            <div class="col-md-4 border-end bg-white p-4 text-center">
+                                <div class="position-relative d-inline-block mb-4">
+                                    <div class="profile-preview-wrapper shadow-sm rounded-circle border border-4 border-white overflow-hidden" style="width: 180px; height: 180px; margin: 0 auto;">
+                                        <img src="{{ doctor.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" id="edit-pic-preview-{{ doctor.id }}" class="w-100 h-100" style="object-fit: cover;">
                                     </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold">Availability Scheduler</label>
-                                        <div class="scheduler-container border rounded p-3 bg-light">
-                                            <div class="row g-3">
-                                                <div class="col-md-5 border-end">
-                                                    <input type="text" class="form-control date-selector mb-2" placeholder="Pick a date">
-                                                    <div class="selected-date-display small fw-bold text-primary">No date selected</div>
-                                                    <button type="button" class="btn btn-sm btn-outline-info w-100 copy-btn mt-2" style="display:none;">Copy slots</button>
-                                                </div>
-                                                <div class="col-md-7">
-                                                    <div class="slots-wrapper"></div>
-                                                    <button type="button" class="btn btn-sm btn-primary add-slot-btn mt-2" style="display:none;">Add Range</button>
-                                                </div>
-                                            </div>
-                                            <hr><div class="schedule-preview d-flex flex-wrap gap-2"></div>
-                                        </div>
-                                        <input type="hidden" name="availability" class="real-availability-input" value='{{ doctor.availability | tojson | safe if doctor.availability else "" }}'>
+                                    <div class="position-absolute bottom-0 end-0 d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-danger shadow-sm rounded-circle p-2 remove-pic-btn" title="Remove Photo" data-preview-id="edit-pic-preview-{{ doctor.id }}" data-hidden-id="remove_pic_{{ doctor.id }}">
+                                            <i class="bi bi-trash3 fs-6"></i>
+                                        </button>
+                                        <label for="edit_profile_pic_{{ doctor.id }}" class="btn btn-sm btn-primary shadow-sm rounded-circle p-2 mb-0 cursor-pointer" title="Upload Photo">
+                                            <i class="bi bi-camera fs-6"></i>
+                                        </label>
+                                    </div>
+                                    <input type="file" class="d-none profile-pic-input" id="edit_profile_pic_{{ doctor.id }}" name="profile_pic" accept="image/*" data-preview-id="edit-pic-preview-{{ doctor.id }}">
+                                    <input type="hidden" name="remove_pic" id="remove_pic_{{ doctor.id }}" value="false">
+                                </div>
+                                
+                                <div class="px-3">
+                                    <h5 class="fw-bold text-dark mb-1">{{ doctor.user.full_name }}</h5>
+                                    <p class="text-muted smallest text-uppercase fw-bold ls-1 mb-4">{{ doctor.department.name }}</p>
+                                    
+                                    <div class="card border-0 bg-light rounded-4 p-3 mb-4 text-start shadow-sm">
+                                        <label class="smallest text-muted fw-bold text-uppercase mb-2">Account Status</label>
+                                        <select class="form-select form-select-sm border-0 bg-white shadow-sm rounded-3" name="status">
+                                            <option value="active" {{ 'selected' if doctor.user.active else '' }}>Active</option>
+                                            <option value="inactive" {{ 'selected' if not doctor.user.active else '' }}>Blacklisted</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Right Side: Extensive Details -->
+                            <div class="col-md-8 p-4 bg-white custom-scroll" style="max-height: 80vh; overflow-y: auto;">
+                                <h6 class="text-primary fw-bold text-uppercase smallest ls-2 mb-4">Core Information</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control bg-light border-0 shadow-sm rounded-4" name="full_name" value="{{ doctor.user.full_name }}" required>
+                                            <label class="fw-bold text-muted">Full Name</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="email" class="form-control bg-light border-0 shadow-sm rounded-4" name="email" value="{{ doctor.user.email }}" required>
+                                            <label class="fw-bold text-muted">Email Address</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="tel" class="form-control bg-light border-0 shadow-sm rounded-4" name="phone_number" value="{{ doctor.phone_number or '' }}">
+                                            <label class="fw-bold text-muted">Phone Number</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select bg-light border-0 shadow-sm rounded-4" name="department_id">
+                                                {% for dept in departments %}<option value="{{ dept.id }}" {{ 'selected' if doctor.department_id == dept.id }}>{{ dept.name }}</option>{% endfor %}
+                                            </select>
+                                            <label class="fw-bold text-muted">Department</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="number" step="0.01" class="form-control bg-light border-0 shadow-sm rounded-4 fw-bold" name="fees" value="{{ doctor.fees or '0.00' }}" required>
+                                            <label class="fw-bold text-muted text-primary">Consultation Fees (₹)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4 opacity-25">
+                                <h6 class="text-primary fw-bold text-uppercase smallest ls-2 mb-4">Professional Bio & Stats</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control bg-light border-0 shadow-sm rounded-4" name="tagline" value="{{ doctor.tagline or '' }}" placeholder="Tagline">
+                                            <label class="fw-bold text-muted">Professional Tagline</label>
+                                        </div>
+                                        <div class="form-floating">
+                                            <textarea class="form-control bg-light border-0 shadow-sm rounded-4 pt-4" name="about_me" style="height: 120px;" placeholder="About Me">{{ doctor.about_me or '' }}</textarea>
+                                            <label class="fw-bold text-muted">Detailed Description</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating mb-3">
+                                            <input type="text" class="form-control bg-light border-0 shadow-sm rounded-4" name="degree" value="{{ doctor.degree or '' }}" placeholder="Degree">
+                                            <label class="fw-bold text-muted">Degree</label>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input type="number" class="form-control bg-light border-0 shadow-sm rounded-4" name="experience_years" value="{{ doctor.experience_years or 0 }}" placeholder="Exp">
+                                            <label class="fw-bold text-muted">Exp (Years)</label>
+                                        </div>
+                                        <div class="card border-0 bg-info-soft rounded-4 p-3 text-center shadow-sm" style="background-color: rgba(13, 202, 240, 0.1);">
+                                            <label class="smallest text-info fw-bold text-uppercase mb-1">Unique Patients Treated</label>
+                                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                                <i class="bi bi-people-fill text-info fs-5"></i>
+                                                <span class="h5 mb-0 fw-bold text-dark">{{ doctor.unique_patients_count }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <label class="smallest fw-bold text-muted text-uppercase mb-2 ms-2">Bio Highlights (Points)</label>
+                                        <textarea class="form-control bg-light border-0 shadow-sm rounded-4 p-3 smallest" name="bio" rows="4" placeholder="Mention key achievements...">{{ doctor.bio or '' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4 opacity-25">
+                                <h6 class="text-primary fw-bold text-uppercase smallest ls-2 mb-4">Availability Viewer (Read-Only)</h6>
+                                <div class="calendar-viewer-container border rounded-4 p-4 bg-light shadow-inner">
+                                    <div class="row g-3">
+                                        <div class="col-md-6 border-end text-center">
+                                            <div class="admin-view-calendar-inline-{{ doctor.id }} mb-2"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="selected-date-title smallest fw-bold text-muted text-uppercase mb-3 px-2">Select a date</div>
+                                            <div class="view-slots-wrapper-{{ doctor.id }} view-slots-wrapper d-flex flex-column gap-2 px-2">
+                                                <div class="alert alert-light py-2 px-3 small text-muted border-0">
+                                                    Click a date to see the schedule.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" class="doctor-availability-data-{{ doctor.id }}" value='{{ doctor.availability | tojson | safe if doctor.availability else "{}" }}'>
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Changes</button></div>
+                    <div class="modal-footer bg-white border-0 p-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm">Save Doctor Profile</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     {% endfor %}
 
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body"><p id="confirmationModalText"></p></div>
-                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn" id="confirmActionButton">Confirm</button></div>
-            </div>
-        </div>
-    </div>
 
 {% endblock %}
 

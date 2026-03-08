@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block page_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-image-side" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%);">
+            <img src="{{ url_for('static', filename='images/undraw_enter-password_1kl4.svg') }}" alt="Confirm">
+            <div class="welcome-text">Verify Email</div>
+        </div>
+
+        <div class="auth-form-side">
+            <h2>Confirm Your Email</h2>
+            <p class="text-muted">A verification link has been sent to your email. Please check your inbox.</p>
+            
+            <form action="{{ url_for_security('send_confirmation') }}" method="POST" name="send_confirmation_form">
+                {{ send_confirmation_form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    {{ send_confirmation_form.email(class="form-control", placeholder="name@example.com") }}
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-warning btn-auth text-white fw-bold">Resend Confirmation</button>
+                </div>
+            </form>
+
+            <div class="auth-switch-link mt-4">
+                Already verified? <a href="{{ url_for('security.login') }}">Go to Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
