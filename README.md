@@ -44,16 +44,16 @@ This project is developed for the Modern Application Development II (MAD-II) cou
 
 ## 📊 Milestone: Doctor Dashboard & Appointment/Treatment Management
 * ✅ **Expected Time:** 7 days
-* 📊 **Completion Progress:** 15%
+* 📊 **Completion Progress:** 100%
 
 - [x] **Milestone 0:** GitHub Repository Setup
 - [x] **Milestone 1:** Database Models and Schema Setup
 - [x] **Milestone 2:** Authentication and Role-Based Access
 - [x] **Milestone 3:** Admin Portal & Analytics Engine
 - [x] **Milestone 4:** Doctor Dashboard & Consultation Tools
-- [ ] **Milestone 5:** Patient Dashboard and Appointment System
-- [ ] **Milestone 6:** Backend Jobs (Celery + Redis)
-- [ ] **Milestone 7:** API Performance Optimization
+- [x] **Milestone 5:** Patient Dashboard and Appointment System
+- [x] **Milestone 6:** Backend Jobs (Celery + Redis)
+- [x] **Milestone 7:** API Performance Optimization
 
 ## ⚙️ Setup and Installation
 

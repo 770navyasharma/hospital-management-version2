@@ -1,9 +1,7 @@
-/* ==========================================================================
-   1. LAYOUT & GRID
-   ========================================================================== */
+
 .chart-container {
     position: relative;
-    height: 350px !important; /* 🟢 Forces visibility */
+    height: 350px !important; 
     width: 100%;
 }
 
@@ -12,9 +10,7 @@
     -webkit-backdrop-filter: blur(12px);
 }
 
-/* ==========================================================================
-   2. PATIENT CARDS (Premium Glassmorphism)
-   ========================================================================== */
+
 .patient-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -42,13 +38,13 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-/* 🟢 Fixed Status Badge Containment */
+
 .patient-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
 .badge {
     font-size: 0.75rem; padding: 6px 12px;
     border-radius: 8px; font-weight: 700;
-    max-width: fit-content; white-space: normal; /* Wraps long text */
+    max-width: fit-content; white-space: normal; 
     display: inline-block;
 }
 
@@ -56,9 +52,7 @@
 .status-under-treatment { color: #856404; background-color: #fff3cd; }
 .status-recovered { color: #155724; background-color: #d4edda; }
 
-/* ==========================================================================
-   3. MODALS & HISTORY SLIDER
-   ========================================================================== */
+
 .modal-content { border-radius: 24px; border: none; overflow: hidden; }
 .modal-xl .modal-content { border-top: 8px solid #0d6efd !important; }
 #visitDetailModal .modal-content { border-top: 8px solid #212529 !important; }
@@ -78,13 +72,13 @@
 
 .history-card:hover { border-color: #0d6efd; transform: translateY(-5px); }
 
-/* Status Dot indicators */
+
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .status-done { background: #198754; }
 .status-pending { background: #ffc107; }
 .bg-soft-primary { background-color: #e7f1ff; color: #0d6efd; }
 
-/* Beautiful Pagination */
+
 .pagination .page-link {
     border: none;
     color: #0d6efd;
@@ -102,7 +96,7 @@
     box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
 }
 
-/* Blacklisted State Styling */
+
 .patient-blacklisted {
     background-color: #fdf2f2 !important;
     border: 1px solid #f8d7da !important;
@@ -115,7 +109,7 @@
 }
 
 .patient-blacklisted:hover {
-    transform: none; /* Disable hover lift for blacklisted users */
+    transform: none; 
 }
 
 .bg-light-success { background-color: #f0fff4; }

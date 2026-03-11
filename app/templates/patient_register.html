@@ -89,4 +89,9 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/auth_preview.js') }}"></script>
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        window.showToast("Creating your account... Please wait.", "primary", "REGISTRATION");
+    });
+</script>
 {% endblock %}

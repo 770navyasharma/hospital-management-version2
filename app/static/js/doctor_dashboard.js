@@ -49,52 +49,33 @@
             console.log("Dashboard Mounted. Fetching initial data...");
             await this.fetchData();
             this.initAvailabilityCalendar();
-
-            this.pollInterval = setInterval(async () => {
-                await this.fetchData();
-            }, 10000);
         },
         unmounted() {
-            if (this.pollInterval) clearInterval(this.pollInterval);
         },
         methods: {
             async fetchData() {
                 console.log("Fetching Dashboard Data...");
+                let data = null;
                 if (this.sharedMethods && this.sharedMethods.fetchGlobalData) {
-                    const data = await this.sharedMethods.fetchGlobalData();
-                    if (data) {
-                        this.localAppointments = data.appointments || [];
-                    }
+                    data = await this.sharedMethods.fetchGlobalData();
                 }
 
-                try {
-                    const res = await fetch('/doctor/api/doctor/stats');
-                    if (!res.ok) {
-                        if (res.status === 401 || res.status === 302) {
-                            console.warn("Session lost, redirecting...");
-                            window.location.href = "/login";
-                            return;
-                        }
-                    }
-                    const data = await res.json();
-                    if (data) {
-                        this.allHistory = data.history || [];
-                        this.allStats = data.stats || [];
-                        this.stats = {
-                            treatedCount: data.treated_count || 0,
-                            cancelledCount: data.cancelled_count || 0,
-                            queueCount: data.queue_count || 0
-                        };
-                        // New stat card fields
-                        this.totalToday = data.total_today || 0;
-                        this.leftToday = data.left_today || 0;
-                        this.pendingRequestsCount = data.pending_requests_count || 0;
-                        this.nextPatientData = data.next_patient;
-                        this.allAvailability = data.availability || {};
-                        nextTick(() => this.renderChart());
-                    }
-                } catch (e) {
-                    console.error("Dashboard Stats Fetch Error:", e);
+                if (data) {
+                    this.localAppointments = data.appointments || [];
+                    this.allHistory = data.history || [];
+                    this.allStats = data.stats || [];
+                    this.stats = {
+                        treatedCount: data.treated_count || 0,
+                        cancelledCount: data.cancelled_count || 0,
+                        queueCount: data.queue_count || 0
+                    };
+                    
+                    this.totalToday = data.total_today || 0;
+                    this.leftToday = data.left_today || 0;
+                    this.pendingRequestsCount = data.pending_requests_count || 0;
+                    this.nextPatientData = data.next_patient;
+                    this.allAvailability = data.availability || {};
+                    nextTick(() => this.renderChart());
                 }
             },
 
@@ -189,7 +170,8 @@
                     pic: appt.patient_pic,
                     gender: appt.patient_gender,
                     age: appt.patient_age,
-                    note: appt.diagnosis || "Scheduled checkup"
+                    note: appt.urgent_note || "Reason not specified",
+                    internal_notes: appt.internal_notes || ""
                 };
                 this.patientHistory = [];
                 this.showPatientModal = true;
@@ -202,7 +184,8 @@
                     pic: req.pic,
                     gender: req.gender,
                     age: req.age,
-                    note: req.note
+                    note: req.note || "Reason not specified",
+                    internal_notes: req.internal_notes || ""
                 };
                 this.patientHistory = [];
                 this.showPatientModal = true;
@@ -255,12 +238,23 @@
                         beforeDraw: (chart) => {
                             const { width, height, ctx } = chart;
                             ctx.restore();
-                            ctx.font = `bold 2em sans-serif`;
+                            
+                            
+                            ctx.font = `bold 2.5em Outfit, sans-serif`;
                             ctx.textBaseline = "middle";
-                            ctx.fillStyle = "#2d3748";
-                            const text = (this.stats.treatedCount || 0) + (this.stats.queueCount || 0);
+                            ctx.fillStyle = "#1a202c";
+                            const total = (this.stats.treatedCount || 0) + (this.stats.cancelledCount || 0) + (this.stats.queueCount || 0);
+                            const text = total.toString();
                             const textX = Math.round((width - ctx.measureText(text).width) / 2);
-                            ctx.fillText(text, textX, height / 2);
+                            ctx.fillText(text, textX, height / 2 - 5);
+
+                            
+                            ctx.font = `bold 0.75rem Inter, sans-serif`;
+                            ctx.fillStyle = "#718096";
+                            const label = "TOTAL";
+                            const labelX = Math.round((width - ctx.measureText(label).width) / 2);
+                            ctx.fillText(label, labelX, height / 2 + 25);
+                            
                             ctx.save();
                         }
                     }]

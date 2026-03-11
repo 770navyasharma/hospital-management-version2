@@ -1,7 +1,4 @@
-/**
- * admin_appointments.js
- * Analytics, Filtering, Searching, Local Pagination, and CSV Export.
- */
+
 
 document.addEventListener('DOMContentLoaded', () => {
     let trendChart, statusChart;
@@ -10,13 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('apptTableBody');
     const patientSearch = document.getElementById('patientSearch');
     
-    // State management
-    let currentData = []; // Full filtered list
-    let filteredData = []; // Data after search
+    
+    let currentData = []; 
+    let filteredData = []; 
     let currentPage = 1;
     const entriesPerPage = 10;
 
-    // --- 1. INITIALIZE FILTERS ---
+    
     const fp = flatpickr("#dateRangePicker", {
         mode: "range",
         dateFormat: "Y-m-d",
@@ -37,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 2. DATA FETCHING ---
+    
     async function refreshData(days = 30, start = null, end = null) {
         let url = `/api/admin/appointment-stats?days=${days}`;
         if (start && end) {
@@ -49,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             currentData = data.appointments || [];
-            filteredData = [...currentData]; // Initially no search filter
+            filteredData = [...currentData]; 
             currentPage = 1;
             
             renderCharts(data);
@@ -59,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. PAGINATION & TABLE LOGIC ---
+    
     function displayTablePage() {
         tableBody.innerHTML = '';
         const startIndex = (currentPage - 1) * entriesPerPage;
@@ -104,14 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (totalPages <= 1) return;
 
-        // Previous Button
+        
         controls.insertAdjacentHTML('beforeend', `
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Prev</a>
             </li>
         `);
 
-        // Page Numbers
+        
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                 controls.insertAdjacentHTML('beforeend', `
@@ -124,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Next Button
+        
         controls.insertAdjacentHTML('beforeend', `
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
@@ -139,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayTablePage();
     };
 
-    // --- 4. SEARCH ---
+    
     patientSearch.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         filteredData = currentData.filter(appt => 
@@ -150,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayTablePage();
     });
 
-    // --- 5. CSV EXPORT (Targeted Data) ---
+    
     document.getElementById('downloadCSV').addEventListener('click', () => {
         if (filteredData.length === 0) {
             alert("No data available to export.");
@@ -178,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     });
 
-    // --- 6. CHARTS ---
+    
     function renderCharts(data) {
         if (trendChart) trendChart.destroy();
         if (statusChart) statusChart.destroy();
@@ -202,12 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // FIX: Match colors specifically to labels
+        
         const statusLabels = Object.keys(data.status_pie);
         const colorMap = {
-            'Booked': '#4e73df',    // Blue
-            'Completed': '#1cc88a', // Green
-            'Cancelled': '#e74a3b'  // Red
+            'Booked': '#4e73df',    
+            'Completed': '#1cc88a', 
+            'Cancelled': '#e74a3b'  
         };
         const backgroundColors = statusLabels.map(label => colorMap[label] || '#858796');
 
@@ -217,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: statusLabels,
                 datasets: [{
                     data: Object.values(data.status_pie),
-                    backgroundColor: backgroundColors // Applied fixed colors
+                    backgroundColor: backgroundColors 
                 }]
             },
             options: { maintainAspectRatio: false, cutout: '70%' }
@@ -232,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.show();
         try {
             const res = await fetch(`/api/admin/appointment-details/${id}`);
-            const d = await res.json(); // FIXED loading bug
+            const d = await res.json(); 
             document.getElementById('modalContentLoader').style.display = 'none';
             const content = document.getElementById('modalActualContent');
             content.style.display = 'block';
@@ -269,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(blob);
-        })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+        })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP
 
     window.exportAppointmentPDF = async (data) => {
         const element = document.getElementById('pdfExportTemplate');
@@ -291,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pdfDiagnosis').innerText = data.treatment.diagnosis;
             document.getElementById('pdfPrescription').innerText = data.treatment.prescription;
 
-            // Load images as Base64 to prevent cutting/missing
+            
             const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
             document.getElementById('pdfPatientImg').src = pBase64;
             document.getElementById('pdfDocImg').src = dBase64;

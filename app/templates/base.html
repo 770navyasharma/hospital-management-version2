@@ -47,8 +47,63 @@
 
     {% block page_content %}{% endblock %}
 
+    
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11000;">
+        <div id="globalToast" class="toast align-items-center border-0 rounded-4 shadow-lg overflow-hidden" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-3 py-3 px-4">
+                    <div id="toastIcon" class="fs-4"></div>
+                    <div>
+                        <div id="toastTitle" class="fw-black smallest text-uppercase ls-1 mb-1">Notification</div>
+                        <div id="toastMessage" class="small fw-bold"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     
     {% block scripts %}{% endblock %}
+
+    <script>
+        
+        window.showToast = function(message, type = 'primary', title = 'Notification') {
+            const toastEl = document.getElementById('globalToast');
+            const toastBody = document.getElementById('toastMessage');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastIcon = document.getElementById('toastIcon');
+            
+            toastBody.innerText = message;
+            toastTitle.innerText = title;
+            
+            
+            toastEl.className = `toast align-items-center border-0 rounded-4 shadow-lg overflow-hidden bg-${type} text-white`;
+            
+            const icons = {
+                'success': '<i class="bi bi-check-circle-fill"></i>',
+                'danger': '<i class="bi bi-exclamation-octagon-fill"></i>',
+                'warning': '<i class="bi bi-exclamation-triangle-fill"></i>',
+                'info': '<i class="bi bi-info-circle-fill"></i>',
+                'primary': '<i class="bi bi-bell-fill"></i>'
+            };
+            toastIcon.innerHTML = icons[type] || icons['primary'];
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
+            toast.show();
+        };
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        window.showToast("{{ message }}", "{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'primary' }}", "{{ category.upper() }}");
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
 </body>
 </html>

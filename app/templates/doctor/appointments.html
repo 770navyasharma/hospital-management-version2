@@ -2,7 +2,7 @@
 
 {% block doctor_content %}
 <div id="appointments-page" class="animate-fade-in">
-    <!-- Search & Filter Header -->
+    
     <div class="row g-4 mb-4">
         <div class="col-md-6">
             <div class="search-container w-100">
@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <!-- Status Filter Pills -->
+    
     <div class="d-flex gap-2 mb-4 overflow-auto pb-2 custom-scroll">
         <button v-for="s in statusOptions" :key="s" 
                 @click="toggleStatusFilter(s)"
@@ -29,7 +29,7 @@
         </button>
     </div>
 
-    <!-- Advanced Collapsible Table -->
+    
     <div class="card border-0 shadow-sm rounded-5 overflow-hidden bg-white">
         <div class="table-responsive">
             <table class="table table-hover border-0 m-0 premium-table">
@@ -44,7 +44,7 @@
                 </thead>
                 <tbody>
                     <template v-for="appt in filteredAppointments" :key="appt.id">
-                        <!-- Main Row -->
+                        
                         <tr class="align-middle transition-all cursor-pointer" @click="toggleRow(appt)" :class="{'row-expanded': expandedId === appt.id}">
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
@@ -77,12 +77,12 @@
                             </td>
                         </tr>
                         
-                        <!-- Collapsible Detail Row -->
+                        
                         <tr v-if="expandedId === appt.id" class="animate-fade-in bg-light-subtle border-0">
                             <td colspan="6" class="p-4 border-0">
                                 <div class="fixed-expanded-row bg-white rounded-5 shadow-sm border overflow-hidden">
                                     <div class="row g-0 h-100">
-                                        <!-- Profile Section (Left) -->
+                                        
                                         <div class="col-md-4 border-end h-100 p-5 custom-scroll overflow-auto">
                                             <div class="d-flex flex-column align-items-center text-center">
                                                 <img :src="appt.patient_pic" class="rounded-circle mb-4 border border-5 border-white shadow-lg" width="140" height="140" style="object-fit: cover;">
@@ -93,8 +93,13 @@
                                                 </div>
                                                 
                                                 <div class="w-100 text-start mt-3">
+                                                    <label class="smallest fw-bold text-muted text-uppercase d-block mb-2 ls-1 font-outfit">Reason for Visit</label>
+                                                    <div class="p-4 bg-primary-soft rounded-5 border-start border-4 border-primary shadow-sm mb-4">
+                                                        <p class="small text-dark fw-black italic mb-0">"[[ appt.urgent_note || 'No specific reason provided' ]]"</p>
+                                                    </div>
+
                                                     <label class="smallest fw-bold text-muted text-uppercase d-block mb-2 ls-1">Patient History</label>
-                                                    <div class="p-3 bg-light rounded-4 border-start border-3 border-primary shadow-sm mb-4">
+                                                    <div class="p-3 bg-light rounded-4 border-start border-3 border-secondary shadow-sm mb-4">
                                                         <p class="small text-secondary italic mb-0">[[ appt.patient_history || 'No established history recorded.' ]]</p>
                                                     </div>
                                                 </div>
@@ -121,12 +126,25 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- History Section (Right) -->
+                                        
                                         <div class="col-md-8 h-100 p-5 bg-light-soft custom-scroll overflow-auto">
                                             <div class="mb-5">
                                                 <h6 class="fw-black text-primary mb-4 text-uppercase ls-1 small d-flex align-items-center">
                                                     <i class="bi bi-chat-quote-fill me-2 fs-5"></i> Current Case Notes
                                                 </h6>
+
+                                                
+                                                <div v-if="(appt.status === 'Rejected' || appt.status === 'Cancelled') && appt.internal_notes" class="p-4 rounded-5 border shadow-sm mb-4"
+                                                     :class="appt.status === 'Rejected' ? 'bg-danger-soft border-danger-subtle' : 'bg-warning-soft border-warning-subtle'">
+                                                    <div class="smallest fw-black text-uppercase ls-1 mb-1"
+                                                         :class="appt.status === 'Rejected' ? 'text-danger' : 'text-warning'">
+                                                        [[ appt.status ]] Reason
+                                                    </div>
+                                                    <div class="small fw-bold" :class="appt.status === 'Rejected' ? 'text-danger' : 'text-warning'">
+                                                        [[ appt.internal_notes.replace('REJECTED: ', '').replace('CANCELLED: ', '') ]]
+                                                    </div>
+                                                </div>
+
                                                 <div class="p-4 bg-white rounded-5 shadow-sm border-start border-4 border-primary">
                                                     <div class="row g-4">
                                                         <div class="col-md-6 border-end">
@@ -171,7 +189,7 @@
                                                     <span class="badge bg-white text-muted shadow-sm rounded-pill border px-3">[[ patientHistory.length ]] VISITS</span>
                                                 </div>
                                                 
-                                                <!-- Vertical History Grid -->
+                                                
                                                 <div class="row g-3">
                                                     <div v-for="h in patientHistory" :key="h.id" class="col-sm-12 col-xl-6">
                                                         <div @click="sharedMethods.viewPastAppt(h.id)"

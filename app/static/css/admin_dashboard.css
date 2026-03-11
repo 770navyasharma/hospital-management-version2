@@ -1,4 +1,4 @@
-/* --- Dashboard Modern Styling --- */
+
 :root {
     --primary: #4e73df;
     --success: #1cc88a;
@@ -23,7 +23,7 @@
     text-transform: uppercase;
 }
 
-/* --- Date Filter Box --- */
+
 .date-filter-box {
     background: #ffffff;
     padding: 10px 18px;
@@ -39,7 +39,7 @@
     box-shadow: 0 8px 20px rgba(78, 115, 223, 0.08);
 }
 
-/* --- Stat Cards (Vertical Stack Logic) --- */
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -80,7 +80,7 @@
 
 .stat-number {
     font-size: 3rem;
-    /* Larger font for the count */
+    
     font-weight: 900;
     line-height: 1.1;
     margin-top: 10px;
@@ -105,7 +105,7 @@
     box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
 }
 
-/* --- Chart Cards --- */
+
 .chart-card {
     border: none !important;
     border-radius: 35px;
@@ -122,7 +122,7 @@
     font-size: 1.1rem;
 }
 
-/* --- Premium Buttons --- */
+
 .btn-export-premium {
     background: #f8fafc;
     color: #475569;

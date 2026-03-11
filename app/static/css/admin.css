@@ -1,6 +1,6 @@
-/* app/static/css/admin.css */
 
-/* --- Keyframe Animations (COMMON) --- */
+
+
 @keyframes slideInUp {
     from {
         opacity: 0;
@@ -35,7 +35,7 @@
     }
 }
 
-/* NEW "COOL" ANIMATION */
+
 @keyframes slideInDown {
     from {
         opacity: 0;
@@ -48,7 +48,7 @@
     }
 }
 
-/* --- Upgraded Toast Styling (COMMON) --- */
+
 .toast-container {
     z-index: 1090;
 }
@@ -98,7 +98,7 @@
     filter: none;
 }
 
-/* --- Main Layout (COMMON) --- */
+
 .admin-wrapper {
     display: flex;
     height: 100vh;
@@ -106,7 +106,7 @@
     overflow: hidden;
 }
 
-/* --- Sidebar (COMMON) --- */
+
 .admin-sidebar {
     width: 260px;
     background-color: #ffffff;
@@ -188,7 +188,7 @@
     text-align: center;
 }
 
-/* --- Sidebar Logout (COMMON) --- */
+
 .sidebar-logout-section {
     margin-top: auto;
     padding-top: 0.75rem;
@@ -216,7 +216,7 @@
 }
 
 
-/* --- Main Content (COMMON) --- */
+
 .admin-content {
     flex-grow: 1;
     padding: 2.5rem;
@@ -233,7 +233,7 @@
     box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
 }
 
-/* --- General Components (COMMON) --- */
+
 .manage-card {
     border: 0;
     border-radius: 12px;
@@ -264,7 +264,7 @@
     border-top: 4px solid #ffc107 !important;
 }
 
-/* Added from dashboard */
+
 
 .input-group-text {
     background-color: #e9ecef;
@@ -275,7 +275,7 @@
     overflow-x: hidden;
 }
 
-/* --- Tooltips (COMMON, activated by admin.js) --- */
+
 .tooltip-inner {
     background-color: #222;
     color: #fff;
@@ -295,13 +295,13 @@
 
 .modal.show .modal-dialog {
     animation: slideInDown 0.3s ease-out;
-    /* This is your "pop from top" animation */
+    
 }
 
-/* Style for our specific confirmation modal */
+
 #confirmationModal .modal-dialog {
     max-width: 450px;
-    /* A nice size for a confirmation */
+    
 }
 
 #confirmationModal .modal-body {
@@ -313,33 +313,33 @@
     font-weight: 600;
 }
 
-/* --- MOVED FROM admin_doctors.css TO BE COMMON --- */
+
 .img-thumbnail-preview {
     width: 150px;
     height: 150px;
     object-fit: cover;
     border-radius: 50%;
-    /* Make it circular */
+    
     border: 4px solid #fff;
-    /* White border */
+    
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    /* Softer shadow */
+    
 }
 
-/* --- NEW: Confirmation Modal Styling (COMMON) --- */
+
 .modal.fade .modal-dialog {
     transition: transform 0.3s ease-out;
 }
 
 .modal.show .modal-dialog {
     animation: slideInDown 0.3s ease-out;
-    /* This is your "pop from top" animation */
+    
 }
 
-/* Style for our specific confirmation modal */
+
 #confirmationModal .modal-dialog {
     max-width: 450px;
-    /* A nice size for a confirmation */
+    
 }
 
 #confirmationModal .modal-body {

@@ -1,4 +1,4 @@
-// app/static/js/auth_preview.js
+
 document.addEventListener('DOMContentLoaded', (event) => {
     
     const inputElement = document.getElementById('profile_pic_input');

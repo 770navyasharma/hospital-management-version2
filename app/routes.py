@@ -11,12 +11,10 @@ from sqlalchemy import func
 
 main = Blueprint('main', __name__)
 
-# --- Helper function for file uploads ---
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
-# --- Decorator (no change) ---
 def prevent_logged_in_access(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -25,7 +23,6 @@ def prevent_logged_in_access(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- Public Routes (no change) ---
 @main.route('/')
 @prevent_logged_in_access
 def index():
@@ -35,7 +32,7 @@ def index():
 @prevent_logged_in_access
 def patient_register():
     if request.method == 'POST':
-        # --- GET ALL NEW FORM DATA ---
+
         full_name = request.form.get('full_name')
         email = request.form.get('email')
         contact_number = request.form.get('contact_number')
@@ -43,8 +40,7 @@ def patient_register():
         gender = request.form.get('gender')
         date_of_birth_str = request.form.get('date_of_birth')
         profile_pic = request.files.get('profile_pic')
-        
-        # --- VALIDATION ---
+
         if not all([full_name, email, contact_number, password, gender, date_of_birth_str]):
             flash("All fields are required", "danger")
             return render_template('patient_register.html', **request.form)
@@ -53,15 +49,13 @@ def patient_register():
             flash("User already exists", "danger")
             return render_template('patient_register.html', **request.form)
 
-        # --- HANDLE FILE UPLOAD ---
         profile_pic_path = url_for('static', filename='images/default-profile.svg')
         if profile_pic and allowed_file(profile_pic.filename):
             filename = secure_filename(f"patient_{email}_" + profile_pic.filename)
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             profile_pic.save(upload_path)
             profile_pic_path = f'/static/uploads/{filename}'
-        
-        # --- CREATE USER ---
+
         hashed_password = utils.hash_password(password)
         patient_role = datastore.find_or_create_role(name='Patient', description='Patient')
         user = datastore.create_user(
@@ -71,8 +65,7 @@ def patient_register():
             roles=[patient_role],
             active=True
         )
-        
-        # --- CREATE PATIENT PROFILE (NOW WITH ALL FIELDS) ---
+
         patient_profile = Patient(
             user=user,
             contact_number=contact_number,
@@ -84,15 +77,11 @@ def patient_register():
         db.session.add(patient_profile)
         db.session.commit()
 
-        # --- SEND CONFIRMATION EMAIL ---
-        current_app.extensions['security'].confirmable_model.send_confirmation_instructions(user)
-        
-        flash("Registration successful! Please check your email and click the confirmation link to activate your account.", "success")
+        flash("Registration successful! Your account is ready. Please sign in below.", "success")
         return redirect(url_for('security.login'))
 
     return render_template('patient_register.html')
 
-# --- Main Dashboard Redirector (no change) ---
 @main.route('/dashboard')
 @login_required
 def dashboard():
@@ -101,13 +90,12 @@ def dashboard():
     elif current_user.has_role('Doctor'):
         return redirect(url_for('doctor.doctor_dashboard'))
     elif current_user.has_role('Patient'):
-        return redirect(url_for('main.patient_dashboard'))
+        return redirect(url_for('patient.patient_dashboard'))
     else:
         return redirect(url_for('security.logout'))
 
-# =========================
-# === ADMIN ROUTES ===
-# =========================
+
+
 
 @main.route('/admin/dashboard')
 @login_required
@@ -135,7 +123,6 @@ def dashboard_stats_api():
     start_date = datetime.strptime(start_str, '%Y-%m-%d')
     end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
 
-    # 1. Appointment Trends (Keep as is)
     appt_stats = db.session.query(
         func.date(Appointment.appointment_datetime).label('date'),
         func.count(Appointment.id).label('count')
@@ -143,13 +130,13 @@ def dashboard_stats_api():
              Appointment.appointment_datetime < end_date)\
      .group_by(func.date(Appointment.appointment_datetime)).all()
 
-    # 2. Patient Intake (Updated for Global view as discussed)
     patient_dist = db.session.query(
         Patient.status, func.count(Patient.id)
-    ).group_by(Patient.status).all()
+    ).join(User, Patient.user_id == User.id)\
+     .filter(User.created_at >= start_date, User.created_at < end_date)\
+     .group_by(Patient.status).all()
 
-    # 3. 🟢 MULTI-BAR DATA: Doctor Workload by Patient Status
-    # We join Appointment -> Doctor -> User (for name) AND Appointment -> Patient (for status)
+
     workload_query = db.session.query(
         User.full_name, Patient.status, func.count(Appointment.id)
     ).join(Doctor, Appointment.doctor_id == Doctor.id)\
@@ -159,14 +146,12 @@ def dashboard_stats_api():
              Appointment.appointment_datetime < end_date)\
      .group_by(User.full_name, Patient.status).all()
 
-    # Restructure for Frontend: { "Dr. Name": {"New": 5, "Recovered": 2 ...} }
     doctor_data = {}
     for name, status, count in workload_query:
         if name not in doctor_data:
             doctor_data[name] = {"New": 0, "Under Treatment": 0, "Recovered": 0}
         doctor_data[name][status] = count
 
-    # Convert to list for JSON response
     formatted_doctors = [{"name": name, "statuses": stats} for name, stats in doctor_data.items()]
 
     return jsonify({
@@ -178,31 +163,28 @@ def dashboard_stats_api():
 @login_required
 @roles_required('Admin')
 def admin_doctors():
-    # 1. Get query parameters
+
     search_name = request.args.get('name', '')
     search_spec = request.args.get('specialization', '')
-    page = request.args.get('page', 1, type=int) # Default to page 1
-    
-    # 2. Build the base query
+    page = request.args.get('page', 1, type=int)
+
     query = Doctor.query.join(User, Doctor.user_id == User.id).join(Department, Doctor.department_id == Department.id)
-    
-    # 3. Apply Filters
+
     if search_name:
         query = query.filter(User.full_name.ilike(f'%{search_name}%'))
     if search_spec:
         query = query.filter(Department.name.ilike(f'%{search_spec}%'))
-        
-    # 4. 🟢 CHANGE: Use .paginate instead of .all()
-    # per_page=10 means 10 doctors per page
+
+
     pagination = query.order_by(User.full_name).paginate(page=page, per_page=10, error_out=False)
-    doctors = pagination.items # These are the doctors for the current page
+    doctors = pagination.items
     
     departments = Department.query.order_by(Department.name).all()
     
     return render_template(
         'admin/admin_doctors.html', 
         doctors=doctors, 
-        pagination=pagination, # Pass the whole pagination object
+        pagination=pagination,
         departments=departments
     )
     
@@ -429,18 +411,15 @@ def admin_delete_department(dept_id):
         
     return redirect(url_for('main.admin_doctors'))
 
-# --- 💙 PATIENT MANAGEMENT ROUTES (CHANGED) 💙 ---
 
-# --- PATIENT MANAGEMENT ---
 @main.route('/admin/patients', methods=['GET'])
 @login_required
 @roles_required('Admin')
 def admin_patients():
     search_name = request.args.get('name', '').strip()
     page = request.args.get('page', 1, type=int)
-    
-    # --- GET DATES FROM URL (New Logic) ---
-    # Default to 30 days ago if not provided
+
+
     default_start = (date.today() - timedelta(days=30)).isoformat()
     default_end = date.today().isoformat()
     
@@ -453,8 +432,7 @@ def admin_patients():
         query = query.filter(
             db.or_(User.full_name.ilike(f'%{search_name}%'), User.email.ilike(f'%{search_name}%'))
         )
-        
-    # Standard 6 patients per page for a balanced grid
+
     pagination = query.order_by(User.full_name).paginate(page=page, per_page=6, error_out=False)
     patients = pagination.items 
     
@@ -470,12 +448,11 @@ def admin_patients():
         pagination=pagination, 
         stats=stats, 
         search_name=search_name,
-        start_date=start_date, # Now passes the URL value or default
-        end_date=end_date,      # Now passes the URL value or default
+        start_date=start_date,
+        end_date=end_date,
         date=date
     )
 
-# --- EDIT PATIENT (Fixes "None" Name Bug) ---
 @main.route('/admin/patient/edit/<int:patient_id>', methods=['POST'])
 @login_required
 @roles_required('Admin')
@@ -498,7 +475,6 @@ def admin_edit_patient(patient_id):
         flash(f'Error: {str(e)}', 'danger')
     return redirect(url_for('main.admin_patients'))
 
-# --- CHART DATA API ---
 @main.route('/admin/api/patient_stats')
 @login_required
 @roles_required('Admin')
@@ -573,8 +549,8 @@ def admin_delete_patient(patient_id):
 @login_required
 @roles_required('Admin')
 def admin_appointments():
-    # This renders the main page. We'll pass initial empty stats
-    # and let JS fetch the actual data.
+
+
     from datetime import date
     return render_template('admin/admin_appointments.html', date=date)
 
@@ -582,22 +558,19 @@ def admin_appointments():
 @login_required
 @roles_required('Admin')
 def appointment_stats_api():
-    # 1. Get filter parameters
+
     days = request.args.get('days')
     start_str = request.args.get('start_date')
     end_str = request.args.get('end_date')
 
-    # 2. Determine date range
     if start_str and end_str:
         start_date = datetime.strptime(start_str, '%Y-%m-%d')
-        # Include the full end day
         end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
     else:
         days = int(days) if days else 7
-        end_date = datetime.utcnow()
+        end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
-    # 3. Query Trend Data
     stats = db.session.query(
         func.date(Appointment.appointment_datetime).label('date'),
         func.count(Appointment.id).label('count')
@@ -605,20 +578,17 @@ def appointment_stats_api():
              Appointment.appointment_datetime < end_date)\
      .group_by(func.date(Appointment.appointment_datetime)).all()
 
-    # 4. Query Status Distribution
     status_dist = db.session.query(
         Appointment.status, func.count(Appointment.id)
     ).filter(Appointment.appointment_datetime >= start_date, 
              Appointment.appointment_datetime < end_date)\
      .group_by(Appointment.status).all()
 
-    # 5. 🟢 NEW: Query Actual Appointment List for the Table
     appts = Appointment.query.filter(
         Appointment.appointment_datetime >= start_date,
         Appointment.appointment_datetime < end_date
     ).order_by(Appointment.appointment_datetime.desc()).all()
 
-    # 6. Format response
     appt_list = [{
         "id": a.id,
         "date": a.appointment_datetime.strftime("%Y-%m-%d %H:%M"),
@@ -660,150 +630,3 @@ def appointment_details_api(appt_id):
             "prescription": appt.treatment.prescription if appt.treatment else "None issued"
         }
     })
-    
-
-@main.route('/patient/dashboard')
-@login_required
-@roles_required('Patient')
-def patient_dashboard():
-    departments = Department.query.all()
-    doctors = Doctor.query.all()
-    return render_template('patient/patient_dashboard.html', user=current_user, departments=departments, doctors=doctors)
-
-def is_doctor_available(doctor, dt):
-    """Helper to check if a doctor is available at a specific datetime."""
-    if not doctor.availability:
-        return False
-    
-    date_str = dt.strftime('%Y-%m-%d')
-    appt_time = dt.time()
-    
-    # Get slots for the specific date
-    slots = doctor.availability.get(date_str, [])
-    
-    for slot in slots:
-        try:
-            # Handle "HH:MM-HH:MM" or "HH:MM - HH:MM"
-            parts = slot.replace(' ', '').split('-')
-            if len(parts) != 2: continue
-            
-            start_time = datetime.strptime(parts[0], '%H:%M').time()
-            end_time = datetime.strptime(parts[1], '%H:%M').time()
-            
-            if start_time <= appt_time <= end_time:
-                return True
-        except (ValueError, TypeError):
-            continue
-            
-    return False
-
-@main.route('/api/patient/book', methods=['POST'])
-@login_required
-@roles_required('Patient')
-def book_appointment():
-    data = request.json
-    doctor_id = data.get('doctor_id')
-    dt_str = data.get('datetime')
-    is_urgent = data.get('is_urgent', False)
-    urgent_note = data.get('note', '')
-
-    if not all([doctor_id, dt_str]):
-        return jsonify({"status": "error", "message": "Missing doctor or date/time"}), 400
-
-    try:
-        dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
-    except ValueError:
-        return jsonify({"status": "error", "message": "Invalid date/time format"}), 400
-
-    doctor = Doctor.query.get_or_404(doctor_id)
-    
-    # --- STATUS OVERRIDE CHECK ---
-    if doctor.status_override in ['break', 'offline', 'busy']:
-        status_names = {'break': 'On Break', 'offline': 'Offline', 'busy': 'Busy'}
-        return jsonify({
-            "status": "error", 
-            "message": f"Doctor is currently {status_names.get(doctor.status_override)}. Please try again later or choose another doctor."
-        }), 400
-    
-    # --- AVAILABILITY ENFORCEMENT ---
-    if not is_urgent:
-        if not is_doctor_available(doctor, dt):
-            return jsonify({
-                "status": "error", 
-                "message": "Doctor is not available at this time. Only urgent appointments can be booked outside available hours."
-            }), 400
-    else:
-        if not urgent_note:
-            return jsonify({
-                "status": "error", 
-                "message": "A reason is required for urgent appointments."
-            }), 400
-
-    # --- DOUBLE-BOOKING INTERVAL PRECHECK ---
-    new_start = dt
-    new_end = new_start + timedelta(minutes=30) # Default tentative 30m block for checking
-
-    existing_appts = Appointment.query.filter(
-        Appointment.doctor_id == doctor_id,
-        Appointment.status.in_(['Booked', 'Ongoing'])
-    ).all()
-
-    for ex in existing_appts:
-        ex_start = ex.appointment_datetime
-        ex_end = ex_start + timedelta(minutes=ex.duration or 30)
-        
-        if ex_start < new_end and new_start < ex_end:
-            return jsonify({
-                "status": "error", 
-                "message": f"Doctor is already busy during this timeframe ({ex_start.strftime('%I:%M %p')} - {ex_end.strftime('%I:%M %p')}). Please choose another slot."
-            }), 400
-
-    # Create the appointment
-    appt = Appointment(
-        patient_id=current_user.patient_profile.id,
-        doctor_id=doctor_id,
-        appointment_datetime=dt,
-        status='Requested',
-        is_urgent=is_urgent,
-        urgent_note=urgent_note
-    )
-    
-    db.session.add(appt)
-    db.session.commit()
-    
-    return jsonify({"status": "success", "message": "Appointment requested successfully!"})
-    
-@main.route('/api/patient/appointments')
-@login_required
-@roles_required('Patient')
-def get_patient_appointments():
-    patient_id = current_user.patient_profile.id
-    appts = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.appointment_datetime.desc()).all()
-    
-    return jsonify([{
-        "id": a.id,
-        "doctor_name": a.doctor.user.full_name,
-        "doctor_pic": a.doctor.profile_pic_url,
-        "datetime": a.appointment_datetime.strftime("%d %b %Y at %I:%M %p"),
-        "status": a.status,
-        "is_urgent": a.is_urgent,
-        "note": a.urgent_note
-    } for a in appts])
-
-@main.route('/api/patient/cancel/<int:appt_id>', methods=['POST'])
-@login_required
-@roles_required('Patient')
-def patient_cancel_appointment(appt_id):
-    appt = Appointment.query.get_or_404(appt_id)
-    if appt.patient_id != current_user.patient_profile.id:
-        return jsonify({"status": "error", "message": "Unauthorized"}), 403
-    
-    reason = request.json.get('reason', 'Cancelled by patient')
-    appt.status = 'Cancelled'
-    appt.urgent_note = f"CANCELLED BY PATIENT: {reason}"
-    db.session.commit()
-    
-    return jsonify({"status": "success", "message": "Appointment cancelled successfully."})
-
-
-

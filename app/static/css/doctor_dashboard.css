@@ -16,7 +16,7 @@
     --hms-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Status Dropdown Refinements */
+
 .status-indicator {
     transition: var(--hms-transition);
     z-index: 10;
@@ -95,7 +95,7 @@ body {
     color: #2d3748;
 }
 
-/* Metric Cards Styling */
+
 .metric-card {
     border-radius: 28px !important;
     transition: var(--hms-transition);
@@ -196,7 +196,7 @@ body {
     color: #fff;
 }
 
-/* Custom Scrollbar */
+
 .custom-scroll::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -215,7 +215,7 @@ body {
     background: transparent;
 }
 
-/* Main Dashboard Cards */
+
 .card {
     border: none !important;
 }
@@ -224,7 +224,7 @@ body {
     height: 480px !important;
 }
 
-/* Appointment Items */
+
 .appointment-item {
     transition: var(--hms-transition);
     border: 1px solid #f0f2f5 !important;
@@ -236,7 +236,7 @@ body {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
 }
 
-/* Gradient Card (Next Patient) */
+
 .gradient-card-primary {
     background: linear-gradient(145deg, #4e73df 0%, #224abe 100%);
     position: relative;
@@ -255,7 +255,7 @@ body {
     pointer-events: none;
 }
 
-/* Multi-select Calendar tweaks */
+
 .flatpickr-calendar.inline {
     width: 100% !important;
     box-shadow: none !important;
@@ -266,7 +266,7 @@ body {
     border-color: var(--hms-primary) !important;
 }
 
-/* Notification Dropdown (Premiumized) */
+
 .notification-dropdown {
     position: absolute;
     top: calc(100% + 15px);
@@ -292,7 +292,7 @@ body {
     }
 }
 
-/* Patient Detail Modal Styles */
+
 .bg-light-soft {
     background-color: #f8fafc;
 }
@@ -367,7 +367,7 @@ body {
     background: rgba(78, 115, 223, 0.04);
 }
 
-/* Urgent Pulse Animation */
+
 .animate-pulse {
     animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -398,7 +398,7 @@ body {
     transform: translateY(-4px);
 }
 
-/* Misc modern touches */
+
 .badge {
     padding: 0.5em 0.8em;
     font-weight: 700;
@@ -434,7 +434,7 @@ body {
     background: rgba(102, 16, 242, 0.03);
 }
 
-/* Premium Table Styling */
+
 .premium-table thead th {
     border-bottom: 2px solid #f0f2f5 !important;
     background: #fbfbfd;
@@ -457,7 +457,7 @@ body {
     background: rgba(78, 115, 223, 0.02) !important;
 }
 
-/* History Cards Scrollable */
+
 .history-scroll {
     scrollbar-width: thin;
     scrollbar-color: #e2e8f0 transparent;
@@ -475,7 +475,7 @@ body {
     border: 1px solid var(--hms-primary) !important;
 }
 
-/* Modal Scale-in Animation */
+
 @keyframes scaleIn {
     from {
         opacity: 0;
@@ -492,7 +492,7 @@ body {
     animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Premium Table Row Hover */
+
 .premium-table tbody tr:not(.row-expanded):hover td {
     background-color: #f8f9fc;
 }
@@ -521,7 +521,7 @@ body {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Premium Toast & Confirm */
+
 .toast-container {
     z-index: 9999;
 }
@@ -576,7 +576,7 @@ body {
     color: #36b9cc;
 }
 
-/* Global Notification Dropdown Style */
+
 .notification-dropdown {
     position: absolute;
     right: 0;
@@ -613,7 +613,7 @@ body {
     flex-grow: 1;
 }
 
-/* Custom scrollbar for premium look */
+
 .custom-scroll::-webkit-scrollbar {
     width: 6px;
 }
@@ -635,15 +635,15 @@ body {
     width: 650px !important;
 }
 
-/* History Scrollbar and Cards */
+
 .history-scroll {
     scrollbar-width: none;
-    /* Firefox */
+    
 }
 
 .history-scroll::-webkit-scrollbar {
     display: none;
-    /* Safari/Chrome */
+    
 }
 
 .history-card:hover {
@@ -676,7 +676,7 @@ body {
     font-size: 0.7rem;
 }
 
-/* Sequential Alert Animations */
+
 .slide-out-left {
     animation: urgentSlideOutLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
@@ -699,10 +699,10 @@ body {
     overflow: hidden;
 }
 
-/* Fixed Expanded Row UI */
+
 .fixed-expanded-row {
     height: 540px;
-    /* Slightly increased to fit all segments */
+    
     overflow: hidden;
     width: 100%;
     border-radius: 2rem !important;
@@ -724,10 +724,10 @@ body {
     background-color: #fbfbfd;
 }
 
-/* Ensure history grid doesn't overflow horizontally */
+
 .history-card {
     min-width: 0 !important;
-    /* Reset previous horizontal scroll min-width */
+    
 }
 
 .slide-in {

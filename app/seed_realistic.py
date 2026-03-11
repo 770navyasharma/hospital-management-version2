@@ -9,8 +9,7 @@ app = create_app()
 def seed_realistic_data():
     with app.app_context():
         print("--- STARTING REALISTIC DATA SEEDING ---")
-        
-        # 1. Clear existing data for Dr. Elena
+
         doctor_user = User.query.filter_by(email='elena.rodriguez@hospital.com').first()
         if not doctor_user:
             print("Dr. Elena not found! Run main seeder first.")
@@ -20,7 +19,6 @@ def seed_realistic_data():
         doctor_id = doctor.id
         now = datetime.now()
 
-        # 1. Set Dr. Elena's Availability for next 7 days
         availability = {}
         for d in range(-1, 7):
             dt = (now + timedelta(days=d)).strftime('%Y-%m-%d')
@@ -28,7 +26,6 @@ def seed_realistic_data():
         doctor.availability = availability
         db.session.commit()
 
-        # 2. CLEAR ALL patients and appointments
         print("Cleaning up existing patient data...")
         Treatment.query.delete()
         Appointment.query.delete()
@@ -36,7 +33,7 @@ def seed_realistic_data():
         
         patient_role = Role.query.filter_by(name='Patient').first()
         if patient_role:
-            # Row-by-row delete for SQLite compatibility
+
             patient_users = User.query.filter(User.roles.contains(patient_role)).all()
             for u in patient_users:
                 db.session.delete(u)
@@ -81,7 +78,6 @@ def seed_realistic_data():
             db.session.add(patient)
             db.session.flush()
 
-            # Past Appointments
             case = random.choice(realistic_cases)
             for j in range(4):
                 past_dt = now - timedelta(days=random.randint(5, 30) + (j * 15), hours=random.randint(9, 17))
@@ -90,15 +86,14 @@ def seed_realistic_data():
                 db.session.flush()
                 db.session.add(Treatment(appointment_id=appt.id, diagnosis=case["diag"], prescription=case["presc"], notes=case["notes"]))
 
-            # 4. Add CURRENT Requests (Aligning with availability)
-            if i < 4: # Urgent
+            if i < 4:
                 appt_dt = now + timedelta(minutes=random.randint(5, 30))
                 db.session.add(Appointment(
                     patient_id=patient.id, doctor_id=doctor_id, 
                     appointment_datetime=appt_dt, status='Requested', 
                     is_urgent=True, urgent_note=f"Emergency: {p_info['history']}"
                 ))
-            else: # Normal (In slots)
+            else:
                 target_day = now + timedelta(days=random.randint(1, 2))
                 hour = 10 if random.random() > 0.5 else 15
                 appt_dt = target_day.replace(hour=hour, minute=30, second=0, microsecond=0)

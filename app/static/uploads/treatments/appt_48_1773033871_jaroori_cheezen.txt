@@ -1,0 +1,85 @@
+==>Basic set up
+
+->A version control system tracks all of the history of a project what happened, where happened, how happened, why happened.
+->finalising the changes is called commit.
+->First add(or stage) the changes then commit it.
+->git --version(to know version)
+->ls(to see folders)
+->clear
+->pwd(to get working directory)
+
+==>Configuring github
+
+->git config --global user.name "Navya Sharma"
+->git config --global user.email "navyasav06@gmail.com"
+->git config --list
+
+==>Clone and status command
+->Clone - cloning a repository on our local machine.
+->Syntax - git clone <-some link->
+->ls - list all files but not hidden
+->ls -Hidden - list hidden files
+->Status command - what;s the current status of repository
+->If I change something on vs code code becomes different on vs('M' sign indicates Modify) and on github for having both as up to date:
+    ->ab git status bolega changes not added for commit.
+    ->added one more file and see git status says 'Untracked files
+    ->four types of file statuses are there:
+        untracked - new files that git doesn't yet track
+        modified - changed
+        staged - file is ready to be committed 
+        unmodified - unchanged
+    ->Firstly we need to add(stage) files.
+
+==>Add and Commit
+->add - for adding to the staging area.
+     git add <-file name->
+->commit - it is the record of change
+     git commit -m "some message"
+->Even before commiting it shows now "brach is 1 commit ahead of original."
+->So now to show these changes on github as well we will use push command i.e. in changes ko github pe push karo.
+->push - upload local repo content to remote repo(github).
+ ->Syntax - git push origin main
+
+==>Maanlo local machine pe hamne koi naya project banaya jo ki hum git me pahuchana chahte hain
+->to create local new folder as you do normally with terminal - mkdir "folder_name"
+->to make any repo a git repo use - git init
+->now do all steps of adding , commiting.
+->now to actually see it on github go to github and create a new repo with the name you want your code as you have on your local machine.
+->git remote add origin <-link->
+->git remote -v(to verify remote)
+->git branch (to check branch)
+->git branch -M main (to rename branch)
+->git push-u origin main(-u means aage isi main me changes karna kyunki ham isipe kaam karenge)
+
+==>Git branches
+->Agar ek product ke upar kai sari implementations hoti hain to har feature ke liye specifically ham ek branch bana sakte hain alag.
+->Merging branches means combining all the features or branches till now.
+->To navigate to a branch -  git checkout <branchname>
+->To create a new branch - git checkout -b <branchname>
+->To delete a brach - git branch -d <branch name>
+->now whwn you added a branch using vs code to github we then can merge it:
+
+-->Way1
+->To compare commits,branches,files and more - git diff "branch name"
+->To merge 2 branches - git merge "branch name"
+
+-->Way2
+->Create a PR(Pull request) - It tells others about the changes you did to a branch in a repo on github.
+->when you add new branch then you see compare and PR option on github.
+->To get the changes and content from remote repo and bring it to local repo - git pull origin main
+->How to resolve conflicts when github is unable to automatically resolve difference in changes in 2 commits:
+->In such cases use - git merge branch_name
+
+==>Undoing changes
+->Case1-staged changes
+-git reset <file name>
+-git reset
+
+->Case2-committed changes(for 1 commit)
+-git reset HEAD~1
+
+->Case3-committed changes(for many commits)
+-git reset <commit hash>
+-git reset --hard <commit hash>
+
+==>fork : a fork is a new repo which shares code with a original upstream repo.Fork is a rough copy. 

@@ -137,7 +137,7 @@
         }
     });
 
-    // Register shared directives
+    
     if (window.HMS_DOCTOR_SHARED && window.HMS_DOCTOR_SHARED.sharedMethods.registerDirectives) {
         window.HMS_DOCTOR_SHARED.sharedMethods.registerDirectives(app);
     }

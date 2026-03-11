@@ -1,7 +1,7 @@
 {% extends "doctor/doctor_base.html" %}
 
 {% block doctor_content %}
-<!-- Loading state: shown until first data fetch completes -->
+
 <div v-if="pageLoading" class="min-vh-75 d-flex align-items-center justify-content-center">
     <div class="text-center animate-fade-in">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
@@ -9,9 +9,9 @@
     </div>
 </div>
 
-<!-- Active session content -->
+
 <div v-else-if="globalState.ongoingAppt" class="row animate-fade-in">
-    <!-- Main Content: Consultation Area -->
+    
     <div class="col-lg-8">
         <div class="card shadow-sm rounded-5 border-0 bg-white p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -53,7 +53,7 @@
                               placeholder="Detailed notes for this specific visit..."></textarea>
                 </div>
 
-                <!-- NEW: Final Diagnosis -->
+                
                 <div class="col-md-6">
                     <label class="smallest fw-black text-success text-uppercase ls-1 mb-2 d-block">
                         <i class="bi bi-bandaid me-1"></i> Final Diagnosis
@@ -63,7 +63,7 @@
                            placeholder="e.g. Acute Pharyngitis, GERD, Type-2 Diabetes...">
                 </div>
 
-                <!-- NEW: Doctor's Clinical Notes -->
+                
                 <div class="col-md-6">
                     <label class="smallest fw-black text-warning text-uppercase ls-1 mb-2 d-block">
                         <i class="bi bi-journal-medical me-1"></i> Doctor's Clinical Notes
@@ -132,7 +132,7 @@
         </div>
     </div>
 
-    <!-- Sidebar: Patient Info & Actions -->
+    
     <div class="col-lg-4">
         <div class="card shadow-sm rounded-5 border-0 bg-white p-4 mb-4 text-center">
             <div class="position-relative d-inline-block mx-auto mb-4">

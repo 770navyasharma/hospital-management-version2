@@ -1,4 +1,4 @@
-# app/__init__.py
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
@@ -41,10 +41,11 @@ def create_app():
     
     from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
-    
-    # 🟢 CRITICAL: Import and register the doctor blueprint
+
     from .doctor_routes import doctor_blueprint
+    from .patient_routes import patient_blueprint
     app.register_blueprint(doctor_blueprint, url_prefix='/doctor')
+    app.register_blueprint(patient_blueprint, url_prefix='/patient')
 
     with app.app_context():
         pass 

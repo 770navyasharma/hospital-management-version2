@@ -1,0 +1,771 @@
+{% extends "patient/patient_base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .search-section {
+        background: #fff;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        margin-bottom: 30px;
+        border: 1px solid #edf2f7;
+    }
+
+    .premium-search-bar {
+        background: #fff;
+        border-radius: 20px;
+        padding: 10px 10px 10px 25px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        border: 1px solid #edf2f7;
+        transition: 0.3s;
+    }
+
+    .premium-search-bar:focus-within {
+        border-color: #4e73df;
+        box-shadow: 0 8px 25px rgba(78, 115, 223, 0.15);
+    }
+
+    .premium-search-bar input {
+        border: none;
+        outline: none;
+        width: 100%;
+        font-size: 1.1rem;
+        font-weight: 500;
+        padding: 10px;
+    }
+
+    .dept-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    .dept-pill {
+        padding: 10px 25px;
+        border-radius: 50px;
+        background: #fff;
+        border: 2px solid #edf2f7;
+        color: #718096;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+    }
+
+    .dept-pill:hover {
+        border-color: #4e73df;
+        color: #4e73df;
+        background: rgba(78, 115, 223, 0.02);
+    }
+
+    .dept-pill.active {
+        background: #4e73df;
+        color: #fff;
+        border-color: #4e73df;
+        box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+    }
+
+    
+    .premium-doctor-card {
+        background: #fff;
+        border-radius: 32px;
+        border: 1px solid #edf2f7;
+        padding: 30px;
+        height: 100%;
+        transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .premium-doctor-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.08);
+        border-color: rgba(78, 115, 223, 0.2);
+    }
+
+    .premium-doctor-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(78, 115, 223, 0.05) 0%, transparent 100%);
+        border-radius: 0 0 0 100%;
+    }
+
+    .doc-avatar-wrapper {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 25px;
+    }
+
+    .doc-avatar-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 35% 65% 70% 30% / 30% 30% 70% 70%;
+        border: 5px solid #fff;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        transition: 0.5s;
+    }
+
+    .premium-doctor-card:hover .doc-avatar-wrapper img {
+        border-radius: 50%;
+    }
+
+    .doc-status-dot {
+        position: absolute;
+        bottom: 5px;
+        right: 15px;
+        width: 22px;
+        height: 22px;
+        background: #48bb78;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .doc-name {
+        font-family: 'Inter', sans-serif;
+        font-weight: 900;
+        color: #1a202c;
+        font-size: 1.15rem;
+        margin-bottom: 5px;
+    }
+
+    .doc-tagline {
+        color: #4e73df;
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 15px;
+    }
+
+    .doc-meta-pills {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .meta-pill {
+        background: #f7fafc;
+        padding: 5px 12px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #4a5568;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .doc-contact {
+        background: #fcfdfe;
+        border: 1px dashed #e2e8f0;
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 25px;
+        font-size: 0.85rem;
+        color: #718096;
+        font-weight: 600;
+    }
+
+    .btn-see-details {
+        background: #fff;
+        border: 2px solid #4e73df;
+        color: #4e73df;
+        font-weight: 900;
+        border-radius: 18px;
+        padding: 14px;
+        width: 100%;
+        transition: 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem;
+        margin-top: auto;
+    }
+
+    .btn-see-details:hover {
+        background: #4e73df;
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(78, 115, 223, 0.2);
+    }
+
+    
+    .doc-detail-modal-side {
+        background: #f8faff;
+        border-radius: 24px;
+        padding: 25px;
+    }
+    
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    
+    .status-available { border-color: #48bb78 !important; color: #48bb78 !important; }
+    .status-busy { border-color: #ed8936 !important; color: #ed8936 !important; }
+    .status-offline { border-color: #a0aec0 !important; color: #a0aec0 !important; }
+    .status-break { border-color: #4299e1 !important; color: #4299e1 !important; }
+
+    .status-dot-available { background: #48bb78 !important; }
+    .status-dot-busy { background: #ed8936 !important; }
+    .status-dot-offline { background: #a0aec0 !important; }
+    .status-dot-break { background: #4299e1 !important; }
+
+    .btn-copy {
+        background: transparent;
+        border: none;
+        color: #4e73df;
+        padding: 0 5px;
+        transition: 0.2s;
+        opacity: 0.6;
+    }
+    .btn-copy:hover {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+</style>
+{% endblock %}
+
+{% block patient_content %}
+<div class="animate-fade-in" v-cloak>
+    
+    <div class="search-section animate-slide-up">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="fw-black text-dark mb-2">Find Your Specialist</h1>
+                <p class="text-muted fw-bold">Select multiple departments or search by expertise to find the perfect match for your care.</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="premium-search-bar">
+                    <i class="bi bi-search fs-5 text-primary opacity-50"></i>
+                    <input type="text" v-model="searchQuery" placeholder="Search by name, expertise...">
+                    <button class="btn btn-primary rounded-4 px-4 fw-black ms-2">SEARCH</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="dept-pills">
+            <div v-for="dept in departments" 
+                 :key="dept.id" 
+                 @click="toggleDept(dept.name)"
+                 class="dept-pill"
+                 :class="{ active: selectedDepts.includes(dept.name) }">
+                [[ dept.name ]]
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+        <h4 class="fw-black m-0 d-flex align-items-center gap-3">
+            Available Specialists
+            <span class="badge bg-primary-soft text-primary rounded-pill smallest fw-black px-3 py-2">[[ filteredDoctors.length ]]</span>
+        </h4>
+        <div class="text-muted small fw-bold" v-if="searchQuery">
+            Showing results for "[[ searchQuery ]]"
+        </div>
+    </div>
+
+    
+    <div class="row g-4 mb-5">
+        <div v-for="doctor in filteredDoctors" :key="doctor.id" class="col-xl-4 col-md-6 animate-fade-in">
+            <div class="premium-doctor-card">
+                <div class="doc-avatar-wrapper">
+                    <img :src="doctor.pic" :alt="doctor.name">
+                    <div class="doc-status-dot" :class="'status-dot-' + (doctor.status === 'auto' ? 'available' : doctor.status)"></div>
+                </div>
+
+                <div class="text-center">
+                    <div class="mb-3">
+                        <span class="badge rounded-pill border-2 px-3 py-1 smallest fw-black text-uppercase ls-1" 
+                              :class="'status-' + (doctor.status === 'auto' ? 'available' : doctor.status)">
+                            [[ doctor.status === 'auto' ? 'Available' : doctor.status ]]
+                        </span>
+                    </div>
+                    <div class="doc-tagline">[[ doctor.tagline || 'Expert Care Professional' ]]</div>
+                    <div class="doc-name">Dr. [[ doctor.name ]]</div>
+                    
+                    <div class="doc-meta-pills">
+                        <div class="meta-pill">
+                            <i class="bi bi-mortarboard-fill"></i> [[ doctor.degree || 'MBBS' ]]
+                        </div>
+                        <div class="meta-pill">
+                            <i class="bi bi-stars"></i> [[ doctor.exp || 5 ]]+ Years
+                        </div>
+                    </div>
+
+                    <p class="small text-muted mb-4 line-clamp-2" style="height: 40px;">
+                        [[ doctor.bio ]]
+                    </p>
+
+                    <div class="doc-contact d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-telephone-fill text-primary"></i> 
+                        <span>[[ doctor.phone || 'Contact not provided' ]]</span>
+                        <button v-if="doctor.phone" @click="sharedMethods.copyToClipboard(doctor.phone)" class="btn-copy" title="Copy Number">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+
+                    <button @click="seeFullDetails(doctor)" class="btn-see-details">
+                        SEE FULL DETAILS & BOOK
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        
+        <div v-if="filteredDoctors.length === 0" class="col-12 text-center py-5">
+            <div class="bg-white rounded-5 shadow-sm p-5 border border-dashed border-2">
+                <i class="bi bi-person-x fs-1 text-muted mb-3 d-block opacity-25"></i>
+                <h3 class="fw-black text-dark">No Doctors Found</h3>
+                <p class="text-muted fw-bold">Try adjusting your search or selecting different departments.</p>
+                <button @click="resetFilters" class="btn btn-primary rounded-pill px-5 py-3 fw-black mt-3 shadow-sm">
+                    CLEAR ALL FILTERS
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="doctorDetailModal" tabindex="-1" aria-hidden="true" style="z-index: 5000;">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 rounded-5 shadow-lg overflow-hidden modal-two-column-fixed">
+            <div class="modal-body p-0">
+                <div class="row g-0 h-100">
+                    
+                    <div class="col-lg-4 modal-left-sidebar" style="width: 420px;">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3 d-lg-none" data-bs-dismiss="modal"></button>
+                        
+                        <div v-if="selectedDoc" class="h-100 d-flex flex-column">
+                            <div class="text-center mb-5 position-relative">
+                                <div class="position-relative d-inline-block">
+                                    <img :src="selectedDoc.pic" class="rounded-circle border border-4 border-white shadow-lg mb-4" width="160" height="160" style="object-fit: cover;">
+                                    <div class="doc-status-dot" :class="'status-dot-' + (selectedDoc.status === 'auto' ? 'available' : selectedDoc.status)" style="width: 32px; height: 32px; bottom: 25px; right: 10px;"></div>
+                                </div>
+                                <h2 class="fw-black text-dark mb-1">Dr. [[ selectedDoc.name ]]</h2>
+                                <div class="smallest fw-bold text-uppercase ls-2 mb-3" :class="selectedDoc.status === 'offline' ? 'text-muted' : 'text-success'">
+                                    <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+                                    [[ selectedDoc.status === 'auto' ? 'Available Now' : selectedDoc.status.toUpperCase() ]]
+                                </div>
+                            </div>
+
+                            <div class="mt-2 flex-grow-1">
+                                <div class="info-label"><i class="bi bi-building"></i> Department</div>
+                                <div class="info-value">[[ selectedDoc.dept ]]</div>
+
+                                <div class="info-label"><i class="bi bi-mortarboard-fill"></i> Qualification</div>
+                                <div class="info-value">[[ selectedDoc.degree ]]</div>
+
+                                <div class="info-label"><i class="bi bi-briefcase-fill"></i> Experience</div>
+                                <div class="info-value">[[ selectedDoc.exp ]] Years Pro</div>
+
+                                <div class="info-label"><i class="bi bi-envelope-at-fill"></i> Email Address</div>
+                                <div class="info-value text-break" style="font-size: 0.9rem;">[[ selectedDoc.email ]]</div>
+
+                                <div class="info-label"><i class="bi bi-telephone-outbound-fill"></i> Contact Number</div>
+                                <div class="info-value" style="font-size: 0.95rem;">[[ selectedDoc.phone ]]</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="col-lg-8 modal-right-content position-relative">
+                        <button type="button" class="modal-close-btn d-none d-lg-flex" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg fs-4"></i>
+                        </button>
+                        
+                        <div v-if="selectedDoc" class="h-100 d-flex flex-column">
+                            <div class="pe-3 flex-grow-1">
+                                
+                                <div class="mb-5 p-4 rounded-4 bg-primary bg-opacity-10 border-start border-4 border-primary position-relative overflow-hidden">
+                                    <i class="bi bi-quote fs-1 text-primary opacity-10 position-absolute" style="top: -10px; right: 10px;"></i>
+                                    <h4 class="fw-black text-dark mb-0 italic" style="line-height: 1.4; position: relative; z-index: 1;">
+                                        "[[ selectedDoc.tagline || 'Clinical Excellence and Compassionate Care' ]]"
+                                    </h4>
+                                </div>
+
+                                <div class="mb-5">
+                                    <h5 class="fw-black text-dark mb-3 d-flex align-items-center gap-2">
+                                        <i class="bi bi-person-badge text-primary"></i> Professional Bio
+                                    </h5>
+                                    <p class="text-muted fw-bold" style="font-size: 1rem; line-height: 1.8; text-align: justify;">
+                                        [[ selectedDoc.bio || 'Experienced specialist dedicated to providing high-quality healthcare and patient-centered treatment.' ]]
+                                    </p>
+                                </div>
+
+                                <div class="row g-4 mb-5">
+                                    <div class="col-md-7">
+                                        <div class="patients-card h-100 d-flex flex-column justify-content-center position-relative overflow-hidden">
+                                            <i class="bi bi-people-fill position-absolute opacity-10" style="font-size: 5rem; bottom: -10px; right: -10px;"></i>
+                                            <div class="d-flex align-items-center gap-3 mb-2">
+                                                <span style="font-size: 2rem;">🩺</span>
+                                                <h6 class="fw-black m-0">Patients Treated</h6>
+                                            </div>
+                                            <div class="display-5 fw-black">[[ selectedDoc.patients_count || 0 ]]+</div>
+                                            <p class="smallest fw-bold opacity-75 mb-0 mt-1">Trusted Clinical Excellence</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="fee-card h-100 d-flex flex-column justify-content-center text-center">
+                                            <div class="info-label text-success justify-content-center">Consultation Fee</div>
+                                            <div class="display-6 fw-black text-dark m-0">₹[[ selectedDoc.fees || 0 ]]</div>
+                                            <p class="smallest text-muted fw-bold mt-2 mb-0">Per Appointment</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+                                <div class="mb-5">
+                                    <h5 class="fw-black text-dark mb-4 d-flex align-items-center gap-2">
+                                        <i class="bi bi-calendar-check text-success"></i> Today's Schedule Overview
+                                    </h5>
+                                    <div v-if="todaySlots.length > 0" class="d-flex flex-wrap gap-3">
+                                        <div v-for="slot in todaySlots" :key="slot.start" class="availability-ref-item flex-grow-1">
+                                            <span>[[ slot.display ]]</span>
+                                            <span class="badge bg-success-soft text-success rounded-pill border border-success">Open</span>
+                                        </div>
+                                    </div>
+                                    <div v-else class="p-5 bg-light rounded-4 text-center border-2 border-dashed">
+                                        <i class="bi bi-calendar-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                                        <p class="text-muted fw-bold mb-0">No slots defined for today.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div class="mt-auto pt-4 pb-4 border-top" style="flex-shrink: 0;">
+                                <button @click="openBookingModal(selectedDoc)" class="btn btn-primary fw-black w-100 rounded-pill py-3 shadow-blue transition-all" style="letter-spacing: 1px;">
+                                    <i class="bi bi-calendar-plus me-2"></i> BOOK APPOINTMENT NOW
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div v-if="showBookingModal" class="bk-modal-backdrop animate-fade-in" @click.self="showBookingModal = false">
+    <div class="bk-modal-card scale-in" role="dialog">
+        
+        <div class="bk-modal-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bk-header-avatar">
+                    <img :src="selectedDoctor?.pic" width="48" height="48" class="rounded-circle object-fit-cover border border-3 border-white shadow-sm">
+                </div>
+                <div>
+                    <h4 class="fw-black m-0" style="letter-spacing: -0.5px;">Book Appointment</h4>
+                    <p class="m-0 opacity-75 small fw-bold">with Dr. [[ selectedDoctor?.name ]]</p>
+                </div>
+            </div>
+            <button @click="showBookingModal = false" class="bk-close-btn" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        
+        <div class="bk-modal-body">
+            <div class="bk-two-col">
+                
+                <div class="bk-left-panel">
+                    <p class="bk-section-label"><i class="bi bi-calendar3 me-2 text-primary"></i>Select a Date</p>
+                    <div class="bk-week-strip">
+                        <div v-for="day in sevenDays" :key="day.value"
+                             @click="selectDay(day.value)"
+                             class="bk-day-chip"
+                             :class="{ 'bk-day-active': selectedDate === day.value }">
+                            <span class="bk-day-name">[[ day.dayShort ]]</span>
+                            <span class="bk-day-num">[[ day.dateNum ]]</span>
+                            <span class="bk-day-month">[[ day.monthShort ]]</span>
+                        </div>
+                    </div>
+
+                    
+                    <div v-if="selectedDate" class="bk-selected-date-badge mt-3 animate-fade-in">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <span class="fw-bold">[[ formatDate(selectedDate) ]]</span>
+                    </div>
+                    <div v-if="!selectedDate" class="bk-no-date-hint mt-3">
+                        <i class="bi bi-arrow-up-circle me-1"></i> Tap a day to see slots
+                    </div>
+                </div>
+
+                
+                <div class="bk-right-panel">
+                    
+                    <div v-if="!selectedDate" class="bk-empty-state">
+                        <div class="bk-empty-icon">📅</div>
+                        <p class="fw-bold text-muted mt-3 mb-1">Pick a date first</p>
+                        <p class="small text-muted">Select any of the 7 days on the left to view available slots.</p>
+                    </div>
+
+                    
+                    <div v-else-if="availableSlots.length === 0" class="bk-empty-state">
+                        <div class="bk-empty-icon">🗓️</div>
+                        <p class="fw-bold text-muted mt-3 mb-1">No slots available</p>
+                        <p class="small text-muted">Dr. [[ selectedDoctor?.name ]] has not set availability for this day.</p>
+                    </div>
+
+                    
+                    <div v-else class="animate-fade-in">
+                        <p class="bk-section-label"><i class="bi bi-clock me-2 text-primary"></i>Available Slots — [[ formatDate(selectedDate) ]]</p>
+                        
+                        <div v-for="slot in availableSlots" :key="slot.start"
+                             class="bk-slot-card"
+                             :class="{ 'bk-slot-selected': selectedSlot && selectedSlot.start === slot.start }">
+                            
+                            
+                            <div class="bk-slot-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="bk-slot-time-badge">[[ slot.display ]]</span>
+                                    <span class="bk-slot-duration">[[ getSlotDurationString(slot) ]] window</span>
+                                </div>
+                                <span v-if="selectedSlot && selectedSlot.start === slot.start" class="bk-slot-selected-badge">
+                                    <i class="bi bi-check-lg me-1"></i>Selected
+                                </span>
+                            </div>
+
+                            
+                            <div class="bk-avail-label">
+                                <i class="bi bi-bar-chart-fill me-1 text-primary opacity-50"></i>
+                                <span>Availability in this window</span>
+                            </div>
+                            <div class="bk-bar-track position-relative" :id="'slot-bar-' + slot.start.replace(':', '')">
+                                
+                                <div class="bk-bar-markers">
+                                    <span>[[ slot.display.split(' - ')[0] ]]</span>
+                                    <span>[[ midpointDisplay(slot) ]]</span>
+                                    <span>[[ slot.display.split(' - ')[1] ]]</span>
+                                </div>
+                                
+                                <div class="bk-bar-inner">
+                                    
+                                    <div class="bk-bar-free w-100 h-100"></div>
+                                    
+                                    <div v-for="busy in getBusyIntervalsForSlot(slot)"
+                                         :key="busy.start"
+                                         class="bk-bar-busy position-absolute h-100"
+                                         :style="getBusyBlockStyle(slot, busy)"
+                                         :title="'Busy: ' + formatTime(busy.start) + ' – ' + formatTime(busy.end)">
+                                        <span class="bk-bar-busy-label">BUSY</span>
+                                    </div>
+                                    
+                                    <div v-if="selectedSlot && selectedSlot.start === slot.start && selectedTime"
+                                         class="bk-bar-selection position-absolute h-100"
+                                         :style="getSelectionPreviewStyle(slot)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div v-if="selectedSlot && selectedSlot.start === slot.start" class="bk-time-picker-box animate-fade-in">
+                                <label class="bk-time-label">
+                                    <i class="bi bi-alarm-fill me-1 text-primary"></i>Your preferred time within this slot
+                                </label>
+                                <div class="bk-time-input-row">
+                                    <input :id="'specificTime'" type="time"
+                                           v-model="selectedTime"
+                                           :min="slot.start"
+                                           :max="slot.end"
+                                           class="bk-time-input">
+                                    <div class="bk-time-preview">
+                                        <i class="bi bi-clock me-1"></i>[[ formatTime(selectedTime) ]]
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <button @click="selectSlot(slot)"
+                                    class="bk-choose-btn"
+                                    :class="selectedSlot && selectedSlot.start === slot.start ? 'bk-choose-active' : ''">
+                                <i class="bi" :class="selectedSlot && selectedSlot.start === slot.start ? 'bi-check2-circle' : 'bi-plus-circle'"></i>
+                                [[ selectedSlot && selectedSlot.start === slot.start ? 'Slot Selected' : 'Add Your Slot Here' ]]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            
+            <div class="bk-fields-section mt-4">
+
+                
+                <div class="bk-field-card">
+                    <div class="bk-field-icon-wrap">
+                        <i class="bi bi-chat-square-text-fill"></i>
+                    </div>
+                    <div class="bk-field-body">
+                        <label class="bk-field-label">What's the problem?</label>
+                        <p class="bk-field-hint">Describe your symptoms or reasons for visit. The doctor will see this in their incoming requests.</p>
+                        <textarea v-model="urgentNote" class="bk-field-textarea" rows="3"
+                                  placeholder="e.g. Severe headache since 3 days, mild fever and throat irritation..."></textarea>
+                    </div>
+                </div>
+
+                
+                <div class="bk-field-card bk-urgent-card" :class="{ 'bk-urgent-active': isUrgent }">
+                    <div class="bk-field-icon-wrap" :class="isUrgent ? 'bk-icon-urgent' : ''">
+                        <i class="bi" :class="isUrgent ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill'"></i>
+                    </div>
+                    <div class="bk-field-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <label class="bk-field-label">Mark as Urgent</label>
+                                <p class="bk-field-hint">Flags this appointment as urgent — the doctor sees a red alert indicator on their dashboard.</p>
+                            </div>
+                            <div class="bk-toggle-switch" @click="isUrgent = !isUrgent" :class="{ 'bk-toggle-on': isUrgent }">
+                                <div class="bk-toggle-knob"></div>
+                            </div>
+                        </div>
+                        <div v-if="isUrgent" class="bk-urgent-note animate-fade-in">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Urgent appointments require a reason. Make sure you've described the problem above.
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="bk-field-card">
+                    <div class="bk-field-icon-wrap bk-icon-history">
+                        <i class="bi bi-journal-medical"></i>
+                    </div>
+                    <div class="bk-field-body">
+                        <label class="bk-field-label">Medical History Update</label>
+                        <p class="bk-field-hint">Any changes to your health history, allergies, current medications, or past surgeries. This updates your profile.</p>
+                        <textarea v-model="medicalHistory" class="bk-field-textarea" rows="3"
+                                  placeholder="e.g. Diagnosed with Type 2 Diabetes in 2022. Allergic to Penicillin. Currently on Metformin 500mg..."></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            
+            <div class="bk-book-action-row mt-5 mb-2">
+                <button @click="openConfirmModal" :disabled="!selectedSlot" class="bk-book-final-btn">
+                    <i class="bi bi-calendar2-check me-2"></i>
+                    Book Appointment
+                </button>
+            </div>
+
+        </div>
+
+        
+        <div class="bk-modal-footer">
+            <div class="bk-footer-summary">
+                <span v-if="selectedSlot && selectedDate">
+                    <i class="bi bi-calendar-check-fill text-success me-2"></i>
+                    [[ formatDate(selectedDate) ]] &nbsp;·&nbsp; [[ formatTime(selectedTime || selectedSlot.start) ]]
+                    &nbsp;with Dr. [[ selectedDoctor?.name ]]
+                </span>
+                <span v-else class="text-muted small">Select a date and slot above, then fill your details to book.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div v-if="showConfirmModal" class="bk-modal-backdrop animate-fade-in" style="z-index: 7000;" @click.self="showConfirmModal = false">
+    <div class="bk-confirm-modal-card scale-in" role="dialog">
+        
+        <div class="bk-cmodal-icon">
+            <i class="bi bi-calendar2-check"></i>
+        </div>
+        <h4 class="fw-black text-dark mb-2" style="letter-spacing: -0.5px;">Confirm Appointment</h4>
+        <p class="text-muted small fw-bold mb-4">Please review the details before confirming.</p>
+
+        
+        <div class="bk-cmodal-summary">
+            <div class="bk-cmodal-row">
+                <span class="bk-cmodal-key"><i class="bi bi-person-fill me-2 text-primary"></i>Doctor</span>
+                <span class="bk-cmodal-val">Dr. [[ selectedDoctor?.name ]]</span>
+            </div>
+            <div class="bk-cmodal-row">
+                <span class="bk-cmodal-key"><i class="bi bi-building me-2 text-primary"></i>Department</span>
+                <span class="bk-cmodal-val">[[ selectedDoctor?.dept ]]</span>
+            </div>
+            <div class="bk-cmodal-row">
+                <span class="bk-cmodal-key"><i class="bi bi-calendar3 me-2 text-primary"></i>Date</span>
+                <span class="bk-cmodal-val">[[ formatDate(selectedDate) ]]</span>
+            </div>
+            <div class="bk-cmodal-row">
+                <span class="bk-cmodal-key"><i class="bi bi-clock me-2 text-primary"></i>Time</span>
+                <span class="bk-cmodal-val">[[ formatTime(selectedTime || selectedSlot?.start) ]]</span>
+            </div>
+            <div class="bk-cmodal-row" v-if="isUrgent">
+                <span class="bk-cmodal-key"><i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Priority</span>
+                <span class="bk-cmodal-val text-danger fw-black">🚨 URGENT</span>
+            </div>
+        </div>
+
+        
+        <div v-if="isUrgent && !urgentNote" class="bk-cmodal-warning">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            You marked this as urgent but haven't described your problem. Please go back and fill in the complaint.
+        </div>
+
+        
+        <div class="bk-cmodal-actions">
+            <button @click="showConfirmModal = false" class="bk-cmodal-cancel-btn">
+                <i class="bi bi-arrow-left me-2"></i> Go Back
+            </button>
+            <button @click="submitBooking" :disabled="loading || (isUrgent && !urgentNote)" class="bk-cmodal-confirm-btn">
+                <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <i v-else class="bi bi-check2-circle me-2"></i>
+                [[ loading ? 'Booking...' : 'Confirm & Book' ]]
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block patient_scripts %}
+<script>
+    window.allDoctors = [
+        {% for doc in doctors %}
+        {
+            id: {{ doc.id }},
+            name: {{ (doc.user.full_name if doc.user else 'Unknown')|tojson }},
+            dept: {{ (doc.department.name if doc.department else 'General')|tojson }},
+            pic: {{ doc.profile_pic_url|tojson }},
+            tagline: {{ (doc.tagline or 'Clinical Excellence')|tojson }},
+            degree: {{ (doc.degree or 'MBBS')|tojson }},
+            exp: {{ (doc.experience_years or 0)|tojson }},
+            bio: {{ (doc.about_me or doc.bio or 'Experienced specialist dedicated to patient care.')|tojson }},
+            phone: {{ (doc.phone_number or 'Contact not visible')|tojson }},
+            email: {{ (doc.user.email if doc.user else 'N/A')|tojson }},
+            patients_count: {{ (doc.unique_patients_count or 0)|tojson }},
+            fees: {{ (doc.fees or 500)|tojson }},
+            status: {{ (doc.status_override or 'available')|tojson }}
+        },
+        {% endfor %}
+    ];
+    window.allDepts = [
+        {% for dept in departments %}
+        { id: {{ dept.id }}, name: {{ dept.name|tojson }} },
+        {% endfor %}
+    ];
+</script>
+<script src="{{ url_for('static', filename='js/book_visit.js') }}"></script>
+{% endblock %}

@@ -32,11 +32,13 @@
                     const matchesStatus = this.activeStatusFilters.length === 0 || this.activeStatusFilters.includes(appt.status);
                     return matchesSearch && matchesStatus;
                 }).sort((a, b) => {
-                    const priority = { 'Ongoing': 0, 'Booked': 1, 'Requested': 2, 'Completed': 3 };
-                    const pA = priority[a.status] ?? 99;
-                    const pB = priority[b.status] ?? 99;
-                    if (pA !== pB) return pA - pB;
-                    return b.id - a.id;
+                    
+                    const dateA = new Date(a.raw_date || a.datetime);
+                    const dateB = new Date(b.raw_date || b.datetime);
+                    if (dateB - dateA !== 0) return dateB - dateA;
+
+                    
+                    return a.status.localeCompare(b.status);
                 });
             }
         },
@@ -44,12 +46,8 @@
             console.log("Appointments Page Mounted.");
             await this.fetchData();
             this.initDatePicker();
-            this.pollInterval = setInterval(() => {
-                this.fetchData();
-            }, 10000);
         },
         unmounted() {
-            if (this.pollInterval) clearInterval(this.pollInterval);
         },
         methods: {
             async fetchData() {

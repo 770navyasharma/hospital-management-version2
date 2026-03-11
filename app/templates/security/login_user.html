@@ -4,6 +4,14 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 {% endblock %}
 
+{% block scripts %}
+<script>
+    document.querySelector('form').addEventListener('submit', function() {
+        window.showToast("Signing in... Please wait.", "primary", "AUTHENTICATION");
+    });
+</script>
+{% endblock %}
+
 {% block page_content %}
 <div class="auth-container">
     <div class="auth-card">

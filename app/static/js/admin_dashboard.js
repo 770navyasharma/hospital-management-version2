@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function updateDashboard(start, end) {
-        // Soft fade animation for cards during data update
+        
         document.querySelectorAll('.chart-card').forEach(c => c.style.opacity = '0.6');
         try {
             const res = await fetch(`/api/admin/dashboard-stats?start_date=${start}&end_date=${end}`);
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderCharts(data) {
-        // --- 1. Line Chart with Interaction ---
+        
         const lineCtx = document.getElementById('lineChart').getContext('2d');
         const lineGrad = lineCtx.createLinearGradient(0, 0, 0, 350);
         lineGrad.addColorStop(0, 'rgba(78, 115, 223, 0.2)');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: { 
                 maintainAspectRatio: false,
-                // 🟢 ENABLED INTERACTION
+                
                 interaction: {
                     intersect: false,
                     mode: 'index',
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- 2. Doughnut with Hover Pop ---
+        
         if (charts.doughnut) charts.doughnut.destroy();
         charts.doughnut = new Chart(document.getElementById('doughnutChart'), {
             type: 'doughnut',
@@ -95,21 +95,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- 3. Multi-Bar Chart: Doctor Workload by Status ---
+        
         const barCtx = document.getElementById('barChart').getContext('2d');
         
-        // Define Statuses and Colors
-        const statuses = ['New', 'Under Treatment', 'Recovered'];
-        const colors = ['#4e73df', '#f6c23e', '#1cc88a']; // Blue, Yellow, Green
         
-        // Prepare Datasets
+        const statuses = ['New', 'Under Treatment', 'Recovered'];
+        const colors = ['#4e73df', '#f6c23e', '#1cc88a']; 
+        
+        
         const datasets = statuses.map((status, index) => ({
             label: status,
             data: data.doctors.map(d => d.statuses[status] || 0),
             backgroundColor: colors[index],
             borderRadius: 8,
-            barPercentage: 0.9,      // High width
-            categoryPercentage: 0.8  // High width
+            barPercentage: 0.9,      
+            categoryPercentage: 0.8  
         }));
 
         if (charts.bar) charts.bar.destroy();

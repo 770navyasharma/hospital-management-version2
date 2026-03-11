@@ -70,7 +70,7 @@
             .ongoing-session-sidebar { width: 100%; }
         }
 
-        /* Swipe & Urgent Feedback */
+        
         .urgent-modal-card {
             width: 450px;
             box-shadow: 0 25px 50px -12px rgba(231, 74, 59, 0.5) !important;
@@ -99,30 +99,33 @@
         <nav id="sidebar" class="shadow-sm">
             <div class="sidebar-header text-center p-4">
                 <div class="profile-img-container mb-3 position-relative d-inline-block dropdown">
-                    <img src="{{ current_user.doctor_profile.profile_pic_url }}" class="rounded-circle shadow-sm border border-4 border-white" width="100" height="100" style="object-fit: cover;">
-                    <div class="status-indicator position-absolute border border-3 border-white rounded-circle cursor-pointer" 
-                         data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false"
-                         :style="{ width: '22px', height: '22px', bottom: '5px', right: '5px', background: sharedMethods.getStatusColor(globalState.currentStatus) }">
-                    </div>
-                    <ul class="dropdown-menu shadow border-0 rounded-4 p-2 smallest fw-bold mt-2">
-                        <li><h6 class="dropdown-header smallest fw-black text-muted opacity-50">SET STATUS</h6></li>
-                        <li><a class="dropdown-item d-flex align-items-center py-2" @click="sharedMethods.setDoctorStatus('auto')">
-                            <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #4e73df;"></div> Automatic [[ globalState.statusOverride === 'auto' ? '✓' : '' ]]
-                        </a></li>
-                        <li><hr class="dropdown-divider opacity-50"></li>
-                        <li><a class="dropdown-item d-flex align-items-center py-2" @click="sharedMethods.setDoctorStatus('available')">
-                            <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #1cc88a;"></div> Available [[ globalState.statusOverride === 'available' ? '✓' : '' ]]
-                        </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center py-2" @click="sharedMethods.setDoctorStatus('busy')">
-                            <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #e74a3b;"></div> Busy [[ globalState.statusOverride === 'busy' ? '✓' : '' ]]
-                        </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center py-2" @click="sharedMethods.setDoctorStatus('break')">
-                            <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #f6c23e;"></div> On Break [[ globalState.statusOverride === 'break' ? '✓' : '' ]]
-                        </a></li>
-                        <li><a class="dropdown-item d-flex align-items-center py-2" @click="sharedMethods.setDoctorStatus('offline')">
-                            <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #858796;"></div> Offline [[ globalState.statusOverride === 'offline' ? '✓' : '' ]]
-                        </a></li>
-                    </ul>
+                    <img src="{{ current_user.doctor_profile.profile_pic_url or url_for('static', filename='images/default-profile.svg') }}" 
+                         class="rounded-circle shadow-sm border border-4 border-white" width="100" height="100" style="object-fit: cover;">
+                    <span data-bs-toggle="tooltip" data-bs-placement="right" :title="'Current Status: ' + sharedMethods.getStatusText(globalState.currentStatus)">
+                        <div class="status-indicator position-absolute border border-3 border-white rounded-circle cursor-pointer" 
+                             data-bs-toggle="dropdown" aria-expanded="false"
+                             :style="{ width: '22px', height: '22px', bottom: '5px', right: '5px', background: sharedMethods.getStatusColor(globalState.currentStatus) }">
+                        </div>
+                        <ul class="dropdown-menu shadow border-0 rounded-4 p-2 smallest fw-bold mt-2 scale-in">
+                            <li><h6 class="dropdown-header smallest fw-black text-muted opacity-50">SET STATUS</h6></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2 rounded-3" @click="sharedMethods.setDoctorStatus('auto')">
+                                <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #4e73df;"></div> Automatic [[ globalState.statusOverride === 'auto' ? '✓' : '' ]]
+                            </a></li>
+                            <li><hr class="dropdown-divider opacity-50"></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2 rounded-3" @click="sharedMethods.setDoctorStatus('available')">
+                                <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #1cc88a;"></div> Available [[ globalState.statusOverride === 'available' ? '✓' : '' ]]
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2 rounded-3" @click="sharedMethods.setDoctorStatus('busy')">
+                                <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #e74a3b;"></div> Busy [[ globalState.statusOverride === 'busy' ? '✓' : '' ]]
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2 rounded-3" @click="sharedMethods.setDoctorStatus('break')">
+                                <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #f6c23e;"></div> On Break [[ globalState.statusOverride === 'break' ? '✓' : '' ]]
+                            </a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2 rounded-3" @click="sharedMethods.setDoctorStatus('offline')">
+                                <div class="rounded-circle me-2" style="width: 8px; height: 8px; background: #858796;"></div> Offline [[ globalState.statusOverride === 'offline' ? '✓' : '' ]]
+                            </a></li>
+                        </ul>
+                    </span>
                 </div>
                 <h5 class="fw-bold text-primary mb-1">{{ current_user.full_name }}</h5>
                 <p class="text-muted smallest fw-bold text-uppercase ls-1">{{ current_user.doctor_profile.department.name }}</p>
@@ -176,38 +179,79 @@
                     <div class="position-relative notification-wrapper" v-click-outside="() => globalState.showNotifications = false">
                         <button class="nav-icon-btn" @click="globalState.showNotifications = !globalState.showNotifications">
                             <i class="bi bi-bell"></i>
-                            <div v-if="globalState.requests.length > 0" class="position-absolute notification-dot animate-pulse"></div>
+                            <div v-if="globalState.requests.length > 0 || globalState.notifications.filter(n => !n.is_read).length > 0" class="position-absolute notification-dot animate-pulse d-flex align-items-center justify-content-center pt-1" style="width: 18px; height: 18px; font-size: 0.65rem; color: white; right: 2px; top: 2px;">
+                                <span style="transform: translateY(-2px)">[[ globalState.requests.length + globalState.notifications.filter(n => !n.is_read).length ]]</span>
+                            </div>
                         </button>
                         
-                        <!-- Global Notification Dropdown -->
-                        <div v-if="globalState.showNotifications" class="notification-dropdown shadow-lg border-0" @click.stop style="max-height: 500px; display: flex; flex-direction: column;">
+                        
+                        <div v-if="globalState.showNotifications" class="notification-dropdown shadow-lg border-0" @click.stop style="max-height: 500px; display: flex; flex-direction: column; width: 380px;">
                             <div class="notification-header d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 fw-bold">Notifications</h6>
-                                <span class="badge bg-white text-primary rounded-pill">[[ globalState.requests.length ]] New</span>
+                                <h6 class="m-0 fw-bold">Inbox</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span v-if="globalState.requests.length + globalState.notifications.filter(n => !n.is_read).length > 0" class="badge bg-white text-primary rounded-pill">
+                                        [[ globalState.requests.length + globalState.notifications.filter(n => !n.is_read).length ]] New
+                                    </span>
+                                    <button v-if="globalState.notifications.length > 0" @click="sharedMethods.markAllAsRead()" class="btn btn-sm btn-link text-white p-0 text-decoration-none smallest fw-bold opacity-75 hover-opacity-100">
+                                        Mark read
+                                    </button>
+                                </div>
                             </div>
-                            <div class="notification-list custom-scroll flex-grow-1 overflow-auto">
-                                <div v-for="req in globalState.requests" :key="req.id" @click="globalState.newUrgentReq = req; globalState.showNotifications = false" class="notification-item cursor-pointer">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <img :src="req.pic" class="rounded-circle me-3" width="35" height="35" style="object-fit: cover;">
-                                        <div class="flex-grow-1">
-                                            <div class="fw-bold small">[[ req.name ]]</div>
-                                            <div class="smallest text-muted">[[ req.proposed_time ]]</div>
+                            <div class="notification-list custom-scroll flex-grow-1 overflow-auto p-2">
+                                
+                                <div v-if="globalState.requests.length > 0" class="mb-3">
+                                    <div class="px-3 pt-2 pb-1 smallest fw-bold text-muted text-uppercase ls-1">Action Required</div>
+                                    <div v-for="req in globalState.requests" :key="req.id" @click="globalState.newUrgentReq = req; globalState.showNotifications = false" class="notification-item cursor-pointer mb-2 border border-primary-subtle shadow-sm pb-3">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <img :src="req.pic" class="rounded-circle me-3" width="35" height="35" style="object-fit: cover;">
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold small">[[ req.name ]]</div>
+                                                <div class="smallest text-muted">[[ req.proposed_time ]]</div>
+                                            </div>
+                                            <span v-if="req.is_urgent" class="badge bg-danger smallest animate-pulse">URGENT</span>
                                         </div>
-                                        <span v-if="req.is_urgent" class="badge bg-danger smallest animate-pulse">URGENT</span>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button @click.stop="sharedMethods.processReq(req.id, 'Booked'); globalState.showNotifications = false" class="btn btn-sm btn-primary rounded-pill flex-grow-1 fw-bold">Accept</button>
-                                        <button @click.stop="sharedMethods.openRejectModal(req.id); globalState.showNotifications = false" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold">Reject</button>
+                                        <div class="d-flex gap-2">
+                                            <button @click.stop="sharedMethods.processReq(req.id, 'Booked'); globalState.showNotifications = false" class="btn btn-sm btn-primary rounded-pill flex-grow-1 fw-bold">Accept</button>
+                                            <button @click.stop="sharedMethods.openRejectModal(req.id); globalState.showNotifications = false" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold">Reject</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div v-if="globalState.requests.length === 0" class="text-center py-5 opacity-50">
+
+                                
+                                <div v-if="globalState.notifications.length > 0">
+                                    <div class="px-3 pt-2 pb-1 smallest fw-bold text-muted text-uppercase ls-1">Notifications</div>
+                                    <div v-for="note in globalState.notifications" :key="note.id"
+                                         class="notif-item position-relative p-3 mb-2 rounded-4 d-flex align-items-start gap-3 transition-all"
+                                         :class="!note.is_read ? 'bg-light border border-primary-subtle' : 'bg-white border text-muted'">
+                                        
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                             style="width: 32px; height: 32px;"
+                                             :class="note.type === 'error' || note.type === 'danger' || note.message.toLowerCase().includes('cancel') ? 'bg-danger-soft text-danger' :
+                                                     note.type === 'success' ? 'bg-success-soft text-success' : 'bg-primary-soft text-primary'">
+                                            <i class="bi"
+                                               :class="note.type === 'error' || note.type === 'danger' || note.message.toLowerCase().includes('cancel') ? 'bi-x-circle-fill' :
+                                                       note.type === 'success' ? 'bi-check-circle-fill' : 'bi-info-circle-fill'"></i>
+                                        </div>
+                                        
+                                        <div class="flex-grow-1 pe-4">
+                                            <p class="mb-1 small" :class="!note.is_read ? 'fw-bold text-dark' : 'text-secondary'">[[ note.message ]]</p>
+                                            <div class="smallest opacity-75"><i class="bi bi-clock me-1"></i>[[ note.time || 'Just now' ]]</div>
+                                        </div>
+                                        
+                                        <button class="btn btn-link p-0 position-absolute top-0 end-0 m-2 text-muted opacity-50 hover-opacity-100"
+                                                @click.stop="globalState.notifications = globalState.notifications.filter(n => n.id !== note.id)"
+                                                title="Dismiss">
+                                            <i class="bi bi-x fs-5"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div v-if="globalState.requests.length === 0 && globalState.notifications.length === 0" class="text-center py-5 opacity-50">
                                     <i class="bi bi-bell-slash fs-2 mb-2 d-block"></i>
                                     <span class="smallest fw-bold text-uppercase ls-1">Clear Inbox</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <button class="nav-icon-btn"><i class="bi bi-gear"></i></button>
                 </div>
             </header>
 
@@ -215,16 +259,16 @@
                 {% block doctor_content %}{% endblock %}
             </div>
 
-            <!-- Global Urgent Modal -->
+            
             <div v-if="globalState.currentUrgent" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 3000;">
                 <div class="card border-0 shadow-lg rounded-5 overflow-hidden urgent-modal-card" :class="globalState.alertAnimation" style="background: #fff;">
                     <div class="p-5 text-white text-center position-relative" style="background: linear-gradient(135deg, #e74a3b 0%, #be123c 100%);"
-                         @touchstart="sharedMethods.handleTouchStart"
-                         @touchmove="sharedMethods.handleTouchMove"
-                         @touchend="sharedMethods.handleTouchEnd"
+                         @touchstart="sharedMethods.handleTouchStart($event, globalState.currentUrgent.id)"
+                         @touchmove="sharedMethods.handleTouchMove($event, globalState.currentUrgent.id)"
+                         @touchend="sharedMethods.handleTouchEnd(globalState.currentUrgent.id)"
                          :style="{ transform: 'translateX(' + globalState.swipeOffset + 'px)', transition: globalState.swipeOffset === 0 ? '0.3s' : 'none' }">
                         
-                        <!-- Swipe Indicators -->
+                        
                         <div class="position-absolute start-0 top-50 translate-middle-y ps-3 opacity-50" v-if="globalState.swipeOffset < -20">
                             <i class="bi bi-x-circle-fill fs-2"></i>
                         </div>
@@ -263,12 +307,12 @@
                 </div>
             </div>
 
-            <!-- Global Alarm Sound -->
+            
             <audio id="urgentAlarm" preload="auto">
                 <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
             </audio>
 
-            <!-- Global Confirmation Modal -->
+            
             <div v-if="globalState.confirmModal.show" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 5000;">
                 <div class="card border-0 shadow-lg rounded-5 overflow-hidden scale-in" style="width: 400px; background: #fff;">
                     <div class="p-4 text-center border-bottom border-light">
@@ -285,7 +329,7 @@
                 </div>
             </div>
             
-            <!-- Duration Selection Modal -->
+            
             <div v-if="globalState.durationModal.show" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 5000;">
                 <div class="card border-0 shadow-lg rounded-5 overflow-hidden scale-in" style="width: 400px; background: #fff;">
                     <div class="p-4 text-center border-bottom border-light bg-light-soft">
@@ -320,7 +364,7 @@
                 </div>
             </div>
 
-            <!-- Global Rejection Reason Modal -->
+            
             <div v-if="globalState.showRejectModal" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 7000;">
                 <div class="card border-0 shadow-lg rounded-5 overflow-hidden scale-in" style="width: 400px; background: #fff;">
                     <div class="p-4 text-center border-bottom border-light bg-danger-soft">
@@ -342,7 +386,7 @@
                 </div>
             </div>
 
-            <!-- Global Toast Notifications -->
+            
             <div class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 6000;">
                 <div v-for="toast in globalState.toasts" :key="toast.id" class="toast-item mb-2 p-3 rounded-4 shadow-lg animate-slide-up d-flex align-items-center" 
                      :class="toast.type === 'success' ? 'bg-success text-white' : (toast.type === 'warning' ? 'bg-warning text-dark' : 'bg-danger text-white')">
@@ -354,9 +398,9 @@
     </div>
     {% block extra_body %}{% endblock %}
 
-    <!-- Global Ongoing Appointment Sidebar Removed (Now a dedicated page) -->
+    
 
-    <!-- Completion Confirmation Modal -->
+    
     <div v-if="globalState.showCompleteModal" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 6000;">
         <div class="card border-0 shadow-lg rounded-5 overflow-hidden scale-in" style="width: 450px; background: #fff;">
             <div class="p-5 text-center">
@@ -374,7 +418,7 @@
         </div>
     </div>
 
-    <!-- Attachment Preview Modal -->
+    
     <div v-if="globalState.activePreview.show" 
          @click.self="sharedMethods.closePreview()"
          class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" 
@@ -383,7 +427,7 @@
         <div class="card border-0 shadow-2xl rounded-5 overflow-hidden scale-in bg-dark" 
              style="width: 90%; height: 90%; max-width: 1200px; position: relative; cursor: default;">
             
-            <!-- Close Button (Premium Red) -->
+            
             <button @click="sharedMethods.closePreview()" 
                     class="btn btn-danger rounded-circle shadow-lg position-absolute top-0 end-0 m-4 z-index-100 hover-lift d-flex align-items-center justify-content-center" 
                     style="width: 50px; height: 50px; z-index: 11000 !important; border: 3px solid rgba(255,255,255,0.3);">
@@ -391,7 +435,7 @@
             </button>
 
             <div class="d-flex flex-column h-100">
-                <!-- Preview Header -->
+                
                 <div class="p-4 px-5 bg-black bg-opacity-25 border-bottom border-white border-opacity-10 d-flex align-items-center justify-content-between">
                     <div>
                         <h5 class="fw-black m-0 text-white text-uppercase ls-1 small">[[ globalState.activePreview.name ]]</h5>
@@ -399,20 +443,20 @@
                     </div>
                 </div>
 
-                <!-- Preview Area -->
+                
                 <div class="flex-grow-1 p-0 overflow-hidden d-flex align-items-center justify-content-center bg-black">
-                    <!-- Image Preview -->
+                    
                     <img v-if="globalState.activePreview.type === 'image'" :src="globalState.activePreview.path" class="img-fluid h-100 w-100 object-fit-contain animate-fade-in">
                     
-                    <!-- PDF Preview -->
+                    
                     <iframe v-else-if="globalState.activePreview.type === 'pdf'" :src="globalState.activePreview.path" class="w-100 h-100 border-0"></iframe>
                     
-                    <!-- Video Preview -->
+                    
                     <video v-else-if="globalState.activePreview.type === 'video'" controls autoplay class="w-100 h-100 animate-fade-in">
                         <source :src="globalState.activePreview.path">
                     </video>
 
-                    <!-- Fallback / Other -->
+                    
                     <div v-else class="text-center text-white p-5">
                         <i class="bi bi-file-earmark-arrow-down-fill fs-1 mb-3 opacity-50"></i>
                         <h4 class="fw-bold">Preview Not Available</h4>
@@ -421,7 +465,7 @@
                     </div>
                 </div>
 
-                <!-- Footer / Controls -->
+                
                 <div class="p-4 bg-black bg-opacity-25 border-top border-white border-opacity-10 d-flex justify-content-center">
                     <a :href="globalState.activePreview.path" download class="btn btn-outline-light rounded-pill px-4 fw-bold smallest ls-1">
                         <i class="bi bi-download me-2"></i> DOWNLOAD ORIGINAL
@@ -431,7 +475,7 @@
         </div>
     </div>
 
-    <!-- Global Past Appointment Detailed Record Modal -->
+    
     <div v-if="globalState.showPastApptModal" class="modal-backdrop d-flex align-items-center justify-content-center animate-fade-in" 
          style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(10, 24, 58, 0.85); z-index: 8500; backdrop-filter: blur(10px);">
         
@@ -439,7 +483,7 @@
              style="width: 85%; height: 85%; max-width: 1400px; background: #f8f9fc;">
             
             <div class="row g-0 h-100">
-                <!-- Record Sidebar -->
+                
                 <div class="col-md-3 bg-white border-end p-5 d-flex flex-column h-100">
                     <div class="text-center mb-5">
                         <div class="position-relative d-inline-block mb-3">
@@ -458,14 +502,93 @@
                         <div class="small fw-bold text-secondary">at [[ globalState.selectedPastAppt.time ]]</div>
                     </div>
 
-                    <div class="mt-auto">
+                    <div v-if="!globalState.isEditingPastAppt" class="mt-auto">
+                        <button @click="globalState.isEditingPastAppt = true" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-blue mb-3">
+                            <i class="bi bi-pencil-square me-2"></i> EDIT RECORD
+                        </button>
                         <button @click="globalState.showPastApptModal = false" class="btn btn-dark w-100 rounded-pill py-3 fw-bold">
                             <i class="bi bi-arrow-left me-2"></i> RETURN
                         </button>
                     </div>
+                    <div v-else class="mt-auto">
+                        <button @click="sharedMethods.saveUpdatedHistory" class="btn btn-success w-100 rounded-pill py-3 fw-bold shadow-sm mb-3">
+                            <i class="bi bi-check-circle me-2"></i> SAVE CHANGES
+                        </button>
+                        <button @click="globalState.isEditingPastAppt = false" class="btn btn-outline-danger w-100 rounded-pill py-3 fw-bold">
+                            <i class="bi bi-x-circle me-2"></i> CANCEL
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Record Content -->
+                <script>
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            let timeout = null;
+            const initTooltips = () => {
+                if (timeout) clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                    tooltipTriggerList.forEach(function (el) {
+                        let instance = bootstrap.Tooltip.getInstance(el);
+                        const newTitle = el.getAttribute('title') || el.getAttribute('data-bs-original-title');
+                        
+                        if (!instance) {
+                            if (newTitle) new bootstrap.Tooltip(el);
+                        } else {
+                            
+                            if (newTitle && instance._config.title !== newTitle) {
+                                
+                                const isShown = instance._activeTrigger && (instance._activeTrigger.click || instance._activeTrigger.hover || instance._activeTrigger.focus);
+                                
+                                if (isShown) {
+                                    
+                                    instance._config.title = newTitle;
+                                    if (instance.update) instance.update();
+                                    
+                                    const tip = instance.getTipElement();
+                                    if (tip) {
+                                        const inner = tip.querySelector('.tooltip-inner');
+                                        if (inner) inner.textContent = newTitle;
+                                    }
+                                } else {
+                                    instance.dispose();
+                                    new bootstrap.Tooltip(el);
+                                }
+                            }
+                        }
+                    });
+                }, 150);
+            };
+
+            
+            initTooltips();
+
+            
+            const observer = new MutationObserver((mutations) => {
+                let shouldUpdate = false;
+                for (let m of mutations) {
+                    
+                    if (m.target && (m.target.classList?.contains('tooltip') || m.target.closest?.('.tooltip'))) {
+                        continue;
+                    }
+
+                    if (m.type === 'childList' || (m.type === 'attributes' && m.attributeName === 'title')) {
+                        shouldUpdate = true;
+                        break;
+                    }
+                }
+                if (shouldUpdate) initTooltips();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['title']
+            });
+        });
+    </script>
+                
                 <div class="col-md-9 p-0 d-flex flex-column h-100">
                     <div class="d-flex justify-content-between align-items-center p-4 px-5 bg-white border-bottom">
                         <h5 class="fw-black m-0 text-uppercase ls-1"><i class="bi bi-file-earmark-medical me-2 text-primary"></i> Clinical Visit Summary</h5>
@@ -477,25 +600,43 @@
                             <div class="col-md-7">
                                 <section class="mb-5 animate-fade-in">
                                     <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Chief Complaint & History</h6>
-                                    <div class="p-4 bg-white rounded-5 shadow-sm border-start border-4 border-primary">
-                                        <p class="small text-dark fw-medium italic mb-0">"[[ globalState.selectedPastAppt.complaint ]]"</p>
+                                    <div v-if="!globalState.isEditingPastAppt">
+                                        <div class="p-4 bg-white rounded-5 shadow-sm border-start border-4 border-primary">
+                                            <p class="small text-dark fw-medium italic mb-0">"[[ globalState.selectedPastAppt.complaint ]]"</p>
+                                        </div>
+                                        <div class="mt-3 ps-2">
+                                            <p class="smallest text-muted"><strong>Known History:</strong> [[ globalState.selectedPastAppt.patient_history ]]</p>
+                                        </div>
                                     </div>
-                                    <div class="mt-3 ps-2">
-                                        <p class="smallest text-muted"><strong>Known History:</strong> [[ globalState.selectedPastAppt.patient_history ]]</p>
+                                    <div v-else class="d-flex flex-column gap-3">
+                                        <div>
+                                            <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block ls-1">Edit Chief Complaint</label>
+                                            <textarea v-model="globalState.selectedPastAppt.complaint" rows="2" class="form-control rounded-4 border-2 border-primary-subtle shadow-sm small italic" placeholder="Update complaint..."></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block ls-1">Update Patient History</label>
+                                            <textarea v-model="globalState.selectedPastAppt.patient_history" rows="2" class="form-control rounded-4 border-2 shadow-sm smallest" placeholder="Update medical history..."></textarea>
+                                        </div>
                                     </div>
                                 </section>
 
                                 <section class="mb-5 animate-fade-in">
                                     <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Final Diagnosis</h6>
-                                    <div class="p-4 bg-primary-soft rounded-5 border border-primary-subtle shadow-sm">
+                                    <div v-if="!globalState.isEditingPastAppt" class="p-4 bg-primary-soft rounded-5 border border-primary-subtle shadow-sm">
                                         <h5 class="fw-black text-primary mb-0">[[ globalState.selectedPastAppt.diagnosis ]]</h5>
+                                    </div>
+                                    <div v-else>
+                                        <input type="text" v-model="globalState.selectedPastAppt.diagnosis" class="form-control form-control-lg rounded-4 border-2 border-primary-subtle fw-bold" placeholder="Enter updated diagnosis...">
                                     </div>
                                 </section>
 
                                 <section class="animate-fade-in">
                                     <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Doctor's Clinical Notes</h6>
-                                    <div class="p-4 bg-white rounded-5 shadow-sm border">
+                                    <div v-if="!globalState.isEditingPastAppt" class="p-4 bg-white rounded-5 shadow-sm border">
                                         <p class="small text-secondary mb-0">[[ globalState.selectedPastAppt.notes ]]</p>
+                                    </div>
+                                    <div v-else>
+                                        <textarea v-model="globalState.selectedPastAppt.notes" rows="4" class="form-control rounded-4 border-2 shadow-sm" placeholder="Update clinical notes..."></textarea>
                                     </div>
                                 </section>
                             </div>
@@ -503,13 +644,17 @@
                             <div class="col-md-5">
                                 <section class="mb-5 animate-fade-in">
                                     <h6 class="fw-bold text-success mb-3 text-uppercase smallest ls-1">Prescribed Medication</h6>
-                                    <div class="p-4 bg-success-soft rounded-5 border border-success-subtle shadow-sm">
+                                    <div v-if="!globalState.isEditingPastAppt" class="p-4 bg-success-soft rounded-5 border border-success-subtle shadow-sm">
                                         <ul class="list-unstyled m-0">
                                             <li v-for="med in (globalState.selectedPastAppt.prescription || '').split(', ')" class="d-flex align-items-center mb-2">
                                                 <i class="bi bi-capsule text-success me-2"></i>
                                                 <span class="small fw-bold">[[ med ]]</span>
                                             </li>
                                         </ul>
+                                    </div>
+                                    <div v-else>
+                                        <input type="text" v-model="globalState.selectedPastAppt.prescription" class="form-control rounded-4 border-2 border-success-subtle shadow-sm" placeholder="E.g. Paracetamol 500mg, Amoxicillin...">
+                                        <div class="smallest text-muted mt-2 ps-2 italic">Separate multiple drugs with commas.</div>
                                     </div>
                                 </section>
 

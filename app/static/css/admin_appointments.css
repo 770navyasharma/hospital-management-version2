@@ -1,4 +1,4 @@
-/* Existing card and chart styles */
+
 .chart-card {
     border: none;
     border-radius: 16px;
@@ -14,7 +14,7 @@
     border: 1px solid #e0e0e0;
 }
 
-/* Table styling */
+
 .table thead th {
     font-weight: 600;
     text-transform: uppercase;
@@ -31,7 +31,7 @@
     border-color: #f8f9fa;
 }
 
-/* Status Badges */
+
 .status-badge {
     padding: 0.4rem 0.8rem;
     border-radius: 50px;
@@ -42,7 +42,7 @@
 .status-completed { background: #e8f5e9; color: #2e7d32; }
 .status-cancelled { background: #ffebee; color: #c62828; }
 
-/* 🟢 New: Pagination Styling */
+
 .pagination .page-link {
     border: none;
     color: #4e73df;

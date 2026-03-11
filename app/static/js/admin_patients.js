@@ -1,13 +1,10 @@
-/**
- * admin_patients.js
- * Consolidated and Fixed Version
- */
 
-let currentVisitData = null; // Global variable to hold modal data for PDF
+
+let currentVisitData = null; 
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- 1. CSV EXPORT ---
+    
     const csvBtn = document.getElementById('downloadPatientCSV');
     if (csvBtn) {
         csvBtn.onclick = () => {
@@ -31,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- 2. CONFIRMATION MODAL ---
+    
     const confModalEl = document.getElementById('confirmationModal');
     if (confModalEl) {
         confModalEl.addEventListener('show.bs.modal', function (event) {
@@ -43,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. CHART ---
+    
     const ctx = document.getElementById('patientChart');
     if (ctx && typeof Chart !== 'undefined') {
         const patientChart = new Chart(ctx, {
@@ -68,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- 4. VISIT DETAILS & PDF LOGIC (Outside DOMContentLoaded for reliability) ---
+
 
 window.openVisitDetails = async (apptId) => {
     const modalElement = document.getElementById('visitDetailModal');
@@ -83,7 +80,7 @@ window.openVisitDetails = async (apptId) => {
     try {
         const response = await fetch(`/api/admin/appointment-details/${apptId}`);
         const data = await response.json();
-        currentVisitData = data; // Store data globally for the Export button
+        currentVisitData = data; 
 
         document.getElementById('visitDoc').innerText = data.doctor.name;
         document.getElementById('visitDate').innerText = data.date;
@@ -101,17 +98,14 @@ window.openVisitDetails = async (apptId) => {
     }
 };
 
-/**
- * 🟢 THE GUARANTEED PDF FIX: 
- * Manually populates and forces DOM rendering.
- */
+
 document.addEventListener('click', async function(e) {
     const btn = e.target.closest('#exportVisitPDFBtn');
     if (btn) {
         if (typeof html2pdf === 'undefined') return alert("PDF Library not loaded.");
         if (!currentVisitData) return alert("Please wait for record to load.");
 
-        // 1. Loading UI
+        
         const originalBtnText = btn.innerHTML;
         btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Rendering...`;
         btn.style.pointerEvents = 'none';
@@ -120,7 +114,7 @@ document.addEventListener('click', async function(e) {
         const container = document.getElementById('pdfExportTemplate');
         
         try {
-            // 2. Map Data Manually to the Template Spans
+            
             document.getElementById('pdfApptId').textContent = data.id;
             document.getElementById('pdfDate').textContent = data.date;
             document.getElementById('pdfGeneratedDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -141,7 +135,7 @@ document.addEventListener('click', async function(e) {
             document.getElementById('pdfDiagnosis').textContent = data.treatment.diagnosis;
             document.getElementById('pdfPrescription').textContent = data.treatment.prescription;
 
-            // 3. Temporarily show the template in an invisible but "Rendered" state
+            
             container.style.display = 'block';
             container.style.position = 'fixed';
             container.style.top = '0';
@@ -165,10 +159,10 @@ document.addEventListener('click', async function(e) {
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            // 4. Force a hard delay to allow the browser to paint the text
+            
             await new Promise(r => setTimeout(r, 1000));
             
-            // 5. Save the PDF
+            
             await html2pdf().set(opt).from(elementToCapture).save();
 
         } catch (err) {

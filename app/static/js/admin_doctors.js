@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', (event) => {
 
-    // --- 1. CSV EXPORT LOGIC ---
+    
     const downloadBtn = document.getElementById('downloadDoctorCSV');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function () {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
 
-    // --- 2. IMAGE PREVIEWS ---
+    
     function setupImagePreview(inputId, previewId) {
         const inputElement = document.getElementById(inputId);
         const previewElement = document.getElementById(previewId);
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (previewId) setupImagePreview(inputEl.id, previewId);
     });
 
-    // --- 3. REMOVE PIC LOGIC ---
+    
     document.querySelectorAll('.remove-pic-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const previewId = this.getAttribute('data-preview-id');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     });
 
-    // --- 3. CONFIRMATION MODAL ---
+    
     const confModal = document.getElementById('confirmationModal');
     if (confModal) {
         const confirmBtn = document.getElementById('confirmActionButton');
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
 
-    // --- 4. DEPT INLINE EDIT ---
+    
     document.querySelectorAll('.btn-edit-dept').forEach(btn => {
         btn.addEventListener('click', function () {
             const li = this.closest('li');
@@ -100,8 +100,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     });
 
-    // --- 5. INITIALIZE VIEWERS ---
-    // Edit Doctor Viewers
+    
+    
     document.querySelectorAll('[id^="editDoctorModal-"]').forEach(modal => {
         const doctorId = modal.id.split('-').pop();
 
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     });
 
-    // --- 6. STRICT ACCORDION INTERCEPTOR ---
+    
     document.querySelectorAll('.doctor-main-row').forEach(row => {
         row.addEventListener('click', function (e) {
             if (e.target.closest('.table-actions') || e.target.closest('.modal')) return;
@@ -129,15 +129,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
             const isOpening = !targetEl.classList.contains('show');
 
             if (isOpening) {
-                // 1. Instantly rotate this arrow and reset others
+                
                 document.querySelectorAll('.doctor-main-row').forEach(r => r.setAttribute('aria-expanded', 'false'));
                 this.setAttribute('aria-expanded', 'true');
 
-                // 2. Hide any currently open row
+                
                 const openDetails = document.querySelector('.doctor-details-row.collapse.show');
                 if (openDetails && openDetails !== targetEl) {
                     bootstrap.Collapse.getOrCreateInstance(openDetails).hide();
-                    // Small delay to ensure "closing" starts before "opening"
+                    
                     setTimeout(() => {
                         bootstrap.Collapse.getOrCreateInstance(targetEl).show();
                     }, 50);
@@ -145,14 +145,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     bootstrap.Collapse.getOrCreateInstance(targetEl).show();
                 }
             } else {
-                // Closing itself
+                
                 this.setAttribute('aria-expanded', 'false');
                 bootstrap.Collapse.getOrCreateInstance(targetEl).hide();
             }
         });
     });
 
-    // Cleanup: Sync aria-expanded if Bootstrap hides it via other means (unlikely but safe)
+    
     document.querySelectorAll('.doctor-details-row').forEach(detail => {
         detail.addEventListener('hidden.bs.collapse', () => {
             const row = document.querySelector(`[data-bs-target="#${detail.id}"]`);
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 });
 
-// --- CLASS: Schedule Viewer (READ-ONLY) ---
+
 class AvailabilityViewer {
     constructor(modal, doctorId) {
         this.doctorId = doctorId;
@@ -184,7 +184,7 @@ class AvailabilityViewer {
     init() {
         if (!this.calendarEl) return;
 
-        // Clean up any existing instances
+        
         if (this.calendarEl._flatpickr) {
             this.calendarEl._flatpickr.destroy();
         }
@@ -202,7 +202,7 @@ class AvailabilityViewer {
             }
         });
 
-        // Initial render for default date (today)
+        
         this.renderSlots(this.fp.selectedDates);
     }
 
@@ -217,7 +217,7 @@ class AvailabilityViewer {
             return;
         }
 
-        // Sort dates chronologically
+        
         const sortedDates = [...dates].sort((a, b) => a - b);
         this.dateTitle.textContent = `Schedule for ${sortedDates.length} selected date${sortedDates.length > 1 ? 's' : ''}`;
 
@@ -232,13 +232,13 @@ class AvailabilityViewer {
             if (slots.length > 0) {
                 hasAnySlots = true;
 
-                // Create Date Header
+                
                 const header = document.createElement('div');
                 header.className = 'date-group-header mt-3 mb-2 px-2 py-1 rounded bg-light-blue smallest fw-bold text-primary-emphasis';
                 header.innerHTML = `<i class="bi bi-calendar-event me-2"></i>${displayDate}`;
                 this.slotsWrapper.appendChild(header);
 
-                // Add Slots
+                
                 slots.forEach(range => {
                     const div = document.createElement('div');
                     div.className = 'd-flex align-items-center gap-2 p-2 bg-white rounded-3 shadow-sm border-left-blue mb-2';

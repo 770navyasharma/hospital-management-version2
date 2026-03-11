@@ -1,4 +1,4 @@
-// doctor_shared.js v3.2 — Global logic, fixed saveSession + PDF generator
+
 (function () {
     const { reactive } = Vue;
 
@@ -12,24 +12,29 @@
         confirmModal: { show: false, title: '', message: '', onConfirm: null, onCancel: null },
         durationModal: { show: false, apptId: null, duration: 30 },
         showNotifications: false,
+        notifications: [],
+        seenToastIds: new Set(),
         doctorName: '',
         statusOverride: 'auto',
         currentStatus: 'offline',
         ongoingAppt: null,
         showCompleteModal: false,
-        // Rejection Globals
+        
         showRejectModal: false,
         rejectReason: '',
         selectedReqId: null,
-        // Swipe States
+        
         touchStart: 0,
         swipeOffset: 0,
         swipingId: null,
-        // Attachment Preview
+        
         activePreview: { show: false, path: '', type: '', name: '' },
-        // Global Past Visit Detail
+        
         showPastApptModal: false,
-        selectedPastAppt: {}
+        selectedPastAppt: {},
+        isEditingPastAppt: false,
+        
+        dismissedUrgentIds: JSON.parse(localStorage.getItem('hms_dismissed_urgents') || '[]'),
     });
 
     const sharedMethods = {
@@ -51,6 +56,17 @@
         getStatusColor(status) {
             const colors = { 'available': '#1cc88a', 'busy': '#e74a3b', 'offline': '#858796', 'break': '#f6c23e' };
             return colors[status] || '#858796';
+        },
+
+        getStatusText(status) {
+            const texts = {
+                'available': 'Available',
+                'busy': 'Busy (Ongoing Session)',
+                'break': 'On Break',
+                'offline': 'Offline',
+                'auto': 'Automatic (Based on Schedule)'
+            };
+            return texts[status] || 'Unknown';
         },
 
         openDurationModal(id) {
@@ -77,7 +93,7 @@
                 globalState.statusOverride = data.status_override;
                 globalState.currentStatus = data.current_status;
 
-                const activeUrgent = (data.requests || []).filter(r => r.is_urgent);
+                const activeUrgent = (data.requests || []).filter(r => r.is_urgent && !globalState.dismissedUrgentIds.includes(r.id));
                 activeUrgent.forEach(req => {
                     if (!globalState.knownReqIds.has(req.id)) {
                         globalState.urgentQueue.push(req);
@@ -99,11 +115,79 @@
             } catch (e) { console.error("Global fetch error:", e); return null; }
         },
 
-        async fetchOngoingSession(id) {
+        async fetchOngoingSession(apptId) {
+            if (!apptId) return;
             try {
-                const res = await fetch(`/doctor/api/doctor/appointment-detail/${id}`);
-                if (res.ok) globalState.ongoingAppt = await res.json();
-            } catch (e) { console.error("Failed to load session:", e); }
+                const res = await fetch(`/doctor/api/doctor/appointment-detail/${apptId}`);
+                if (res.ok) {
+                    const data = await res.json();
+
+                    
+                    globalState.ongoingAppt = {
+                        id: data.id,
+                        status: data.status,
+                        patient: {
+                            id: data.patient.id,
+                            name: data.patient.name,
+                            pic: data.patient.pic,
+                            gender: data.patient.gender,
+                            age: data.patient.age,
+                            medical_history: data.patient.medical_history
+                        },
+                        start_time: data.start_time,
+                        end_time: data.end_time,
+                        duration: data.duration,
+                        datetime: data.datetime,
+                        diagnosis: data.diagnosis,
+                        problem_stated: data.problem_stated,
+                        clinical_notes: data.clinical_notes,
+                        prescriptions: data.prescriptions || [],
+                        attachments: data.attachments || [],
+                        meet_link: data.meet_link
+                    };
+                    console.log("HMS_DEBUG: Ongoing session populated:", globalState.ongoingAppt);
+                }
+            } catch (e) {
+                console.error("Failed to fetch ongoing session:", e);
+                sharedMethods.showToast("Critical: Failed to load active session details.", "error");
+            }
+        },
+
+        async fetchNotifications() {
+            try {
+                const res = await fetch('/api/notifications');
+                if (res.ok) {
+                    const newNotifs = await res.json();
+                    
+                    
+                    if (globalState.seenToastIds.size === 0 && newNotifs.length > 0) {
+                        newNotifs.forEach(n => globalState.seenToastIds.add(n.id));
+                    } else {
+                        
+                        newNotifs.forEach(n => {
+                            if (!globalState.seenToastIds.has(n.id) && !n.is_read) {
+                                sharedMethods.showToast(n.message, n.type || 'info');
+                                globalState.seenToastIds.add(n.id);
+                            }
+                        });
+                    }
+
+                    globalState.notifications = newNotifs;
+                }
+            } catch (e) {
+                console.error("Failed to fetch notifications:", e);
+            }
+        },
+
+        async markAllAsRead() {
+            try {
+                const res = await fetch('/api/notifications/mark-read', { method: 'POST' });
+                if (res.ok) {
+                    globalState.notifications.forEach(n => n.is_read = true);
+                }
+            } catch (e) {
+                console.error("Failed to mark notifications read:", e);
+            }
         },
 
         addPrescription() {
@@ -134,7 +218,7 @@
             } catch (e) { sharedMethods.showToast("Upload failed", "error"); }
         },
 
-        // ── FIXED: uses sharedMethods instead of 'this' to avoid context loss ──
+        
         async saveSession() {
             if (!globalState.ongoingAppt) return;
             try {
@@ -164,7 +248,7 @@
         async finalizeAppointment() {
             if (!globalState.ongoingAppt) return;
             try {
-                // We send the final session data during the completion call as a safeguard
+                
                 const res = await fetch(`/doctor/api/appointment/complete/${globalState.ongoingAppt.id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -181,7 +265,7 @@
                     globalState.ongoingAppt = null;
                     sharedMethods.showToast("Appointment marked as Completed!");
                     await sharedMethods.fetchGlobalData();
-                    // Redirect to dashboard or refresh list if on appointments page
+                    
                     if (window.location.pathname.includes('ongoing')) {
                         window.location.href = "/doctor/dashboard";
                     } else if (typeof app !== 'undefined' && app.fetchData) {
@@ -206,7 +290,7 @@
 
             sharedMethods.showToast("Opening document preview...");
 
-            // Force reset then set to ensure absolute reactivity trigger
+            
             globalState.activePreview.show = false;
 
             setTimeout(() => {
@@ -234,6 +318,7 @@
             }
 
             sharedMethods.showToast("Retrieving medical record...");
+            globalState.isEditingPastAppt = false;
             globalState.showPastApptModal = true;
             globalState.selectedPastAppt = { patient_name: 'Retrieving secure data...' };
 
@@ -255,7 +340,39 @@
             }
         },
 
-        // ── PDF CLINICAL REPORT GENERATOR ────────────────────────────────
+        async saveUpdatedHistory() {
+            const appt = globalState.selectedPastAppt;
+            if (!appt.id) return;
+
+            sharedMethods.showToast("Saving clinical updates...");
+            try {
+                const res = await fetch(`/doctor/api/doctor/update-treatment-history/${appt.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        diagnosis: appt.diagnosis,
+                        clinical_notes: appt.notes,
+                        prescription: appt.prescription,
+                        complaint: appt.complaint,
+                        patient_history: appt.patient_history
+                    })
+                });
+
+                if (res.ok) {
+                    sharedMethods.showToast("Medical record updated successfully!");
+                    globalState.isEditingPastAppt = false;
+                    
+                    if (typeof fetchGlobalData === 'function') fetchGlobalData();
+                } else {
+                    sharedMethods.showToast("Failed to save changes.", "error");
+                }
+            } catch (e) {
+                console.error("Save Error:", e);
+                sharedMethods.showToast("Connection error.", "error");
+            }
+        },
+
+        
         async generatePDF(data) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -264,97 +381,109 @@
             const mg = 18;
             let y = 0;
 
-            // Header band
+            
             doc.setFillColor(26, 46, 100);
             doc.rect(0, 0, pageW, 40, 'F');
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(20);
+            doc.setFontSize(22);
             doc.setFont('helvetica', 'bold');
             doc.text('CLINICAL VISIT REPORT', mg, 18);
-            doc.setFontSize(8);
+            doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
             doc.text('HMS · Hospital Management System', mg, 26);
             doc.text('Generated: ' + new Date().toLocaleString('en-IN'), mg, 32);
 
-            // ── PATIENT IDENTITY BLOCK: photo LEFT, details RIGHT ────────
-            y = 50;
-            const photoSize = 36;
-            const photoX = mg;
-            const textX = mg + photoSize + 6;
+            
+            y = 52;
+            const photoW = 32;
+            const photoH = 32;
 
-            // Collect patient info first
-            const pName = data.patient_name || (data.patient && data.patient.name) || 'Unknown Patient';
-            const pGender = data.patient_gender || (data.patient && data.patient.gender) || '';
-            const pAge = data.patient_age || (data.patient && data.patient.age) || '';
-            const pId = data.patient_id || (data.patient && data.patient.id) || 0;
-            const visitDate = data.date ? (data.date + (data.time ? '  at  ' + data.time : '')) : (data.datetime || '');
-
-            // Photo placeholder (light blue circle as fallback)
-            doc.setFillColor(220, 230, 250);
-            doc.roundedRect(photoX, y, photoSize, photoSize, 4, 4, 'F');
+            
+            doc.setFillColor(240, 242, 248);
+            doc.roundedRect(mg, y, photoW, photoH, 3, 3, 'F');
             doc.setFontSize(7);
-            doc.setTextColor(100, 120, 180);
-            doc.text('PHOTO', photoX + photoSize / 2, y + photoSize / 2, { align: 'center' });
+            doc.setTextColor(140, 150, 190);
+            doc.text('PATIENT', mg + photoW / 2, y + photoH / 2, { align: 'center' });
 
-            // Try embedding real photo
-            try {
-                const picSrc = data.patient_pic || (data.patient && data.patient.pic);
-                if (picSrc && !picSrc.includes('default')) {
-                    const abs = picSrc.startsWith('http') ? picSrc : (window.location.origin + picSrc);
-                    const b64 = await sharedMethods._fetchImageAsBase64(abs);
-                    if (b64) doc.addImage(b64, 'JPEG', photoX, y, photoSize, photoSize);
-                }
-            } catch (e) { /* keep placeholder */ }
-
-            // Name
-            doc.setTextColor(26, 46, 100);
-            doc.setFontSize(15);
-            doc.setFont('helvetica', 'bold');
-            doc.text(pName, textX, y + 8);
-
-            // Meta line
-            doc.setTextColor(80, 80, 110);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            const metaParts = [pGender, pAge ? pAge + ' yrs' : '', 'Patient ID: #' + (pId + 5000)].filter(Boolean);
-            doc.text(metaParts.join('   ·   '), textX, y + 16);
-
-            // Visit date
-            if (visitDate) {
-                doc.setFontSize(8.5);
-                doc.setTextColor(120, 120, 140);
-                doc.text('Date of Visit: ' + visitDate, textX, y + 23);
+            const pPic = data.patient_pic || (data.patient && data.patient.pic);
+            if (pPic) {
+                try {
+                    const absP = pPic.startsWith('http') ? pPic : (window.location.origin + pPic);
+                    
+                    if (!absP.toLowerCase().endsWith('.svg')) {
+                        const b64P = await sharedMethods._fetchImageAsBase64(absP);
+                        if (b64P) doc.addImage(b64P, 'JPEG', mg, y, photoW, photoH);
+                    }
+                } catch (e) { console.warn("PDF_DEBUG: Patient photo error:", e); }
             }
 
-            // HMS badge top-right
-            doc.setFillColor(26, 46, 100);
-            doc.roundedRect(pageW - mg - 28, y, 28, 10, 2, 2, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(7);
+            
+            const dPhotoX = pageW - mg - photoW;
+            doc.setFillColor(240, 242, 248);
+            doc.roundedRect(dPhotoX, y, photoW, photoH, 3, 3, 'F');
+            doc.text('DOCTOR', dPhotoX + photoW / 2, y + photoH / 2, { align: 'center' });
+
+            const dPic = data.doctor_pic;
+            if (dPic) {
+                try {
+                    const absD = dPic.startsWith('http') ? dPic : (window.location.origin + dPic);
+                    if (!absD.toLowerCase().endsWith('.svg')) {
+                        const b64D = await sharedMethods._fetchImageAsBase64(absD);
+                        if (b64D) doc.addImage(b64D, 'JPEG', dPhotoX, y, photoW, photoH);
+                    }
+                } catch (e) { console.warn("PDF_DEBUG: Doctor photo error:", e); }
+            }
+
+            
+            const centerX = pageW / 2;
+            doc.setTextColor(26, 46, 100);
+            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
-            doc.text('HMS · REPORT', pageW - mg - 14, y + 7, { align: 'center' });
+            doc.text(data.patient_name || 'Patient', centerX, y + 8, { align: 'center' });
 
-            y = y + photoSize + 8;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(80, 80, 110);
+            const pMeta = [data.patient_gender, data.patient_age ? data.patient_age + ' yrs' : ''].filter(Boolean).join('  ·  ');
+            doc.text(pMeta, centerX, y + 16, { align: 'center' });
 
-            // Divider
+            doc.setTextColor(26, 46, 100);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Treated By:', centerX, y + 24, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.text(data.doctor_name || 'Assigned Doctor', centerX, y + 29, { align: 'center' });
+            if (data.doctor_dept) {
+                doc.setFontSize(8);
+                doc.setTextColor(120, 120, 140);
+                doc.text(data.doctor_dept, centerX, y + 33, { align: 'center' });
+            }
+
+            y = y + photoH + 12;
+
+            
             doc.setDrawColor(210, 215, 235);
-            doc.setLineWidth(0.5);
+            doc.setLineWidth(0.4);
             doc.line(mg, y, pageW - mg, y);
-            y += 8;
+            y += 6;
+            doc.setFontSize(8.5);
+            doc.setTextColor(100, 100, 120);
+            doc.text('Visit Date: ' + (data.date || 'N/A'), mg, y);
+            doc.text('Report ID: #CMS-' + data.id + '-' + Math.floor(Math.random() * 1000), pageW - mg, y, { align: 'right' });
+            y += 10;
 
-            // Helpers
+            
             const secHeader = (title, r, g, b) => {
-                if (y > pageH - 30) { doc.addPage(); y = 20; }
+                if (y > pageH - 35) { doc.addPage(); y = 20; }
                 doc.setFillColor(r || 26, g || 46, b || 100);
                 doc.roundedRect(mg, y, pageW - mg * 2, 8, 1.5, 1.5, 'F');
                 doc.setTextColor(255, 255, 255);
-                doc.setFontSize(8);
+                doc.setFontSize(8.5);
                 doc.setFont('helvetica', 'bold');
                 doc.text(title.toUpperCase(), mg + 4, y + 5.5);
                 y += 13;
-                doc.setTextColor(30, 30, 50);
+                doc.setTextColor(40, 40, 60);
                 doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9.5);
+                doc.setFontSize(10);
             };
 
             const txtBlock = (txt, bold = false) => {
@@ -367,23 +496,22 @@
                     y += 5.5;
                 });
                 y += 3;
-                doc.setFont('helvetica', 'normal');
             };
 
-            // Sections
-            const complaint = data.complaint || data.urgent_note || data.problem_stated || '';
-            if (complaint) { secHeader('Chief Complaint / Visit Notes', 70, 80, 160); doc.setFont('helvetica', 'italic'); txtBlock('"' + complaint + '"'); }
+            
+            const complaint = data.complaint || '';
+            if (complaint) { secHeader('Reason for Visit', 70, 80, 160); doc.setFont('helvetica', 'italic'); txtBlock('"' + complaint + '"'); }
 
-            const history = data.patient_history || (data.patient && data.patient.medical_history) || '';
-            if (history) { secHeader('Known Medical History', 30, 110, 70); txtBlock(history); }
+            const history = data.patient_history || '';
+            if (history) { secHeader('Medical background', 30, 110, 70); txtBlock(history); }
 
             const diagnosis = data.diagnosis || '';
-            if (diagnosis) { secHeader('Final Diagnosis', 170, 50, 30); txtBlock(diagnosis, true); }
+            if (diagnosis) { secHeader('Diagnosis', 170, 50, 30); txtBlock(diagnosis, true); }
 
-            const notes = data.notes || data.clinical_notes || '';
-            if (notes && notes !== complaint) { secHeader("Doctor's Clinical Notes", 60, 80, 150); txtBlock(notes); }
+            const notes = data.notes || '';
+            if (notes) { secHeader("Clinical Notes", 60, 80, 150); txtBlock(notes); }
 
-            const rxRaw = data.prescription || data.prescriptions;
+            const rxRaw = data.prescription;
             const rxList = Array.isArray(rxRaw) ? rxRaw
                 : (typeof rxRaw === 'string' && rxRaw.length > 0 ? rxRaw.split(/,\s*/) : []);
             if (rxList.length > 0) {
@@ -398,22 +526,21 @@
                 });
             }
 
-            // Footer on every page
+            
             const total = doc.internal.getNumberOfPages();
             for (let i = 1; i <= total; i++) {
                 doc.setPage(i);
-                doc.setFillColor(245, 246, 252);
-                doc.rect(0, pageH - 13, pageW, 13, 'F');
+                doc.setFillColor(248, 249, 253);
+                doc.rect(0, pageH - 14, pageW, 14, 'F');
                 doc.setFontSize(7.5);
-                doc.setTextColor(140, 140, 160);
-                doc.setFont('helvetica', 'normal');
-                doc.text('This document is computer-generated. HMS · For clinical use only.', mg, pageH - 6);
-                doc.text('Page ' + i + ' / ' + total, pageW - mg - 14, pageH - 6);
+                doc.setTextColor(150, 150, 170);
+                doc.text('This clinical report is computer-generated and verified by HMS encrypted systems.', mg, pageH - 7);
+                doc.text('Page ' + i + ' / ' + total, pageW - mg, pageH - 7, { align: 'right' });
             }
 
-            const safeName = pName.replace(/\s+/g, '_');
+            const safeName = (data.patient_name || 'Report').replace(/\s+/g, '_');
             const safeDate = (data.date || new Date().toLocaleDateString('en-IN')).replace(/[\s/]/g, '-');
-            doc.save('HMS_Report_' + safeName + '_' + safeDate + '.pdf');
+            doc.save('Clinical_Report_' + safeName + '_' + safeDate + '.pdf');
         },
 
         async _fetchImageAsBase64(url) {
@@ -427,7 +554,7 @@
                 });
             } catch { return null; }
         },
-        // ── END PDF ──────────────────────────────────────────────────────
+        
 
         playAlertSound() {
             const audio = document.getElementById('urgentAlarm');
@@ -438,6 +565,18 @@
             const id = Date.now();
             globalState.toasts.push({ id, message, type });
             setTimeout(() => { globalState.toasts = globalState.toasts.filter(t => t.id !== id); }, 4000);
+        },
+
+        dismissUrgent(id) {
+            if (!id) return;
+            if (!globalState.dismissedUrgentIds.includes(id)) {
+                globalState.dismissedUrgentIds.push(id);
+                localStorage.setItem('hms_dismissed_urgents', JSON.stringify(globalState.dismissedUrgentIds));
+            }
+            globalState.urgentQueue = globalState.urgentQueue.filter(r => r.id !== id);
+            globalState.currentUrgent = globalState.urgentQueue.length > 0 ? globalState.urgentQueue[0] : null;
+            globalState.swipeOffset = 0;
+            globalState.swipingId = null;
         },
 
         async showConfirm(title, message) {
@@ -452,9 +591,7 @@
 
         async handleUrgentAction(id, action) {
             if (action === 'Dismissed') {
-                // Just hide the modal for now
-                globalState.urgentQueue.shift();
-                globalState.currentUrgent = globalState.urgentQueue.length > 0 ? globalState.urgentQueue[0] : null;
+                sharedMethods.dismissUrgent(id);
                 return;
             }
             if (action === 'Cancelled') {
@@ -463,13 +600,15 @@
                 const success = await sharedMethods.processReq(id, 'Cancelled');
                 if (success) {
                     sharedMethods.showToast("Urgent request rejected.");
+                    sharedMethods.dismissUrgent(id);
                 }
                 return;
             }
-            // If action is 'Booked', process it (this might trigger Duration Modal)
+            
             const success = await sharedMethods.processReq(id, 'Booked');
             if (success) {
                 sharedMethods.showToast("Urgent case accepted!");
+                sharedMethods.dismissUrgent(id);
             }
         },
 
@@ -488,10 +627,7 @@
                 if (res.ok) {
                     sharedMethods.showToast(status === 'Booked' ? "Request accepted!" : "Request processed.");
                     await sharedMethods.fetchGlobalData();
-                    if (globalState.currentUrgent && globalState.currentUrgent.id === id) {
-                        globalState.urgentQueue.shift();
-                        globalState.currentUrgent = globalState.urgentQueue.length > 0 ? globalState.urgentQueue[0] : null;
-                    }
+                    sharedMethods.dismissUrgent(id);
                     return true;
                 } else {
                     sharedMethods.showToast(data.message || "Action failed.", "error");
@@ -527,7 +663,7 @@
             });
         },
 
-        // NEW: Multi-purpose swipe handlers for request cards
+        
         handleTouchStart(e, id) {
             globalState.touchStart = e.touches[0].clientX;
             globalState.swipingId = id;
@@ -536,11 +672,11 @@
         },
 
         handleTouchMove(e, id) {
-            if (globalState.swipingId !== id) return;
+            if (globalState.swipingId !== id || !e.touches) return;
             const currentX = e.touches[0].clientX;
             globalState.swipeOffset = currentX - globalState.touchStart;
 
-            // Minimal threshold to consider it a swipe and prevent vertical scroll
+            
             if (Math.abs(globalState.swipeOffset) > 15) {
                 if (e.cancelable) e.preventDefault();
             }
@@ -550,21 +686,19 @@
             if (globalState.swipingId !== id || globalState.swipeOffset === 0) return;
 
             const offset = globalState.swipeOffset;
-            const threshold = 100; // Require 100px swipe for action
+            const threshold = 100; 
 
             console.log("HMS_DEBUG: Swipe end for ID:", id, "Offset:", offset);
 
             if (offset > threshold) {
-                // Swipe Right -> Accept
-                sharedMethods.showToast("Accepting Request...", "success");
-                sharedMethods.processReq(id, 'Booked');
+                
+                sharedMethods.handleUrgentAction(id, 'Booked');
             } else if (offset < -threshold) {
-                // Swipe Left -> Reject
-                sharedMethods.showToast("Opening Rejection Modal...", "warning");
-                sharedMethods.openRejectModal(id);
+                
+                sharedMethods.handleUrgentAction(id, 'Cancelled');
             }
 
-            // Reset with slight delay
+            
             setTimeout(() => {
                 globalState.swipingId = null;
                 globalState.swipeOffset = 0;
@@ -573,4 +707,13 @@
     };
 
     window.HMS_DOCTOR_SHARED = { globalState, sharedMethods };
+
+    
+    
+    sharedMethods.fetchGlobalData();
+    sharedMethods.fetchNotifications();
+    setInterval(() => {
+        sharedMethods.fetchGlobalData();
+        sharedMethods.fetchNotifications();
+    }, 10000);
 })();
