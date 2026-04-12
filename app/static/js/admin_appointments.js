@@ -444,15 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onerror = reject;
             reader.readAsDataURL(blob);
         })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
-
     window.exportAppointmentPDF = async () => {
         const data = currentVisitData;
         if (!data) return alert("Report data not loaded.");
         
         const btn = document.querySelector('button[onclick="exportAppointmentPDF()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
-        btn.disabled = true;
+        const originalText = btn ? btn.innerHTML : "DOWNLOAD PDF";
+        if (btn) {
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
+            btn.disabled = true;
+        }
 
         const element = document.getElementById('pdfExportTemplate');
         
@@ -476,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pdfPrescription').innerText = data.treatment.prescription || "No medication prescribed.";
             document.getElementById('pdfClinicalNotes').innerText = data.treatment.clinical_notes || "No detailed observations provided.";
 
-            // Base64 conversion to avoid CORS issues in PDF rendering
             const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
             document.getElementById('pdfPatientImg').src = pBase64;
             document.getElementById('pdfDocImg').src = dBase64;
@@ -485,24 +485,29 @@ document.addEventListener('DOMContentLoaded', () => {
             element.style.position = 'fixed';
             element.style.left = '-9999px';
 
+            const sanitizedName = (data.patient.name || 'Clinical_Record').replace(/[^a-z0-9]/gi, '_');
             const opt = {
                 margin: 0,
-                filename: `Clinical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
+                filename: `Clinical_Report_${sanitizedName}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
                 html2canvas: { scale: 2, useCORS: true, letterRendering: true },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            await html2pdf().set(opt).from(element).save();
+            await html2pdf().from(element).set(opt).save();
+
         } catch (err) {
             console.error(err);
             alert("Failed to generate PDF.");
         } finally {
             element.style.display = 'none';
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
     };
+
 
     refreshData(180);
 });

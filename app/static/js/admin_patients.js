@@ -342,16 +342,17 @@ document.addEventListener('click', async function(e) {
             container.style.opacity = '1';
 
             const elementToCapture = document.getElementById('pdfInnerContent');
+            const sanitizedName = (data.patient.name || 'Clinical_Record').replace(/[^a-z0-9]/gi, '_');
 
             const opt = {
                 margin: 0,
-                filename: `Clinical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
+                filename: `Clinical_Report_${sanitizedName}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
                 html2canvas: { scale: 2, useCORS: true, letterRendering: true },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            await html2pdf().set(opt).from(elementToCapture).save();
+            await html2pdf().from(elementToCapture).set(opt).save();
 
         } catch (err) {
             console.error("PDF Export Failed:", err);
