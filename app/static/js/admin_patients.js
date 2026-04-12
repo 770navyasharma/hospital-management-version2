@@ -160,65 +160,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-window.openVisitDetails = async (apptId) => {
-    // Close any currently open patient record modal first to avoid stacking issues
-    const allOpenModals = document.querySelectorAll('.modal.show');
-    allOpenModals.forEach(m => {
-        const bsModal = bootstrap.Modal.getInstance(m);
-        if (bsModal) bsModal.hide();
-    });
+window.openVisitDetailsInline = async (apptId, patientId) => {
+    const historyPanel = document.getElementById(`historyPanel-${patientId}`);
+    const detailPanel = document.getElementById(`detailPanel-${patientId}`);
+    const loading = document.getElementById(`detailLoading-${patientId}`);
+    const content = document.getElementById(`detailContent-${patientId}`);
 
-    const loader = document.getElementById('visitLoader');
-    const content = document.getElementById('visitContent');
-
-    // Prep the visit modal
-    loader.style.display = 'flex';
+    // Toggle panels
+    historyPanel.style.display = 'none';
+    detailPanel.style.display = 'block';
+    loading.style.display = 'flex';
     content.style.display = 'none';
-
-    // Small delay to let the parent modal close gracefully then open visit modal
-    await new Promise(r => setTimeout(r, 320));
-    const visitModalEl = document.getElementById('visitDetailModal');
-    const modal = new bootstrap.Modal(visitModalEl, { backdrop: true });
-    modal.show();
 
     try {
         const response = await fetch(`/api/admin/appointment-details/${apptId}`);
         const data = await response.json();
-        currentVisitData = data;
+        currentVisitData = data; // Keep for PDF export
 
-        // Header: Doctor info + date
-        document.getElementById('visitDoctorPic').src = data.doctor.pic;
-        document.getElementById('visitDoctorName').innerText = 'Dr. ' + data.doctor.name;
-        document.getElementById('visitDoctorDept').innerText = data.doctor.degree ? `${data.doctor.degree} · ${data.doctor.dept}` : data.doctor.dept;
-        document.getElementById('visitDateDisplay').innerText = data.date;
-
-        // Header: Patient strip
-        document.getElementById('visitPatientPic').src = data.patient.pic;
-        document.getElementById('visitPatientName').innerText = data.patient.name;
+        // Populate header
+        document.querySelector(`.vd-doc-pic-${patientId}`).src = data.doctor.pic;
+        document.querySelector(`.vd-doc-name-${patientId}`).innerText = 'Dr. ' + data.doctor.name;
+        document.querySelector(`.vd-doc-dept-${patientId}`).innerText = data.doctor.degree ? `${data.doctor.degree} · ${data.doctor.dept}` : data.doctor.dept;
+        document.querySelector(`.vd-date-${patientId}`).innerText = data.date;
 
         // Status badge
-        const statusBadge = document.getElementById('visitStatusBadge');
+        const statusBadge = document.querySelector(`.vd-status-${patientId}`);
         statusBadge.innerText = data.status;
-        statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
+        statusBadge.className = `vd-status-${patientId} badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
             data.status === 'Completed' ? 'bg-success text-white' :
             data.status === 'Cancelled' ? 'bg-danger text-white' : 'bg-warning text-dark'
         }`;
 
-        // Body: Reason for visit + medical history
-        document.getElementById('visitInternalNotes').innerText =
-            data.urgent_note ? `"${data.urgent_note}"` : 'No reason recorded.';
-        document.getElementById('visitPatientHistory').innerText =
-            data.patient.medical_history || 'No medical history on record.';
-
-        // Doctor's assessment
-        document.getElementById('visitDiagnosisDisplay').innerText =
-            data.treatment.diagnosis || 'No diagnosis recorded';
-        document.getElementById('visitClinicalNotesDisplay').innerText =
-            data.treatment.clinical_notes || 'No notes recorded.';
+        // Body content
+        document.querySelector(`.vd-reason-${patientId}`).innerText = data.urgent_note ? `"${data.urgent_note}"` : 'No reason recorded.';
+        document.querySelector(`.vd-history-${patientId}`).innerText = data.patient.medical_history || 'No medical history on record.';
+        document.querySelector(`.vd-diagnosis-${patientId}`).innerText = data.treatment.diagnosis || 'No diagnosis recorded';
+        document.querySelector(`.vd-notes-${patientId}`).innerText = data.treatment.clinical_notes || 'No detailed observations provided.';
 
         // Medications
-        const medList = document.getElementById('medicationList');
-        const noMed = document.getElementById('noMedication');
+        const medList = document.querySelector(`.vd-meds-${patientId}`);
+        const noMed = document.querySelector(`.vd-nomeds-${patientId}`);
         const meds = (data.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
 
         medList.innerHTML = '';
@@ -235,8 +216,8 @@ window.openVisitDetails = async (apptId) => {
         }
 
         // Attachments
-        const attList = document.getElementById('attachmentList');
-        const noAtt = document.getElementById('noAttachments');
+        const attList = document.querySelector(`.vd-atts-${patientId}`);
+        const noAtt = document.querySelector(`.vd-noatts-${patientId}`);
 
         attList.innerHTML = '';
         if (data.treatment.attachments && data.treatment.attachments.length > 0) {
@@ -244,8 +225,8 @@ window.openVisitDetails = async (apptId) => {
             data.treatment.attachments.forEach(file => {
                 const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
                 const card = `
-                    <div class="bg-white rounded-4 d-flex align-items-center p-3 border cursor-pointer gap-3" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')" style="cursor:pointer; transition: background 0.2s;">
-                        <div class="bg-light rounded-3 p-2 text-center" style="min-width:44px;">
+                    <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer gap-3" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')" style="cursor:pointer; transition: background 0.2s;">
+                        <div class="bg-white rounded-3 p-2 text-center" style="min-width:44px;">
                             <i class="bi ${icon} fs-4"></i>
                         </div>
                         <div class="overflow-hidden flex-grow-1">
@@ -260,19 +241,24 @@ window.openVisitDetails = async (apptId) => {
             noAtt.style.display = 'block';
         }
 
-        // Show content, hide loader
-        loader.style.display = 'none';
+        loading.style.display = 'none';
         content.style.display = 'block';
 
     } catch (err) {
         console.error(err);
-        loader.innerHTML = `
-            <div class="text-center">
+        loading.innerHTML = `
+            <div class="text-center p-4">
                 <i class="bi bi-exclamation-circle fs-1 text-danger d-block mb-3"></i>
-                <p class="text-muted fw-bold">Could not load appointment details.</p>
-                <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <p class="text-muted fw-bold mb-3">Could not load details.</p>
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="closeVisitDetail(${patientId})">Go Back</button>
             </div>`;
     }
+};
+
+window.closeVisitDetail = (patientId) => {
+    document.getElementById(`historyPanel-${patientId}`).style.display = 'block';
+    document.getElementById(`detailPanel-${patientId}`).style.display = 'none';
+    currentVisitData = null;
 };
 
 window.openPreview = (name, type, path) => {
@@ -302,7 +288,7 @@ window.openPreview = (name, type, path) => {
 
 
 document.addEventListener('click', async function(e) {
-    const btn = e.target.closest('#exportVisitPDFBtn');
+    const btn = e.target.closest('[class*="vd-export-btn-"]');
     if (btn) {
         if (typeof html2pdf === 'undefined') return alert("PDF Library not loaded.");
         if (!currentVisitData) return alert("Please wait for record to load.");
