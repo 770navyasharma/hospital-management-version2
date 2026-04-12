@@ -81,101 +81,116 @@
 
 <!-- Premium Appointment Detail Modal -->
 <div class="modal fade" id="apptDetailModal" tabindex="-1" aria-hidden="true" style="z-index: 1085;">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-2xl overflow-hidden" style="border-radius: 30px; height: 85vh;">
-            <div id="modalContentLoader" class="text-center p-5 w-100 h-100 d-flex align-items-center justify-content-center bg-white" style="position: absolute; z-index: 10;">
-                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+
+            <!-- Loading state -->
+            <div id="visitLoader" class="text-center p-5 d-flex align-items-center justify-content-center bg-white" style="min-height: 300px;">
+                <div>
+                    <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem;"></div>
+                    <p class="text-muted small fw-bold">Loading appointment details...</p>
+                </div>
             </div>
-            
-            <div id="modalActualContent" class="h-100" style="display: none;">
-                <div class="row g-0 h-100">
-                    <!-- Left Sidebar -->
-                    <div class="col-md-3 bg-light border-end p-4 d-flex flex-column h-100">
-                        <div class="text-center mb-4">
-                            <div class="position-relative d-inline-block mb-3">
-                                <img id="apptPatientPic" src="" class="rounded-circle border border-4 border-white shadow-sm" width="100" height="100" style="object-fit: cover;">
+
+            <!-- Content (hidden until loaded) -->
+            <div id="visitContent" style="display: none;">
+
+                <!-- Header: blue gradient like patient portal -->
+                <div class="visit-modal-header p-4 position-relative">
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-4" data-bs-dismiss="modal"></button>
+                    <div class="d-flex align-items-center gap-4">
+                        <img id="visitDoctorPic" src="" class="rounded-circle border border-3 border-white shadow-lg" width="70" height="70" style="object-fit: cover; min-width: 70px;">
+                        <div class="text-white flex-grow-1">
+                            <h5 id="visitDoctorName" class="fw-black mb-1"></h5>
+                            <p id="visitDoctorDept" class="small mb-0 text-white-75 fw-bold"></p>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-white text-primary rounded-pill px-3 py-2 fw-bold mb-2 d-block">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                <span id="visitDateDisplay"></span>
                             </div>
-                            <h5 id="apptPatientName" class="fw-black mb-1 text-dark"></h5>
-                            <span class="smallest fw-bold text-muted text-uppercase ls-1">Appointment Record</span>
-                        </div>
-
-                        <div class="bg-white rounded-4 p-3 shadow-sm mb-4 text-start">
-                            <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block ls-1">Attending Specialist</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <img id="apptDocPic" src="" class="rounded-circle border" width="40" height="40" style="object-fit: cover;">
-                                <div>
-                                    <h6 id="apptDocName" class="fw-bold text-primary mb-0 smallest"></h6>
-                                    <div id="apptDocDept" class="smallest text-muted fw-bold"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-primary-soft rounded-4 p-3 mb-4 text-start">
-                            <label class="smallest fw-bold text-primary text-uppercase mb-1 ls-1">Visit Date</label>
-                            <div id="apptDateDisplay" class="fw-black text-primary" style="font-size: 1.1rem;"></div>
-                        </div>
-
-                        <div class="mt-auto">
-                            <button class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm" onclick="exportAppointmentPDF()">
-                                <i class="bi bi-file-pdf me-2"></i> DOWNLOAD PDF
+                            <button class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-2" id="exportVisitPDFBtn">
+                                <i class="bi bi-file-pdf-fill me-1"></i> Download PDF
                             </button>
-                            <button type="button" class="btn btn-outline-secondary w-100 rounded-pill py-2 mt-2 fw-bold" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
+                    <!-- Patient info strip -->
+                    <div class="d-flex align-items-center gap-3 mt-3 pt-3 border-top border-white border-opacity-25">
+                        <img id="visitPatientPic" src="" class="rounded-circle border border-2 border-white" width="36" height="36" style="object-fit: cover;">
+                        <div class="text-white">
+                            <span class="smallest fw-bold text-white-75">Patient: </span>
+                            <span id="visitPatientName" class="small fw-black"></span>
+                        </div>
+                        <span id="visitStatusBadge" class="badge ms-auto rounded-pill px-3 py-2 fw-bold text-uppercase smallest"></span>
+                    </div>
+                </div>
 
-                    <!-- Right Section -->
-                    <div class="col-md-9 d-flex flex-column h-100 bg-white">
-                        <div class="d-flex justify-content-between align-items-center p-4 px-5 border-bottom bg-white sticky-top">
-                            <h5 class="fw-black m-0 text-uppercase ls-1"><i class="bi bi-file-earmark-medical me-2 text-primary"></i> Clinical Visit Summary</h5>
-                            <span id="apptStatusBadge" class="badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest"></span>
+                <!-- Body: two-column layout, exactly like patient portal -->
+                <div class="modal-body p-4 bg-light-soft">
+                    <div class="row g-4">
+
+                        <!-- Left: Reason for Visit + Medical History -->
+                        <div class="col-md-5">
+                            <div class="mb-4">
+                                <label class="smallest fw-black text-muted text-uppercase mb-2 ls-1 d-block">Reason for Visit</label>
+                                <div class="bg-white p-3 rounded-4 shadow-sm border-start border-4 border-warning">
+                                    <p id="visitInternalNotes" class="small fw-bold text-dark mb-0 fst-italic"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="smallest fw-black text-muted text-uppercase mb-2 ls-1 d-block">Known Medical History</label>
+                                <div class="bg-white p-3 rounded-4 shadow-sm border">
+                                    <p id="visitPatientHistory" class="small text-muted mb-0"></p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex-grow-1 p-5 overflow-auto custom-scroll text-start">
-                            <div class="row g-5">
-                                <div class="col-md-7">
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Chief Complaint & Context</h6>
-                                        <div class="p-4 bg-light-soft rounded-4 border-start border-4 border-warning shadow-sm">
-                                            <p id="apptReason" class="small text-dark fw-medium fst-italic mb-0"></p>
-                                        </div>
-                                    </section>
+                        <!-- Right: Doctor's Assessment -->
+                        <div class="col-md-7">
+                            <label class="smallest fw-black text-primary text-uppercase mb-3 ls-1 d-block">Doctor's Assessment</label>
 
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Final Diagnosis</h6>
-                                        <div class="p-4 bg-primary-soft rounded-4 border border-primary-subtle shadow-sm">
-                                            <h5 id="apptDiagnosis" class="fw-black text-primary mb-0"></h5>
-                                        </div>
-                                    </section>
-
-                                    <section>
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Clinical Observations</h6>
-                                        <div class="p-4 bg-white rounded-4 border shadow-sm">
-                                            <p id="apptNotes" class="small text-secondary mb-0" style="white-space: pre-wrap;"></p>
-                                        </div>
-                                    </section>
+                            <div class="bg-white p-4 rounded-4 shadow-sm border-start border-4 border-primary mb-3">
+                                <div class="row g-3">
+                                    <div class="col-12 border-bottom pb-3">
+                                        <div class="smallest fw-black text-primary text-uppercase ls-1 mb-1">Final Diagnosis</div>
+                                        <div id="visitDiagnosisDisplay" class="fs-5 fw-black text-dark"></div>
+                                    </div>
+                                    <div class="col-12 pt-1">
+                                        <div class="smallest fw-black text-warning text-uppercase ls-1 mb-1">Clinical Notes</div>
+                                        <p id="visitClinicalNotesDisplay" class="small text-muted mb-0"></p>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="col-md-5">
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-success mb-3 text-uppercase smallest ls-1">Prescribed Medication</h6>
-                                        <div id="apptMeds" class="d-flex flex-wrap gap-2 pt-2"></div>
-                                        <div id="noApptMeds" class="smallest text-muted fst-italic p-3 text-center border rounded-4 border-dashed w-100" style="display:none;">No medication prescribed.</div>
-                                    </section>
+                            <div class="mb-3">
+                                <div class="smallest fw-black text-success text-uppercase ls-1 mb-2">Prescriptions</div>
+                                <div class="bg-white p-3 rounded-4 shadow-sm border border-success-subtle">
+                                    <div id="medicationList" class="d-flex flex-column gap-2"></div>
+                                    <div id="noMedication" class="small text-muted fst-italic" style="display:none;">No medications prescribed.</div>
+                                </div>
+                            </div>
 
-                                    <section>
-                                        <h6 class="fw-bold text-secondary mb-3 text-uppercase smallest ls-1">Consultation Attachments</h6>
-                                        <div id="apptAtts" class="d-grid gap-2"></div>
-                                        <div id="noApptAtts" class="text-center py-4 opacity-50 bg-light rounded-4 border border-dashed" style="display:none;">
-                                            <i class="bi bi-paperclip fs-2 mb-1 d-block"></i>
-                                            <span class="smallest fw-bold text-muted">No attachments.</span>
-                                        </div>
-                                    </section>
+                            <div id="attachmentsSection">
+                                <div class="smallest fw-black text-muted text-uppercase ls-1 mb-2">Attachments & Reports</div>
+                                <div id="attachmentList" class="d-flex flex-column gap-2"></div>
+                                <div id="noAttachments" class="text-center py-3 opacity-50 bg-white rounded-4 border" style="display:none;">
+                                    <i class="bi bi-paperclip fs-3 text-muted d-block mb-1"></i>
+                                    <span class="smallest fw-bold text-muted">No attachments</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 bg-white d-flex justify-content-between align-items-center py-3 px-4">
+                    <span class="smallest text-muted fw-bold">
+                        <i class="bi bi-shield-check text-success me-1"></i> Verified Clinical Record
+                    </span>
+                    <button type="button" class="btn btn-dark rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -277,5 +292,5 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='js/admin_appointments.js') }}?v=1.1"></script>
+<script src="{{ url_for('static', filename='js/admin_appointments.js') }}"></script>
 {% endblock %}

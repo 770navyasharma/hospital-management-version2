@@ -1,5 +1,3 @@
-
-
 let currentVisitData = null; 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -160,46 +158,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-window.openVisitDetailsInline = async (apptId, patientId) => {
-    const historyPanel = document.getElementById(`historyPanel-${patientId}`);
-    const detailPanel = document.getElementById(`detailPanel-${patientId}`);
-    const loading = document.getElementById(`detailLoading-${patientId}`);
-    const content = document.getElementById(`detailContent-${patientId}`);
+window.openVisitDetails = async (apptId) => {
+    // Close any currently open patient record modal first to avoid stacking issues
+    const allOpenModals = document.querySelectorAll('.modal.show');
+    allOpenModals.forEach(m => {
+        const bsModal = bootstrap.Modal.getInstance(m);
+        if (bsModal) bsModal.hide();
+    });
 
-    // Toggle panels
-    historyPanel.style.display = 'none';
-    detailPanel.style.display = 'block';
-    loading.style.display = 'flex';
-    content.style.display = 'none';
+    const loader = document.getElementById('visitLoader');
+    const content = document.getElementById('visitContent');
+
+    // Prep the visit modal
+    if (loader) {
+        loader.classList.remove('d-none');
+        loader.classList.add('d-flex');
+    }
+    if (content) content.style.display = 'none';
+
+    // Small delay to let the parent modal close gracefully then open visit modal
+    await new Promise(r => setTimeout(r, 320));
+    const visitModalEl = document.getElementById('visitDetailModal');
+    const modal = new bootstrap.Modal(visitModalEl, { backdrop: true });
+    modal.show();
 
     try {
         const response = await fetch(`/api/admin/appointment-details/${apptId}`);
         const data = await response.json();
-        currentVisitData = data; // Keep for PDF export
+        currentVisitData = data;
 
-        // Populate header
-        document.querySelector(`.vd-doc-pic-${patientId}`).src = data.doctor.pic;
-        document.querySelector(`.vd-doc-name-${patientId}`).innerText = 'Dr. ' + data.doctor.name;
-        document.querySelector(`.vd-doc-dept-${patientId}`).innerText = data.doctor.degree ? `${data.doctor.degree} · ${data.doctor.dept}` : data.doctor.dept;
-        document.querySelector(`.vd-date-${patientId}`).innerText = data.date;
+        // Header: Doctor info + date
+        document.getElementById('visitDoctorPic').src = data.doctor.pic;
+        document.getElementById('visitDoctorName').innerText = 'Dr. ' + data.doctor.name;
+        document.getElementById('visitDoctorDept').innerText = data.doctor.degree ? `${data.doctor.degree} · ${data.doctor.dept}` : data.doctor.dept;
+        document.getElementById('visitDateDisplay').innerText = data.date;
+
+        // Header: Patient strip
+        document.getElementById('visitPatientPic').src = data.patient.pic;
+        document.getElementById('visitPatientName').innerText = data.patient.name;
 
         // Status badge
-        const statusBadge = document.querySelector(`.vd-status-${patientId}`);
+        const statusBadge = document.getElementById('visitStatusBadge');
         statusBadge.innerText = data.status;
-        statusBadge.className = `vd-status-${patientId} badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
+        statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
             data.status === 'Completed' ? 'bg-success text-white' :
             data.status === 'Cancelled' ? 'bg-danger text-white' : 'bg-warning text-dark'
         }`;
 
-        // Body content
-        document.querySelector(`.vd-reason-${patientId}`).innerText = data.urgent_note ? `"${data.urgent_note}"` : 'No reason recorded.';
-        document.querySelector(`.vd-history-${patientId}`).innerText = data.patient.medical_history || 'No medical history on record.';
-        document.querySelector(`.vd-diagnosis-${patientId}`).innerText = data.treatment.diagnosis || 'No diagnosis recorded';
-        document.querySelector(`.vd-notes-${patientId}`).innerText = data.treatment.clinical_notes || 'No detailed observations provided.';
+        // Body: Reason for visit + medical history
+        document.getElementById('visitInternalNotes').innerText =
+            data.urgent_note ? `"${data.urgent_note}"` : 'No reason recorded.';
+        document.getElementById('visitPatientHistory').innerText =
+            data.patient.medical_history || 'No medical history on record.';
+
+        // Doctor's assessment
+        document.getElementById('visitDiagnosisDisplay').innerText =
+            data.treatment.diagnosis || 'No diagnosis recorded';
+        document.getElementById('visitClinicalNotesDisplay').innerText =
+            data.treatment.clinical_notes || 'No notes recorded.';
 
         // Medications
-        const medList = document.querySelector(`.vd-meds-${patientId}`);
-        const noMed = document.querySelector(`.vd-nomeds-${patientId}`);
+        const medList = document.getElementById('medicationList');
+        const noMed = document.getElementById('noMedication');
         const meds = (data.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
 
         medList.innerHTML = '';
@@ -216,8 +236,8 @@ window.openVisitDetailsInline = async (apptId, patientId) => {
         }
 
         // Attachments
-        const attList = document.querySelector(`.vd-atts-${patientId}`);
-        const noAtt = document.querySelector(`.vd-noatts-${patientId}`);
+        const attList = document.getElementById('attachmentList');
+        const noAtt = document.getElementById('noAttachments');
 
         attList.innerHTML = '';
         if (data.treatment.attachments && data.treatment.attachments.length > 0) {
@@ -225,8 +245,8 @@ window.openVisitDetailsInline = async (apptId, patientId) => {
             data.treatment.attachments.forEach(file => {
                 const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
                 const card = `
-                    <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer gap-3" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')" style="cursor:pointer; transition: background 0.2s;">
-                        <div class="bg-white rounded-3 p-2 text-center" style="min-width:44px;">
+                    <div class="bg-white rounded-4 d-flex align-items-center p-3 border cursor-pointer gap-3" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')" style="cursor:pointer; transition: background 0.2s;">
+                        <div class="bg-light rounded-3 p-2 text-center" style="min-width:44px;">
                             <i class="bi ${icon} fs-4"></i>
                         </div>
                         <div class="overflow-hidden flex-grow-1">
@@ -241,24 +261,22 @@ window.openVisitDetailsInline = async (apptId, patientId) => {
             noAtt.style.display = 'block';
         }
 
-        loading.style.display = 'none';
-        content.style.display = 'block';
+        // Show content, hide loader
+        if (loader) {
+            loader.classList.remove('d-flex');
+            loader.classList.add('d-none');
+        }
+        if (content) content.style.display = 'block';
 
     } catch (err) {
         console.error(err);
-        loading.innerHTML = `
-            <div class="text-center p-4">
+        loader.innerHTML = `
+            <div class="text-center">
                 <i class="bi bi-exclamation-circle fs-1 text-danger d-block mb-3"></i>
-                <p class="text-muted fw-bold mb-3">Could not load details.</p>
-                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="closeVisitDetail(${patientId})">Go Back</button>
+                <p class="text-muted fw-bold">Could not load appointment details.</p>
+                <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
             </div>`;
     }
-};
-
-window.closeVisitDetail = (patientId) => {
-    document.getElementById(`historyPanel-${patientId}`).style.display = 'block';
-    document.getElementById(`detailPanel-${patientId}`).style.display = 'none';
-    currentVisitData = null;
 };
 
 window.openPreview = (name, type, path) => {
@@ -287,29 +305,22 @@ window.openPreview = (name, type, path) => {
 };
 
 
-    const toBase64 = url => fetch(url)
-        .then(res => res.blob())
-        .then(blob => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
-
 document.addEventListener('click', async function(e) {
-    const btn = e.target.closest('[class*="vd-export-btn-"]');
+    const btn = e.target.closest('#exportVisitPDFBtn');
     if (btn) {
         if (typeof html2pdf === 'undefined') return alert("PDF Library not loaded.");
         if (!currentVisitData) return alert("Please wait for record to load.");
 
+        
         const originalBtnText = btn.innerHTML;
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
-        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Rendering...`;
+        btn.style.pointerEvents = 'none';
 
         const data = currentVisitData;
         const container = document.getElementById('pdfExportTemplate');
         
         try {
+            
             document.getElementById('pdfApptId').textContent = data.id;
             document.getElementById('pdfDate').textContent = data.date;
             document.getElementById('pdfGeneratedDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -325,34 +336,39 @@ document.addEventListener('click', async function(e) {
             document.getElementById('pdfDocEmail').textContent = data.doctor.email;
             document.getElementById('pdfDocDept').textContent = data.doctor.dept;
 
-            document.getElementById('pdfDiagnosis').textContent = data.treatment.diagnosis || "No diagnosis recorded.";
-            document.getElementById('pdfPrescription').textContent = data.treatment.prescription || "No medication prescribed.";
+            document.getElementById('pdfDiagnosis').textContent = data.treatment.diagnosis;
+            document.getElementById('pdfPrescription').textContent = data.treatment.prescription;
             document.getElementById('pdfClinicalNotes').textContent = data.treatment.clinical_notes || "No detailed observations provided.";
 
-            // Convert images to Base64 to ensure they show up in PDF
-            const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
-            document.getElementById('pdfPatientImg').src = pBase64;
-            document.getElementById('pdfDocImg').src = dBase64;
-
+            
             container.style.display = 'block';
             container.style.position = 'fixed';
             container.style.top = '0';
-            container.style.left = '-9999px';
+            container.style.left = '0';
             container.style.zIndex = '-9999';
             container.style.opacity = '1';
 
             const elementToCapture = document.getElementById('pdfInnerContent');
-            const sanitizedName = (data.patient.name || 'Clinical_Record').replace(/[^a-z0-9]/gi, '_');
 
             const opt = {
                 margin: 0,
-                filename: `Clinical_Report_${sanitizedName}.pdf`,
+                filename: `Medical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false, 
+                    letterRendering: true,
+                    backgroundColor: '#ffffff'
+                },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            await html2pdf().from(elementToCapture).set(opt).save();
+            
+            await new Promise(r => setTimeout(r, 1000));
+            
+            
+            await html2pdf().set(opt).from(elementToCapture).save();
 
         } catch (err) {
             console.error("PDF Export Failed:", err);
@@ -360,7 +376,7 @@ document.addEventListener('click', async function(e) {
         } finally {
             container.style.display = 'none';
             btn.innerHTML = originalBtnText;
-            btn.disabled = false;
+            btn.style.pointerEvents = 'auto';
         }
     }
 });

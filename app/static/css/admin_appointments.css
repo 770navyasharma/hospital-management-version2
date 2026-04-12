@@ -117,3 +117,19 @@
     color: #2e59d9;
     transform: translateX(3px);
 }
+
+/* ─────────────────────────────────────────────────
+   VISIT DETAIL MODAL (Matching Patient Portal)
+   ───────────────────────────────────────────────── */
+.visit-modal-header {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: white;
+}
+.text-white-75 { color: rgba(255, 255, 255, 0.75) !important; }
+.bg-success-soft { background-color: rgba(16, 185, 129, 0.1) !important; }
+.bg-danger-soft  { background-color: rgba(239, 68, 68, 0.1) !important; }
+.bg-warning-soft { background-color: rgba(245, 158, 11, 0.1) !important; }
+.fw-black { font-weight: 900 !important; }
+.smallest { font-size: 0.72rem !important; }
+.bg-light-soft { background-color: #f8fafc !important; }
+.ls-1 { letter-spacing: 1px !important; }

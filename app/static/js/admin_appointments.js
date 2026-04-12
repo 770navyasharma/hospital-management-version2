@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
     let currentVisitData = null;
     let trendChart, statusChart;
@@ -100,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="status-badge status-${appt.status.toLowerCase()}">${appt.status}</span>
                     </td>
                     <td class="text-end pe-4">
-                        <span class="smallest fw-bold text-muted text-uppercase ls-1">Record Locked</span>
+                        <a href="javascript:void(0)" class="view-link justify-content-end" onclick="viewDetails(${appt.id})">
+                            VIEW RECORD <i class="bi bi-arrow-right"></i>
+                        </a>
                     </td>
                 </tr>
             `;
@@ -297,120 +297,124 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.viewDetails = async (id) => {
         const modalEl = document.getElementById('apptDetailModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (!modalEl) {
+            console.error("Modal element #apptDetailModal not found");
+            return;
+        }
         
-        const loader = document.getElementById('modalContentLoader');
-        const content = document.getElementById('modalActualContent');
+        const allOpenModals = document.querySelectorAll('.modal.show');
+        allOpenModals.forEach(m => {
+            if (m.id !== 'apptDetailModal') {
+                const bsModal = bootstrap.Modal.getInstance(m);
+                if (bsModal) bsModal.hide();
+            }
+        });
+
+        const loader = document.getElementById('visitLoader');
+        const content = document.getElementById('visitContent');
         
-        // Reset view
         if (loader) {
-            loader.style.display = 'flex';
-            loader.style.zIndex = '2000'; // Ensure it covers everything including sticky headers
+            loader.classList.remove('d-none');
+            loader.classList.add('d-flex');
         }
         if (content) content.style.display = 'none';
         
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: true });
         modal.show();
 
         try {
             const res = await fetch(`/api/admin/appointment-details/${id}`);
             if (!res.ok) throw new Error("API request failed");
-            const d = await res.json(); 
-            currentVisitData = d;
+            const data = await res.json(); 
+            currentVisitData = data;
             
-            // Important: Hide loader as soon as data is ready to be rendered
-            // This prevents the "stuck loading" visual if something small fails below
-            if (loader) loader.style.display = 'none';
-            if (content) content.style.display = 'block';
+            // Header: Doctor info + date
+            document.getElementById('visitDoctorPic').src = data.doctor.pic;
+            document.getElementById('visitDoctorName').innerText = 'Dr. ' + data.doctor.name;
+            document.getElementById('visitDoctorDept').innerText = data.doctor.degree ? `${data.doctor.degree} · ${data.doctor.dept}` : data.doctor.dept;
+            document.getElementById('visitDateDisplay').innerText = data.date;
 
-            // Populate Sidebar
-            if (document.getElementById('apptPatientPic')) document.getElementById('apptPatientPic').src = d.patient.pic || '';
-            if (document.getElementById('apptPatientName')) document.getElementById('apptPatientName').innerText = d.patient.name || 'Unknown';
-            if (document.getElementById('apptDocPic')) document.getElementById('apptDocPic').src = d.doctor.pic || '';
-            if (document.getElementById('apptDocName')) document.getElementById('apptDocName').innerText = 'Dr. ' + (d.doctor.name || 'Staff');
-            if (document.getElementById('apptDocDept')) {
-                document.getElementById('apptDocDept').innerText = d.doctor.degree ? `${d.doctor.degree} · ${d.doctor.dept}` : (d.doctor.dept || 'Consultant');
-            }
-            if (document.getElementById('apptDateDisplay')) document.getElementById('apptDateDisplay').innerText = d.date || '';
+            // Header: Patient strip
+            document.getElementById('visitPatientPic').src = data.patient.pic;
+            document.getElementById('visitPatientName').innerText = data.patient.name;
 
-            // Status Badge
-            const statusBadge = document.getElementById('apptStatusBadge');
-            if (statusBadge) {
-                const status = (d.status || 'Unknown').toUpperCase();
-                statusBadge.innerText = status;
-                statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
-                    status === 'COMPLETED' ? 'bg-success' : 
-                    status === 'CANCELLED' || status === 'REJECTED' ? 'bg-danger' : 'bg-warning text-dark'
-                }`;
-            }
+            // Status badge
+            const statusBadge = document.getElementById('visitStatusBadge');
+            statusBadge.innerText = data.status;
+            statusBadge.className = `badge ms-auto rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
+                data.status === 'Completed' ? 'bg-success text-white' :
+                data.status === 'Cancelled' ? 'bg-danger text-white' : 'bg-warning text-dark'
+            }`;
 
-            // Body content
-            if (document.getElementById('apptReason')) document.getElementById('apptReason').innerText = d.urgent_note ? `"${d.urgent_note}"` : 'No specific intake reason provided.';
-            if (document.getElementById('apptDiagnosis')) document.getElementById('apptDiagnosis').innerText = (d.treatment && d.treatment.diagnosis) || 'No diagnosis recorded.';
-            if (document.getElementById('apptNotes')) document.getElementById('apptNotes').innerText = (d.treatment && d.treatment.clinical_notes) || 'No detailed clinical observations recorded.';
+            // Body: Reason for visit + medical history
+            document.getElementById('visitInternalNotes').innerText =
+                data.urgent_note ? `"${data.urgent_note}"` : 'No reason recorded.';
+            document.getElementById('visitPatientHistory').innerText =
+                data.patient.medical_history || 'No medical history on record.';
+
+            // Doctor's assessment
+            document.getElementById('visitDiagnosisDisplay').innerText =
+                data.treatment.diagnosis || 'No diagnosis recorded';
+            document.getElementById('visitClinicalNotesDisplay').innerText =
+                data.treatment.clinical_notes || 'No notes recorded.';
 
             // Medications
-            const medContainer = document.getElementById('apptMeds');
-            const noMeds = document.getElementById('noApptMeds');
-            if (medContainer && noMeds) {
-                const meds = (d.treatment && d.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
-                medContainer.innerHTML = '';
-                if (meds.length > 0) {
-                    noMeds.style.display = 'none';
-                    meds.forEach(m => {
-                        medContainer.insertAdjacentHTML('beforeend', `
-                            <span class="badge bg-success-soft text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                                <i class="bi bi-capsule me-2"></i>${m}
-                            </span>`);
-                    });
-                } else {
-                    noMeds.style.display = 'block';
-                }
+            const medList = document.getElementById('medicationList');
+            const noMed = document.getElementById('noMedication');
+            const meds = (data.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
+
+            medList.innerHTML = '';
+            if (meds.length > 0) {
+                noMed.style.display = 'none';
+                meds.forEach(m => {
+                    medList.insertAdjacentHTML('beforeend', `
+                        <div class="d-flex align-items-center gap-2 small fw-bold text-dark">
+                            <i class="bi bi-capsule text-success fs-5"></i> ${m}
+                        </div>`);
+                });
+            } else {
+                noMed.style.display = 'block';
             }
 
             // Attachments
-            const attContainer = document.getElementById('apptAtts');
-            const noAtts = document.getElementById('noApptAtts');
-            if (attContainer && noAtts) {
-                attContainer.innerHTML = '';
-                if (d.treatment && d.treatment.attachments && d.treatment.attachments.length > 0) {
-                    noAtts.style.display = 'none';
-                    d.treatment.attachments.forEach(file => {
-                        const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
-                        const card = `
-                            <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer hover-lift gap-3 transition-all" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')">
-                                <div class="bg-white rounded-3 p-2 shadow-sm text-center" style="min-width:44px;">
-                                    <i class="bi ${icon} fs-4"></i>
-                                </div>
-                                <div class="overflow-hidden flex-grow-1 text-start">
-                                    <div class="small fw-bold text-dark text-truncate">${file.name}</div>
-                                    <div class="smallest text-muted">${file.type.toUpperCase()} DOCUMENT</div>
-                                </div>
-                                <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
-                            </div>`;
-                        attContainer.insertAdjacentHTML('beforeend', card);
-                    });
-                } else {
-                    noAtts.style.display = 'block';
-                }
+            const attList = document.getElementById('attachmentList');
+            const noAtt = document.getElementById('noAttachments');
+
+            attList.innerHTML = '';
+            if (data.treatment.attachments && data.treatment.attachments.length > 0) {
+                noAtt.style.display = 'none';
+                data.treatment.attachments.forEach(file => {
+                    const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
+                    const card = `
+                        <div class="bg-white rounded-4 d-flex align-items-center p-3 border cursor-pointer gap-3" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')" style="cursor:pointer; transition: background 0.2s;">
+                            <div class="bg-light rounded-3 p-2 text-center" style="min-width:44px;">
+                                <i class="bi ${icon} fs-4"></i>
+                            </div>
+                            <div class="overflow-hidden flex-grow-1">
+                                <div class="small fw-bold text-dark text-truncate">${file.name}</div>
+                                <div class="smallest text-muted text-uppercase">${file.type}</div>
+                            </div>
+                            <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
+                        </div>`;
+                    attList.insertAdjacentHTML('beforeend', card);
+                });
+            } else {
+                noAtt.style.display = 'block';
             }
+
+            // Hook up PDF export
+            document.getElementById('exportVisitPDFBtn').onclick = () => exportAppointmentPDF();
+
+            // Show content, hide loader
+            if (loader) {
+                loader.classList.remove('d-flex');
+                loader.classList.add('d-none');
+            }
+            if (content) content.style.display = 'block';
 
         } catch (err) { 
             console.error(err);
-            if (loader) loader.style.display = 'none'; // Guarantee hiding on error
-            if (content) {
-                content.style.display = 'block';
-                content.innerHTML = `
-                    <div class="text-center p-5 w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                        <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-4 mb-4">
-                            <i class="bi bi-exclamation-triangle fs-1"></i>
-                        </div>
-                        <h4 class="fw-black text-dark">Data Retrieval Failed</h4>
-                        <p class="text-muted small mb-4">We encountered an issue while loading the clinical summary.</p>
-                        <button class="btn btn-primary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">CLOSE RECORD</button>
-                    </div>`;
-            }
-        } finally {
-            if (loader) loader.style.display = 'none';
+            if (loader) loader.innerHTML = `<div class="p-5 text-danger"><i class="bi bi-exclamation-circle fs-1 d-block mb-3"></i><h5>Failed to load data</h5><p class="small text-muted">${err.message}</p></div>`;
         }
     };
 
@@ -430,8 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `<div class="text-center text-white p-5"><i class="bi bi-file-earmark-arrow-down-fill fs-1 mb-3 opacity-50"></i><h4 class="fw-bold">Preview Not Available</h4><a href="${path}" target="_blank" class="btn btn-primary rounded-pill px-5">DOWNLOAD FILE</a></div>`;
         }
         
-        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-        previewModal.show();
+        new bootstrap.Modal(document.getElementById('previewModal')).show();
     };
 
     const toBase64 = url => fetch(url)
@@ -439,22 +442,17 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(blob => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
-            reader.onerror = reject;
             reader.readAsDataURL(blob);
         })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
-    window.exportAppointmentPDF = async () => {
-        const data = currentVisitData;
-        if (!data) return alert("Report data not loaded.");
-        
-        const btn = document.querySelector('button[onclick="exportAppointmentPDF()"]');
-        const originalText = btn ? btn.innerHTML : "DOWNLOAD PDF";
-        if (btn) {
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
-            btn.disabled = true;
-        }
 
+    window.exportAppointmentPDF = async (data) => {
+        data = data || currentVisitData;
+        if (!data) return alert("Report data not loaded.");
         const element = document.getElementById('pdfExportTemplate');
-        
+        const toast = document.createElement('div');
+        toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;padding:15px;background:#333;color:white;border-radius:8px;z-index:10000;">Generating Sharp PDF...</div>';
+        document.body.appendChild(toast);
+
         try {
             document.getElementById('pdfApptId').innerText = data.id;
             document.getElementById('pdfDate').innerText = data.date;
@@ -471,41 +469,31 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pdfDocEmail').innerText = data.doctor.email;
             document.getElementById('pdfDocDept').innerText = data.doctor.dept;
             
-            document.getElementById('pdfDiagnosis').innerText = data.treatment.diagnosis || "No diagnosis recorded.";
-            document.getElementById('pdfPrescription').innerText = data.treatment.prescription || "No medication prescribed.";
+            document.getElementById('pdfDiagnosis').innerText = data.treatment.diagnosis;
+            document.getElementById('pdfPrescription').innerText = data.treatment.prescription;
             document.getElementById('pdfClinicalNotes').innerText = data.treatment.clinical_notes || "No detailed observations provided.";
 
+            
             const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
             document.getElementById('pdfPatientImg').src = pBase64;
             document.getElementById('pdfDocImg').src = dBase64;
 
             element.style.display = 'block';
-            element.style.position = 'fixed';
-            element.style.left = '-9999px';
 
-            const sanitizedName = (data.patient.name || 'Clinical_Record').replace(/[^a-z0-9]/gi, '_');
             const opt = {
                 margin: 0,
-                filename: `Clinical_Report_${sanitizedName}.pdf`,
+                filename: `HMS_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: 794 },
+                jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] }
             };
 
-            await html2pdf().from(element).set(opt).save();
-
-        } catch (err) {
-            console.error(err);
-            alert("Failed to generate PDF.");
+            await html2pdf().set(opt).from(element).save();
         } finally {
             element.style.display = 'none';
-            if (btn) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            document.body.removeChild(toast);
         }
     };
-
 
     refreshData(180);
 });

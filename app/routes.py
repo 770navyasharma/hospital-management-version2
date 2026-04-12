@@ -746,18 +746,18 @@ def appointment_details_api(appt_id):
         "is_urgent": appt.is_urgent,
         "urgent_note": appt.urgent_note,
         "patient": {
-            "name": appt.patient.user.full_name,
-            "email": appt.patient.user.email,
-            "contact": appt.patient.contact_number,
-            "pic": appt.patient.profile_pic_url,
-            "medical_history": appt.patient.medical_history or "No previous clinical notes available."
+            "name": appt.patient.user.full_name if appt.patient and appt.patient.user else "Deleted Patient",
+            "email": appt.patient.user.email if appt.patient and appt.patient.user else "",
+            "contact": appt.patient.contact_number if appt.patient else "",
+            "pic": appt.patient.profile_pic_url if appt.patient and appt.patient.profile_pic_url else "/static/images/default-profile.svg",
+            "medical_history": (appt.patient.medical_history if appt.patient else None) or "No previous clinical notes available."
         },
         "doctor": {
-            "name": appt.doctor.user.full_name, 
-            "email": appt.doctor.user.email,
-            "dept": appt.doctor.department.name,
-            "degree": appt.doctor.degree or "",
-            "pic": appt.doctor.profile_pic_url
+            "name": appt.doctor.user.full_name if appt.doctor and appt.doctor.user else "Deleted Doctor", 
+            "email": appt.doctor.user.email if appt.doctor and appt.doctor.user else "",
+            "dept": appt.doctor.department.name if appt.doctor and appt.doctor.department else "Unassigned",
+            "degree": (appt.doctor.degree if appt.doctor else None) or "",
+            "pic": appt.doctor.profile_pic_url if appt.doctor and appt.doctor.profile_pic_url else "/static/images/default-profile.svg"
         },
         "treatment": {
             "diagnosis": appt.treatment.diagnosis if appt.treatment else "Pending",
