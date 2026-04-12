@@ -299,16 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.viewDetails = async (id) => {
         const modalEl = document.getElementById('apptDetailModal');
-        if (!modalEl) {
-            console.error("Modal element #apptDetailModal not found");
-            return;
-        }
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         
         const loader = document.getElementById('modalContentLoader');
         const content = document.getElementById('modalActualContent');
         
-        if (loader) loader.style.display = 'block';
+        if (loader) loader.style.display = 'flex';
         if (content) content.style.display = 'none';
         
         modal.show();
@@ -319,120 +315,85 @@ document.addEventListener('DOMContentLoaded', () => {
             const d = await res.json(); 
             currentVisitData = d;
             
-            if (loader) loader.style.display = 'none';
-            if (content) {
-                content.style.display = 'block';
+            // Populate Sidebar
+            document.getElementById('apptPatientPic').src = d.patient.pic;
+            document.getElementById('apptPatientName').innerText = d.patient.name;
+            document.getElementById('apptDocPic').src = d.doctor.pic;
+            document.getElementById('apptDocName').innerText = 'Dr. ' + d.doctor.name;
+            document.getElementById('apptDocDept').innerText = d.doctor.degree ? `${d.doctor.degree} · ${d.doctor.dept}` : d.doctor.dept;
+            document.getElementById('apptDateDisplay').innerText = d.date;
+
+            // Status Badge
+            const statusBadge = document.getElementById('apptStatusBadge');
+            statusBadge.innerText = d.status.toUpperCase();
+            statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
+                d.status === 'Completed' ? 'bg-success' : 
+                d.status === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark'
+            }`;
+
+            // Body content
+            document.getElementById('apptReason').innerText = d.urgent_note ? `"${d.urgent_note}"` : 'No specific intake reason provided.';
+            document.getElementById('apptDiagnosis').innerText = d.treatment.diagnosis || 'No diagnosis recorded.';
+            document.getElementById('apptNotes').innerText = d.treatment.clinical_notes || 'No detailed clinical observations recorded.';
+
+            // Medications
+            const medContainer = document.getElementById('apptMeds');
+            const noMeds = document.getElementById('noApptMeds');
+            const meds = (d.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
+            
+            medContainer.innerHTML = '';
+            if (meds.length > 0) {
+                noMeds.style.display = 'none';
+                meds.forEach(m => {
+                    medContainer.insertAdjacentHTML('beforeend', `
+                        <span class="badge bg-success-soft text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                            <i class="bi bi-capsule me-2"></i>${m}
+                        </span>`);
+                });
+            } else {
+                noMeds.style.display = 'block';
             }
 
-            const meds = (d.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
-            const medChips = meds.map(m => `
-                <span class="badge bg-success-soft text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                    <i class="bi bi-capsule me-2"></i>${m}
-                </span>`).join('');
+            // Attachments
+            const attContainer = document.getElementById('apptAtts');
+            const noAtts = document.getElementById('noApptAtts');
+            
+            attContainer.innerHTML = '';
+            if (d.treatment.attachments && d.treatment.attachments.length > 0) {
+                noAtts.style.display = 'none';
+                d.treatment.attachments.forEach(file => {
+                    const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
+                    const card = `
+                        <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer hover-lift gap-3 transition-all" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')">
+                            <div class="bg-white rounded-3 p-2 shadow-sm text-center" style="min-width:44px;">
+                                <i class="bi ${icon} fs-4"></i>
+                            </div>
+                            <div class="overflow-hidden flex-grow-1 text-start">
+                                <div class="small fw-bold text-dark text-truncate">${file.name}</div>
+                                <div class="smallest text-muted">${file.type.toUpperCase()} DOCUMENT</div>
+                            </div>
+                            <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
+                        </div>`;
+                    attContainer.insertAdjacentHTML('beforeend', card);
+                });
+            } else {
+                noAtts.style.display = 'block';
+            }
 
-            const attachmentCards = (d.treatment.attachments || []).map(file => {
-                const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
-                return `
-                    <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer hover-lift gap-3 transition-all" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')">
-                        <div class="bg-white rounded-3 p-2 shadow-sm text-center" style="min-width:44px;">
-                            <i class="bi ${icon} fs-4"></i>
-                        </div>
-                        <div class="overflow-hidden flex-grow-1 text-start">
-                            <div class="small fw-bold text-dark text-truncate">${file.name}</div>
-                            <div class="smallest text-muted">${file.type.toUpperCase()} DOCUMENT</div>
-                        </div>
-                        <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
+            if (loader) loader.style.display = 'none';
+            if (content) content.style.display = 'block';
+
+        } catch (err) { 
+            console.error(err);
+            if (loader) {
+                loader.innerHTML = `
+                    <div class="text-center p-4">
+                        <i class="bi bi-exclamation-circle fs-1 text-danger d-block mb-3"></i>
+                        <p class="text-muted fw-bold">Could not load details.</p>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Close</button>
                     </div>`;
-            }).join('');
-
-            content.innerHTML = `
-                <div class="row g-0 h-100">
-                    <!-- Left Sidebar -->
-                    <div class="col-md-3 bg-light border-end p-4 d-flex flex-column">
-                        <div class="text-center mb-4">
-                            <div class="position-relative d-inline-block mb-3">
-                                <img src="${d.patient.pic}" class="rounded-circle border border-4 border-white shadow-sm" width="100" height="100" style="object-fit: cover;">
-                            </div>
-                            <h5 class="fw-black mb-1 text-dark">${d.patient.name}</h5>
-                            <span class="smallest fw-bold text-muted text-uppercase ls-1">Appointment Record</span>
-                        </div>
-
-                        <div class="bg-white rounded-4 p-3 shadow-sm mb-4 text-start">
-                            <label class="smallest fw-bold text-muted text-uppercase mb-2 d-block ls-1">Attending Specialist</label>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="${d.doctor.pic}" class="rounded-circle border" width="40" height="40" style="object-fit: cover;">
-                                <div>
-                                    <h6 class="fw-bold text-primary mb-0 smallest">${d.doctor.name}</h6>
-                                    <div class="smallest text-muted fw-bold">${d.doctor.dept}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-primary-soft rounded-4 p-3 mb-4 text-start">
-                            <label class="smallest fw-bold text-primary text-uppercase mb-1 ls-1">Visit Date</label>
-                            <div class="fw-black text-primary" style="font-size: 1.1rem;">${d.date}</div>
-                        </div>
-
-                        <div class="mt-auto">
-                            <button class="btn btn-dark w-100 rounded-pill py-3 fw-bold shadow-sm" onclick="exportAppointmentPDF()">
-                                <i class="bi bi-file-pdf me-2"></i> DOWNLOAD PDF
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary w-100 rounded-pill py-2 mt-2 fw-bold" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-
-                    <!-- Right Section -->
-                    <div class="col-md-9 d-flex flex-column h-100 bg-white">
-                        <div class="d-flex justify-content-between align-items-center p-4 px-5 border-bottom bg-white sticky-top">
-                            <h5 class="fw-black m-0 text-uppercase ls-1"><i class="bi bi-file-earmark-medical me-2 text-primary"></i> Clinical Visit Summary</h5>
-                            <span class="badge rounded-pill px-3 py-2 ${d.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${d.status.toUpperCase()}</span>
-                        </div>
-
-                        <div class="flex-grow-1 p-5 overflow-auto custom-scroll text-start">
-                            <div class="row g-5">
-                                <div class="col-md-7">
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Chief Complaint & Context</h6>
-                                        <div class="p-4 bg-light-soft rounded-4 border-start border-4 border-primary shadow-sm">
-                                            <p class="small text-dark fw-medium italic mb-0">${d.urgent_note || "No specific intake reason provided."}</p>
-                                        </div>
-                                    </section>
-
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Final Diagnosis</h6>
-                                        <div class="p-4 bg-primary-soft rounded-4 border border-primary-subtle shadow-sm">
-                                            <h5 class="fw-black text-primary mb-0">${d.treatment.diagnosis}</h5>
-                                        </div>
-                                    </section>
-
-                                    <section>
-                                        <h6 class="fw-bold text-primary mb-3 text-uppercase smallest ls-1">Clinical Observations</h6>
-                                        <div class="p-4 bg-white rounded-4 border shadow-sm">
-                                            <p class="small text-secondary mb-0" style="white-space: pre-wrap;">${d.treatment.clinical_notes || "No detailed clinical observations recorded."}</p>
-                                        </div>
-                                    </section>
-                                </div>
-
-                                <div class="col-md-5">
-                                    <section class="mb-5">
-                                        <h6 class="fw-bold text-success mb-3 text-uppercase smallest ls-1">Prescribed Medication</h6>
-                                        <div class="d-flex flex-wrap gap-2 pt-2">
-                                            ${medChips || '<div class="smallest text-muted italic p-3 text-center border rounded-4 border-dashed w-100">No medication prescribed.</div>'}
-                                        </div>
-                                    </section>
-
-                                    <section>
-                                        <h6 class="fw-bold text-secondary mb-3 text-uppercase smallest ls-1">Consultation Attachments</h6>
-                                        <div class="d-grid gap-2">
-                                            ${attachmentCards || '<div class="text-center py-4 opacity-50 bg-light rounded-4 border border-dashed"><i class="bi bi-paperclip fs-2 mb-1 d-block"></i><span class="smallest fw-bold text-muted">No attachments.</span></div>'}
-                                        </div>
-                                    </section>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        } catch (err) { console.error(err); }
+            }
+        }
     };
 
     window.openPreview = (name, type, path) => {
@@ -451,7 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML = `<div class="text-center text-white p-5"><i class="bi bi-file-earmark-arrow-down-fill fs-1 mb-3 opacity-50"></i><h4 class="fw-bold">Preview Not Available</h4><a href="${path}" target="_blank" class="btn btn-primary rounded-pill px-5">DOWNLOAD FILE</a></div>`;
         }
         
-        new bootstrap.Modal(document.getElementById('previewModal')).show();
+        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+        previewModal.show();
     };
 
     const toBase64 = url => fetch(url)
@@ -459,17 +421,21 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(blob => new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
             reader.readAsDataURL(blob);
         })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
 
-    window.exportAppointmentPDF = async (data) => {
-        data = data || currentVisitData;
+    window.exportAppointmentPDF = async () => {
+        const data = currentVisitData;
         if (!data) return alert("Report data not loaded.");
-        const element = document.getElementById('pdfExportTemplate');
-        const toast = document.createElement('div');
-        toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;padding:15px;background:#333;color:white;border-radius:8px;z-index:10000;">Generating Sharp PDF...</div>';
-        document.body.appendChild(toast);
+        
+        const btn = document.querySelector('button[onclick="exportAppointmentPDF()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
+        btn.disabled = true;
 
+        const element = document.getElementById('pdfExportTemplate');
+        
         try {
             document.getElementById('pdfApptId').innerText = data.id;
             document.getElementById('pdfDate').innerText = data.date;
@@ -486,29 +452,35 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('pdfDocEmail').innerText = data.doctor.email;
             document.getElementById('pdfDocDept').innerText = data.doctor.dept;
             
-            document.getElementById('pdfDiagnosis').innerText = data.treatment.diagnosis;
-            document.getElementById('pdfPrescription').innerText = data.treatment.prescription;
+            document.getElementById('pdfDiagnosis').innerText = data.treatment.diagnosis || "No diagnosis recorded.";
+            document.getElementById('pdfPrescription').innerText = data.treatment.prescription || "No medication prescribed.";
             document.getElementById('pdfClinicalNotes').innerText = data.treatment.clinical_notes || "No detailed observations provided.";
 
-            
+            // Base64 conversion to avoid CORS issues in PDF rendering
             const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
             document.getElementById('pdfPatientImg').src = pBase64;
             document.getElementById('pdfDocImg').src = dBase64;
 
             element.style.display = 'block';
+            element.style.position = 'fixed';
+            element.style.left = '-9999px';
 
             const opt = {
                 margin: 0,
-                filename: `HMS_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
+                filename: `Clinical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: 794 },
-                jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait', hotfixes: ['px_scaling'] }
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
             await html2pdf().set(opt).from(element).save();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to generate PDF.");
         } finally {
             element.style.display = 'none';
-            document.body.removeChild(toast);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     };
 

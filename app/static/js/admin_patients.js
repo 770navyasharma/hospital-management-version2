@@ -287,22 +287,29 @@ window.openPreview = (name, type, path) => {
 };
 
 
+    const toBase64 = url => fetch(url)
+        .then(res => res.blob())
+        .then(blob => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        })).catch(() => "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+
 document.addEventListener('click', async function(e) {
     const btn = e.target.closest('[class*="vd-export-btn-"]');
     if (btn) {
         if (typeof html2pdf === 'undefined') return alert("PDF Library not loaded.");
         if (!currentVisitData) return alert("Please wait for record to load.");
 
-        
         const originalBtnText = btn.innerHTML;
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Rendering...`;
-        btn.style.pointerEvents = 'none';
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Preparing...`;
+        btn.disabled = true;
 
         const data = currentVisitData;
         const container = document.getElementById('pdfExportTemplate');
         
         try {
-            
             document.getElementById('pdfApptId').textContent = data.id;
             document.getElementById('pdfDate').textContent = data.date;
             document.getElementById('pdfGeneratedDate').textContent = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -318,15 +325,19 @@ document.addEventListener('click', async function(e) {
             document.getElementById('pdfDocEmail').textContent = data.doctor.email;
             document.getElementById('pdfDocDept').textContent = data.doctor.dept;
 
-            document.getElementById('pdfDiagnosis').textContent = data.treatment.diagnosis;
-            document.getElementById('pdfPrescription').textContent = data.treatment.prescription;
+            document.getElementById('pdfDiagnosis').textContent = data.treatment.diagnosis || "No diagnosis recorded.";
+            document.getElementById('pdfPrescription').textContent = data.treatment.prescription || "No medication prescribed.";
             document.getElementById('pdfClinicalNotes').textContent = data.treatment.clinical_notes || "No detailed observations provided.";
 
-            
+            // Convert images to Base64 to ensure they show up in PDF
+            const [pBase64, dBase64] = await Promise.all([toBase64(data.patient.pic), toBase64(data.doctor.pic)]);
+            document.getElementById('pdfPatientImg').src = pBase64;
+            document.getElementById('pdfDocImg').src = dBase64;
+
             container.style.display = 'block';
             container.style.position = 'fixed';
             container.style.top = '0';
-            container.style.left = '0';
+            container.style.left = '-9999px';
             container.style.zIndex = '-9999';
             container.style.opacity = '1';
 
@@ -334,22 +345,12 @@ document.addEventListener('click', async function(e) {
 
             const opt = {
                 margin: 0,
-                filename: `Medical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
+                filename: `Clinical_Report_${data.patient.name.replace(/\s+/g, '_')}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true, 
-                    logging: false, 
-                    letterRendering: true,
-                    backgroundColor: '#ffffff'
-                },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
             };
 
-            
-            await new Promise(r => setTimeout(r, 1000));
-            
-            
             await html2pdf().set(opt).from(elementToCapture).save();
 
         } catch (err) {
@@ -358,7 +359,7 @@ document.addEventListener('click', async function(e) {
         } finally {
             container.style.display = 'none';
             btn.innerHTML = originalBtnText;
-            btn.style.pointerEvents = 'auto';
+            btn.disabled = false;
         }
     }
 });
