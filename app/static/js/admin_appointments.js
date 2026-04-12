@@ -304,7 +304,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const loader = document.getElementById('modalContentLoader');
         const content = document.getElementById('modalActualContent');
         
-        if (loader) loader.style.display = 'flex';
+        // Reset view
+        if (loader) {
+            loader.style.display = 'flex';
+            loader.style.zIndex = '2000'; // Ensure it covers everything including sticky headers
+        }
         if (content) content.style.display = 'none';
         
         modal.show();
@@ -315,84 +319,100 @@ document.addEventListener('DOMContentLoaded', () => {
             const d = await res.json(); 
             currentVisitData = d;
             
+            // Important: Hide loader as soon as data is ready to be rendered
+            // This prevents the "stuck loading" visual if something small fails below
+            if (loader) loader.style.display = 'none';
+            if (content) content.style.display = 'block';
+
             // Populate Sidebar
-            document.getElementById('apptPatientPic').src = d.patient.pic;
-            document.getElementById('apptPatientName').innerText = d.patient.name;
-            document.getElementById('apptDocPic').src = d.doctor.pic;
-            document.getElementById('apptDocName').innerText = 'Dr. ' + d.doctor.name;
-            document.getElementById('apptDocDept').innerText = d.doctor.degree ? `${d.doctor.degree} · ${d.doctor.dept}` : d.doctor.dept;
-            document.getElementById('apptDateDisplay').innerText = d.date;
+            if (document.getElementById('apptPatientPic')) document.getElementById('apptPatientPic').src = d.patient.pic || '';
+            if (document.getElementById('apptPatientName')) document.getElementById('apptPatientName').innerText = d.patient.name || 'Unknown';
+            if (document.getElementById('apptDocPic')) document.getElementById('apptDocPic').src = d.doctor.pic || '';
+            if (document.getElementById('apptDocName')) document.getElementById('apptDocName').innerText = 'Dr. ' + (d.doctor.name || 'Staff');
+            if (document.getElementById('apptDocDept')) {
+                document.getElementById('apptDocDept').innerText = d.doctor.degree ? `${d.doctor.degree} · ${d.doctor.dept}` : (d.doctor.dept || 'Consultant');
+            }
+            if (document.getElementById('apptDateDisplay')) document.getElementById('apptDateDisplay').innerText = d.date || '';
 
             // Status Badge
             const statusBadge = document.getElementById('apptStatusBadge');
-            statusBadge.innerText = d.status.toUpperCase();
-            statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
-                d.status === 'Completed' ? 'bg-success' : 
-                d.status === 'Cancelled' ? 'bg-danger' : 'bg-warning text-dark'
-            }`;
+            if (statusBadge) {
+                const status = (d.status || 'Unknown').toUpperCase();
+                statusBadge.innerText = status;
+                statusBadge.className = `badge rounded-pill px-3 py-2 fw-bold text-uppercase smallest ${
+                    status === 'COMPLETED' ? 'bg-success' : 
+                    status === 'CANCELLED' || status === 'REJECTED' ? 'bg-danger' : 'bg-warning text-dark'
+                }`;
+            }
 
             // Body content
-            document.getElementById('apptReason').innerText = d.urgent_note ? `"${d.urgent_note}"` : 'No specific intake reason provided.';
-            document.getElementById('apptDiagnosis').innerText = d.treatment.diagnosis || 'No diagnosis recorded.';
-            document.getElementById('apptNotes').innerText = d.treatment.clinical_notes || 'No detailed clinical observations recorded.';
+            if (document.getElementById('apptReason')) document.getElementById('apptReason').innerText = d.urgent_note ? `"${d.urgent_note}"` : 'No specific intake reason provided.';
+            if (document.getElementById('apptDiagnosis')) document.getElementById('apptDiagnosis').innerText = (d.treatment && d.treatment.diagnosis) || 'No diagnosis recorded.';
+            if (document.getElementById('apptNotes')) document.getElementById('apptNotes').innerText = (d.treatment && d.treatment.clinical_notes) || 'No detailed clinical observations recorded.';
 
             // Medications
             const medContainer = document.getElementById('apptMeds');
             const noMeds = document.getElementById('noApptMeds');
-            const meds = (d.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
-            
-            medContainer.innerHTML = '';
-            if (meds.length > 0) {
-                noMeds.style.display = 'none';
-                meds.forEach(m => {
-                    medContainer.insertAdjacentHTML('beforeend', `
-                        <span class="badge bg-success-soft text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
-                            <i class="bi bi-capsule me-2"></i>${m}
-                        </span>`);
-                });
-            } else {
-                noMeds.style.display = 'block';
+            if (medContainer && noMeds) {
+                const meds = (d.treatment && d.treatment.prescription || '').split(',').map(m => m.trim()).filter(m => m);
+                medContainer.innerHTML = '';
+                if (meds.length > 0) {
+                    noMeds.style.display = 'none';
+                    meds.forEach(m => {
+                        medContainer.insertAdjacentHTML('beforeend', `
+                            <span class="badge bg-success-soft text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                                <i class="bi bi-capsule me-2"></i>${m}
+                            </span>`);
+                    });
+                } else {
+                    noMeds.style.display = 'block';
+                }
             }
 
             // Attachments
             const attContainer = document.getElementById('apptAtts');
             const noAtts = document.getElementById('noApptAtts');
-            
-            attContainer.innerHTML = '';
-            if (d.treatment.attachments && d.treatment.attachments.length > 0) {
-                noAtts.style.display = 'none';
-                d.treatment.attachments.forEach(file => {
-                    const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
-                    const card = `
-                        <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer hover-lift gap-3 transition-all" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')">
-                            <div class="bg-white rounded-3 p-2 shadow-sm text-center" style="min-width:44px;">
-                                <i class="bi ${icon} fs-4"></i>
-                            </div>
-                            <div class="overflow-hidden flex-grow-1 text-start">
-                                <div class="small fw-bold text-dark text-truncate">${file.name}</div>
-                                <div class="smallest text-muted">${file.type.toUpperCase()} DOCUMENT</div>
-                            </div>
-                            <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
-                        </div>`;
-                    attContainer.insertAdjacentHTML('beforeend', card);
-                });
-            } else {
-                noAtts.style.display = 'block';
+            if (attContainer && noAtts) {
+                attContainer.innerHTML = '';
+                if (d.treatment && d.treatment.attachments && d.treatment.attachments.length > 0) {
+                    noAtts.style.display = 'none';
+                    d.treatment.attachments.forEach(file => {
+                        const icon = file.type === 'image' ? 'bi-image text-info' : (file.type === 'pdf' ? 'bi-file-pdf text-danger' : 'bi-file-earmark text-muted');
+                        const card = `
+                            <div class="bg-light rounded-4 d-flex align-items-center p-3 border cursor-pointer hover-lift gap-3 transition-all" onclick="openPreview('${file.name}', '${file.type}', '${file.path}')">
+                                <div class="bg-white rounded-3 p-2 shadow-sm text-center" style="min-width:44px;">
+                                    <i class="bi ${icon} fs-4"></i>
+                                </div>
+                                <div class="overflow-hidden flex-grow-1 text-start">
+                                    <div class="small fw-bold text-dark text-truncate">${file.name}</div>
+                                    <div class="smallest text-muted">${file.type.toUpperCase()} DOCUMENT</div>
+                                </div>
+                                <i class="bi bi-eye text-primary opacity-50 flex-shrink-0"></i>
+                            </div>`;
+                        attContainer.insertAdjacentHTML('beforeend', card);
+                    });
+                } else {
+                    noAtts.style.display = 'block';
+                }
             }
-
-            if (loader) loader.style.display = 'none';
-            if (content) content.style.display = 'block';
 
         } catch (err) { 
             console.error(err);
-            if (loader) {
-                loader.innerHTML = `
-                    <div class="text-center p-4">
-                        <i class="bi bi-exclamation-circle fs-1 text-danger d-block mb-3"></i>
-                        <p class="text-muted fw-bold">Could not load details.</p>
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+            if (loader) loader.style.display = 'none'; // Guarantee hiding on error
+            if (content) {
+                content.style.display = 'block';
+                content.innerHTML = `
+                    <div class="text-center p-5 w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-4 mb-4">
+                            <i class="bi bi-exclamation-triangle fs-1"></i>
+                        </div>
+                        <h4 class="fw-black text-dark">Data Retrieval Failed</h4>
+                        <p class="text-muted small mb-4">We encountered an issue while loading the clinical summary.</p>
+                        <button class="btn btn-primary rounded-pill px-5 fw-bold" data-bs-dismiss="modal">CLOSE RECORD</button>
                     </div>`;
             }
+        } finally {
+            if (loader) loader.style.display = 'none';
         }
     };
 
