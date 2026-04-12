@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 import os
 import hashlib
 from sqlalchemy import func
+from sqlalchemy.ext.mutable import flag_modified
 
 doctor_blueprint = Blueprint('doctor', __name__)
 
@@ -43,6 +44,15 @@ def get_notifications():
 def mark_notifications_read():
     from .models import Notification
     Notification.query.filter_by(user_id=current_user.id, is_read=False).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"status": "success"})
+
+@doctor_blueprint.route('/api/notifications/dismiss/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Doctor')
+def dismiss_notification(id):
+    from .models import Notification
+    Notification.query.filter_by(id=id, user_id=current_user.id).delete()
     db.session.commit()
     return jsonify({"status": "success"})
 
@@ -428,9 +438,16 @@ def handle_request(appt_id, status):
 @roles_required('Doctor')
 def update_availability():
     doctor = current_user.doctor_profile
-    doctor.availability = request.json 
+    data = request.get_json()
+    
+    # Store the entire object, implicitly merging with existing if not intended to clear all
+    doctor.availability = data 
+    
+    # Force SQLAlchemy to recognize the change in the JSON/MutableDict column
+    flag_modified(doctor, "availability")
+    
     db.session.commit()
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success", "received_keys": list(data.keys()) if data else []})
 
 @doctor_blueprint.route('/api/doctor/update-treatment-history/<int:appt_id>', methods=['POST'])
 @login_required

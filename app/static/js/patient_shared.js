@@ -4,7 +4,8 @@ const globalState = reactive({
     notifications: [],
     showNotifications: false,
     toasts: [],
-    loading: false
+    loading: false,
+    patientProfile: null
 });
 
 
@@ -66,6 +67,18 @@ const sharedMethods = {
         }
     },
 
+    async dismissNotification(id) {
+        try {
+            const res = await fetch(`/patient/api/notifications/dismiss/${id}`, { method: 'POST' });
+            if (res.ok) {
+                globalState.notifications = globalState.notifications.filter(n => n.id !== id);
+            }
+        } catch (e) {
+            console.error("Failed to dismiss notification:", e);
+            globalState.notifications = globalState.notifications.filter(n => n.id !== id);
+        }
+    },
+
     copyToClipboard(text) {
         if (!text || text === 'Contact not provided' || text === 'Contact not visible') {
             return this.showToast("No contact number to copy!", "warning");
@@ -88,6 +101,17 @@ const sharedMethods = {
                 reader.readAsDataURL(blob);
             });
         } catch { return null; }
+    },
+
+    async fetchProfile() {
+        try {
+            const res = await fetch('/patient/api/profile');
+            if (res.ok) {
+                globalState.patientProfile = await res.json();
+            }
+        } catch (e) {
+            console.error("Failed to fetch patient profile:", e);
+        }
     }
 };
 
@@ -108,4 +132,5 @@ const clickOutside = {
 
 
 sharedMethods.fetchNotifications();
+sharedMethods.fetchProfile();
 setInterval(() => sharedMethods.fetchNotifications(), 30000);

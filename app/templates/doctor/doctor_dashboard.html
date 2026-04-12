@@ -152,6 +152,14 @@
                     <h6 class="fw-bold m-0"><i class="bi bi-inbox me-2 text-primary"></i>Incoming Requests</h6>
                     <span class="badge bg-primary-soft text-primary smallest rounded-pill" v-if="requests.length > 0">[[ requests.length ]] NEW</span>
                 </div>
+                
+                <!-- Lead-Time Policy Reminder -->
+                <div v-if="requests.length > 0" class="alert alert-warning border-0 rounded-4 p-2 mb-3 animate-fade-in d-flex align-items-center gap-2 shadow-sm mx-1" style="background: rgba(255, 193, 7, 0.1);">
+                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 0.75rem;"></i>
+                    <p class="smallest fw-bold text-muted mb-0" style="font-size: 0.62rem; line-height: 1.3;">
+                        <span class="text-dark">Policy Reminder:</span> Please accept or reject requests at least <span class="text-danger">10 mins</span> before start or they will auto-cancel.
+                    </p>
+                </div>
                 <div class="pe-2 custom-scroll flex-grow-1" style="max-height: 380px; overflow-y: auto;">
                     <div v-for="req in requests" :key="req.id" class="position-relative mb-3 overflow-hidden rounded-4">
                         

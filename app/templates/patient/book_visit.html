@@ -530,6 +530,19 @@
                     <div v-else class="animate-fade-in">
                         <p class="bk-section-label"><i class="bi bi-clock me-2 text-primary"></i>Available Slots — [[ formatDate(selectedDate) ]]</p>
                         
+                        <!-- Policy Banner -->
+                        <div v-if="isTodaySelected" 
+                             class="alert alert-warning border-0 rounded-4 p-3 mb-4 animate-fade-in d-flex align-items-center gap-3 shadow-sm"
+                             style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); position: relative; z-index: 10;">
+                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 32px; height: 32px; flex-shrink: 0;">
+                                <i class="bi bi-clock-history fs-6"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="fw-black mb-0 text-dark" style="font-size: 0.8rem;">Lead-Time Policy</h6>
+                                <p class="smallest fw-bold text-muted mb-0">Earliest available booking: [[ formatTime(leadTimeThreshold) ]]</p>
+                            </div>
+                        </div>
+                        
                         <div v-for="slot in availableSlots" :key="slot.start"
                              class="bk-slot-card"
                              :class="{ 'bk-slot-selected': selectedSlot && selectedSlot.start === slot.start }">
@@ -559,6 +572,12 @@
                                 </div>
                                 
                                 <div class="bk-bar-inner">
+                                    <!-- Lead-Time Deadzone (Grey Block) -->
+                                    <div class="position-absolute h-100" :style="getLeadTimeBlockStyle(slot)" style="pointer-events: none;">
+                                        <span v-if="timeToMinutes(leadTimeThreshold) - timeToMinutes(slot.start) > 20" 
+                                              class="smallest fw-bold text-white opacity-75 ps-2" 
+                                              style="font-size: 0.5rem; line-height: 24px; letter-spacing: 0.5px;">LOCKED</span>
+                                    </div>
                                     
                                     <div class="bk-bar-free w-100 h-100"></div>
                                     
@@ -597,9 +616,10 @@
                             
                             <button @click="selectSlot(slot)"
                                     class="bk-choose-btn"
+                                    :disabled="isTodaySelected && slot.end <= leadTimeThreshold"
                                     :class="selectedSlot && selectedSlot.start === slot.start ? 'bk-choose-active' : ''">
                                 <i class="bi" :class="selectedSlot && selectedSlot.start === slot.start ? 'bi-check2-circle' : 'bi-plus-circle'"></i>
-                                [[ selectedSlot && selectedSlot.start === slot.start ? 'Slot Selected' : 'Add Your Slot Here' ]]
+                                [[ selectedSlot && selectedSlot.start === slot.start ? 'Slot Selected' : (isTodaySelected && slot.end <= leadTimeThreshold ? 'SLOT ELAPSED' : 'Add Your Slot Here') ]]
                             </button>
                         </div>
                     </div>
@@ -686,7 +706,14 @@
 
 
 <div v-if="showConfirmModal" class="bk-modal-backdrop animate-fade-in" style="z-index: 7000;" @click.self="showConfirmModal = false">
-    <div class="bk-confirm-modal-card scale-in" role="dialog">
+    <div class="bk-confirm-modal-card scale-in" role="dialog" style="position: relative;">
+        <!-- Compact Policy Badge -->
+        <div v-if="isTodaySelected" class="text-center mb-3 animate-fade-in" style="margin-top: -10px;">
+            <span class="badge rounded-pill px-3 py-2 border border-warning-subtle text-warning-emphasis shadow-sm" 
+                  style="background: #fffbe6; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.5px;">
+                <i class="bi bi-clock-history me-1"></i> POLICY: BOOKINGS AFTER [[ formatTime(leadTimeThreshold) ]]
+            </span>
+        </div>
         
         <div class="bk-cmodal-icon">
             <i class="bi bi-calendar2-check"></i>
@@ -729,7 +756,7 @@
             <button @click="showConfirmModal = false" class="bk-cmodal-cancel-btn">
                 <i class="bi bi-arrow-left me-2"></i> Go Back
             </button>
-            <button @click="submitBooking" :disabled="loading || (isUrgent && !urgentNote)" class="bk-cmodal-confirm-btn">
+            <button @click="submitBooking" :disabled="loading || (isUrgent && !urgentNote) || (isTodaySelected && (selectedTime || selectedSlot?.start) < leadTimeThreshold)" class="bk-cmodal-confirm-btn">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                 <i v-else class="bi bi-check2-circle me-2"></i>
                 [[ loading ? 'Booking...' : 'Confirm & Book' ]]

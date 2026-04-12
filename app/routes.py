@@ -120,8 +120,13 @@ def dashboard_stats_api():
     start_str = request.args.get('start_date')
     end_str = request.args.get('end_date')
 
-    start_date = datetime.strptime(start_str, '%Y-%m-%d')
-    end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
+    if start_str and end_str:
+        start_date = datetime.strptime(start_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
+    else:
+        # NEW: Default to 180 days (6 months) as requested
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=180)
 
     appt_stats = db.session.query(
         func.date(Appointment.appointment_datetime).label('date'),
@@ -130,34 +135,147 @@ def dashboard_stats_api():
              Appointment.appointment_datetime < end_date)\
      .group_by(func.date(Appointment.appointment_datetime)).all()
 
-    patient_dist = db.session.query(
-        Patient.status, func.count(Patient.id)
-    ).join(User, Patient.user_id == User.id)\
-     .filter(User.created_at >= start_date, User.created_at < end_date)\
-     .group_by(Patient.status).all()
-
-
-    workload_query = db.session.query(
-        User.full_name, Patient.status, func.count(Appointment.id)
-    ).join(Doctor, Appointment.doctor_id == Doctor.id)\
-     .join(User, Doctor.user_id == User.id)\
-     .join(Patient, Appointment.patient_id == Patient.id)\
-     .filter(Appointment.appointment_datetime >= start_date, 
+    # 1. Appointment status distribution (Filtered by date range)
+    status_stats = db.session.query(
+        Appointment.status, func.count(Appointment.id)
+    ).filter(Appointment.appointment_datetime >= start_date, 
              Appointment.appointment_datetime < end_date)\
-     .group_by(User.full_name, Patient.status).all()
+     .group_by(Appointment.status).all()
 
-    doctor_data = {}
-    for name, status, count in workload_query:
-        if name not in doctor_data:
-            doctor_data[name] = {"New": 0, "Under Treatment": 0, "Recovered": 0}
-        doctor_data[name][status] = count
+    # 2. Department-wise stats (Comprehensive)
+    # Get all departments first to ensure they appear
+    all_depts = Department.query.order_by(Department.name).all()
+    dept_stats = []
+    for dept in all_depts:
+        doc_count = Doctor.query.filter_by(department_id=dept.id).count()
+        # Count unique patients who have visited this department's doctors
+        pat_count = db.session.query(func.count(func.distinct(Appointment.patient_id)))\
+            .join(Doctor, Appointment.doctor_id == Doctor.id)\
+            .filter(Doctor.department_id == dept.id)\
+            .scalar() or 0
+        
+        dept_stats.append({
+            "name": dept.name,
+            "doctors": doc_count,
+            "patients": pat_count
+        })
 
-    formatted_doctors = [{"name": name, "statuses": stats} for name, stats in doctor_data.items()]
+    # Add absolute totals for the summary cards
+    totals = {
+        "patients": Patient.query.count(),
+        "doctors": Doctor.query.count(),
+        "appointments": Appointment.query.count()
+    }
 
     return jsonify({
-        "appointments": [{"date": str(s.date), "count": s.count} for s in appt_stats],
-        "patients": {s[0]: s[1] for s in patient_dist},
-        "doctors": formatted_doctors
+        "status_distribution": {s[0]: s[1] for s in status_stats},
+        "dept_stats": dept_stats,
+        "totals": totals
+    })
+
+@main.route('/api/admin/doctors-list')
+@login_required
+@roles_required('Admin')
+def admin_doctors_list_api():
+    doctors = Doctor.query.all()
+    return jsonify([{
+        "id": d.id,
+        "name": d.user.full_name,
+        "dept": d.department.name,
+        "pic": d.profile_pic_url
+    } for d in doctors])
+
+@main.route('/api/admin/doctor-schedule/<int:doctor_id>')
+@login_required
+@roles_required('Admin')
+def admin_doctor_schedule_api(doctor_id):
+    doctor = Doctor.query.get_or_404(doctor_id)
+    appts = Appointment.query.filter_by(doctor_id=doctor.id).all()
+    
+    appt_data = [{
+        "date": a.appointment_datetime.strftime("%Y-%m-%d"),
+        "time": a.appointment_datetime.strftime("%H:%M"),
+        "status": a.status
+    } for a in appts]
+
+    # Explicitly cast to dict to ensure MutableDict/SQLiteJSON doesn't cause serialization ghosting
+    availability_data = dict(doctor.availability) if doctor.availability else {}
+    has_any = len(availability_data.keys()) > 0
+
+    return jsonify({
+        "availability": availability_data,
+        "has_any_availability": has_any,
+        "appointments": appt_data,
+        "doctor_info": {
+            "name": doctor.user.full_name,
+            "dept": doctor.department.name,
+            "pic": doctor.profile_pic_url
+        }
+    })
+
+@main.route('/api/admin/patient-case-file/<int:patient_id>')
+@login_required
+@roles_required('Admin')
+def patient_case_file_api(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    appts = Appointment.query.filter_by(patient_id=patient.id).order_by(Appointment.appointment_datetime.desc()).all()
+    
+    visit_history = []
+    for a in appts:
+        visit_history.append({
+            "date": a.appointment_datetime.strftime("%d %b %Y"),
+            "doctor": a.doctor.user.full_name,
+            "status": a.status,
+            "diagnosis": a.treatment.diagnosis if a.treatment else "Pending",
+            "prescription": a.treatment.prescription if a.treatment else "None"
+        })
+
+    return jsonify({
+        "info": {
+            "name": patient.user.full_name,
+            "email": patient.user.email,
+            "contact": patient.contact_number,
+            "medical_history": patient.medical_history or "No previous medical history recorded.",
+            "status": patient.status,
+            "pic": patient.profile_pic_url
+        },
+        "history": visit_history
+    })
+
+@main.route('/api/admin/doctor-performance/<int:doctor_id>')
+@login_required
+@roles_required('Admin')
+def doctor_performance_api(doctor_id):
+    start_str = request.args.get('start_date')
+    end_str = request.args.get('end_date')
+    
+    if start_str and end_str:
+        start_date = datetime.strptime(start_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
+    else:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=180)
+
+    doctor = Doctor.query.get_or_404(doctor_id)
+    appts = Appointment.query.filter(
+        Appointment.doctor_id == doctor.id,
+        Appointment.appointment_datetime >= start_date,
+        Appointment.appointment_datetime < end_date
+    ).all()
+
+    total_revenue = sum([doctor.fees for a in appts if a.status == 'Completed'])
+    
+    status_counts = {"Completed": 0, "Cancelled": 0, "Ongoing": 0, "Booked": 0}
+    for a in appts:
+        if a.status in status_counts:
+            status_counts[a.status] += 1
+
+    return jsonify({
+        "doctor_id": doctor.id,
+        "count": len(appts),
+        "revenue": total_revenue,
+        "status_dist": status_counts,
+        "recent_patients": list(set([a.patient.user.full_name for a in appts[:5]]))
     })
 @main.route('/admin/doctors', methods=['GET'])
 @login_required
@@ -266,7 +384,7 @@ def admin_edit_doctor(doctor_id):
             doctor.user.active = (request.form.get('status') == 'active')
         doctor.phone_number = request.form.get('phone_number')
         doctor.department_id = request.form.get('department_id')
-        doctor.bio = request.form.get('bio')
+        # Professional bio and credentials are now doctor-managed and locked for admins
         doctor.fees = float(request.form.get('fees', 0.0))
 
         profile_pic = request.files.get('profile_pic')
@@ -485,23 +603,35 @@ def patient_stats_api():
     start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
     end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
     
+    # Get total count of patients before the start date
+    base_count = db.session.query(func.count(User.id)).join(User.roles).filter(
+        Role.name == 'Patient',
+        User.created_at < datetime.combine(start_date, datetime.min.time())
+    ).scalar() or 0
+
+    # Get daily new patient counts for the range
     new_patients = db.session.query(
         func.date(User.created_at).label('date'),
         func.count(User.id).label('count')
     ).join(User.roles).filter(
         Role.name == 'Patient',
-        User.created_at >= start_date,
+        User.created_at >= datetime.combine(start_date, datetime.min.time()),
         User.created_at <= datetime.combine(end_date, datetime.max.time())
     ).group_by(func.date(User.created_at)).all()
 
     labels = []
     data_points = []
+    current_total = base_count
+    
     delta = end_date - start_date
     for i in range(delta.days + 1):
         day = (start_date + timedelta(days=i)).isoformat()
         labels.append(day)
-        count = next((x.count for x in new_patients if x.date == day), 0)
-        data_points.append(count)
+        
+        # Find daily count
+        daily_new = next((x.count for x in new_patients if str(x.date) == day), 0)
+        current_total += daily_new
+        data_points.append(current_total)
 
     return jsonify({'labels': labels, 'new_patients_data': data_points})
 
@@ -567,7 +697,8 @@ def appointment_stats_api():
         start_date = datetime.strptime(start_str, '%Y-%m-%d')
         end_date = datetime.strptime(end_str, '%Y-%m-%d') + timedelta(days=1)
     else:
-        days = int(days) if days else 7
+        # Default to a larger window if not specified, often 30 days is standard.
+        days = int(days) if days else 30 
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
 
@@ -612,21 +743,32 @@ def appointment_details_api(appt_id):
         "id": appt.id,
         "date": appt.appointment_datetime.strftime("%d %b %Y at %H:%M"),
         "status": appt.status,
+        "is_urgent": appt.is_urgent,
+        "urgent_note": appt.urgent_note,
         "patient": {
             "name": appt.patient.user.full_name,
             "email": appt.patient.user.email,
             "contact": appt.patient.contact_number,
             "pic": appt.patient.profile_pic_url,
-            "clinical_notes": appt.patient.medical_history or "No previous clinical notes available."
+            "medical_history": appt.patient.medical_history or "No previous clinical notes available."
         },
         "doctor": {
             "name": appt.doctor.user.full_name, 
             "email": appt.doctor.user.email,
             "dept": appt.doctor.department.name,
+            "degree": appt.doctor.degree or "",
             "pic": appt.doctor.profile_pic_url
         },
         "treatment": {
             "diagnosis": appt.treatment.diagnosis if appt.treatment else "Pending",
-            "prescription": appt.treatment.prescription if appt.treatment else "None issued"
+            "prescription": appt.treatment.prescription if appt.treatment else "None issued",
+            "notes": appt.treatment.notes if appt.treatment else "",
+            "clinical_notes": appt.treatment.clinical_notes if appt.treatment else "",
+            "attachments": [{
+                "id": att.id,
+                "name": att.filename,
+                "type": att.file_type,
+                "path": att.file_path
+            } for att in (appt.treatment.attachments if appt.treatment else [])]
         }
     })

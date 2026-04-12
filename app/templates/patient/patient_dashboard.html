@@ -85,6 +85,26 @@
             </div>
         </div>
     </div>
+    
+    <div v-else class="mb-5 animate-fade-in">
+        <div class="card border-0 rounded-5 shadow-sm overflow-hidden" 
+             style="background: linear-gradient(135deg, rgba(78, 115, 223, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%); border: 1px solid rgba(78, 115, 223, 0.1) !important;">
+            <div class="card-body p-5 text-center">
+                <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle shadow-sm mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-calendar-heart text-primary fs-1"></i>
+                </div>
+                <h3 class="fw-black text-dark mb-2">You're all set for today!</h3>
+                <p class="text-muted fw-bold mb-4 mx-auto" style="max-width: 400px; line-height: 1.6;">
+                    No health appointments are scheduled for today. Take this time to focus on your well-being or explore our top specialists.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/patient/book-appointment" class="btn btn-primary rounded-pill px-4 py-2 fw-black shadow-blue transition-all">
+                        <i class="bi bi-plus-circle me-2"></i>BOOK NEW
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     
     <div v-if="requestedAppointments.length > 0" class="mb-5">
@@ -269,6 +289,12 @@
                                     </div>
                                     
                                     <div class="slot-track rounded-pill overflow-hidden position-relative bg-light border" style="height: 32px;">
+                                        <!-- Lead-Time Deadzone (Grey Block) -->
+                                        <div class="position-absolute h-100" :style="getLeadTimeBlockStyle(slot)" title="Policy: Lead-time window (20m)">
+                                            <span v-if="timeToMinutes(leadTimeThreshold) - timeToMinutes(slot.start) > 15" 
+                                                  class="smallest fw-bold text-white opacity-75 ps-2" 
+                                                  style="font-size: 0.55rem; line-height: 32px; letter-spacing: 0.5px;">UNAVAILABLE</span>
+                                        </div>
                                         
                                         <div v-for="busy in getBusyIntervalsForSlot(slot)" 
                                              class="position-absolute h-100 bg-danger opacity-50 d-flex align-items-center justify-content-center"
@@ -293,6 +319,19 @@
                             </div>
 
                             
+                            <div v-if="isTodaySelected" 
+                                 class="alert alert-warning border-0 rounded-4 p-3 mb-4 animate-fade-in d-flex align-items-center gap-3 shadow-sm mt-3"
+                                 style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); position: relative; z-index: 5;">
+                                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                    <i class="bi bi-clock-history fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-black mb-1 text-dark" style="font-size: 0.85rem;">Doctor Review Policy</h6>
+                                    <p class="smallest fw-bold text-muted mb-0" style="line-height: 1.4;">Same-day appointments must be booked at least 20 minutes from now. Earliest available: <span class="text-primary fw-black">[[ formatTime(leadTimeThreshold) ]]</span></p>
+                                </div>
+                            </div>
+
+                            <!-- 3. Pick Specific Start Time -->
                             <div v-if="selectedSlot" class="mt-4 animate-fade-in bg-light rounded-4 p-4 border border-primary-subtle shadow-sm">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <label class="smallest fw-black text-primary text-uppercase ls-1 m-0">3. Pick Specific Start Time</label>
@@ -350,7 +389,7 @@
             <button @click="showBookingModal = false" class="btn text-muted fw-bold">Cancel</button>
             <button @click="submitBooking" 
                     class="btn btn-primary rounded-pill px-5 py-3 fw-black shadow-blue scale-in d-flex align-items-center"
-                    :disabled="!selectedTime || loading">
+                    :disabled="!selectedTime || loading || (isTodaySelected && selectedTime < leadTimeThreshold)">
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 <span>BOOK APPOINTMENT</span>
                 <i class="bi bi-arrow-right-circle-fill ms-2 fs-5"></i>
@@ -361,9 +400,32 @@
 
 
 <div v-if="completedAppointments.length > 0" class="mb-5">
-    <h4 class="dash-section-title"><i class="bi bi-journal-medical text-primary"></i>My Medical History</h4>
-    <div class="row g-4">
-        <div class="col-md-4" v-for="appt in completedAppointments" :key="appt.id">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <h4 class="dash-section-title m-0"><i class="bi bi-journal-medical text-primary"></i>My Medical History</h4>
+        
+        <div class="d-flex flex-wrap gap-2">
+            <!-- Search by Doctor -->
+            <div class="search-box mb-0 shadow-sm" style="min-width: 250px;">
+                <i class="bi bi-search"></i>
+                <input type="text" v-model="historySearchQuery" placeholder="Search by doctor name...">
+            </div>
+            
+            <!-- Filter by Date -->
+            <div class="search-box mb-0 shadow-sm" style="min-width: 180px;">
+                <i class="bi bi-calendar3"></i>
+                <input type="date" v-model="historyDateFilter" class="ps-5" style="cursor: pointer;" title="Filter by appointment date">
+            </div>
+
+            <button v-if="historySearchQuery || historyDateFilter" 
+                    @click="historySearchQuery = ''; historyDateFilter = ''" 
+                    class="btn btn-soft-danger rounded-4 px-3 fw-bold small">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4" v-if="filteredCompletedAppointments.length > 0">
+        <div class="col-md-4" v-for="appt in filteredCompletedAppointments" :key="appt.id">
             <div @click="openHistoryModal(appt)" class="card border-0 shadow-sm rounded-4 h-100 transition-all hover-lift cursor-pointer hover-border-primary border-3 border-transparent bg-white">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">

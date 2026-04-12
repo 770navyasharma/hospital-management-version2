@@ -166,6 +166,15 @@ def mark_notifications_read():
     db.session.commit()
     return jsonify({"status": "success"})
 
+@patient_blueprint.route('/api/notifications/dismiss/<int:id>', methods=['POST'])
+@login_required
+@roles_required('Patient')
+def dismiss_notification(id):
+    from .models import Notification
+    Notification.query.filter_by(id=id, user_id=current_user.id).delete()
+    db.session.commit()
+    return jsonify({"status": "success"})
+
 @patient_blueprint.route('/api/appointments')
 @login_required
 @roles_required('Patient')
@@ -235,18 +244,19 @@ def get_doctor_availability(doctor_id, date_str):
         })
     
     now = datetime.now()
+    buffer_now = now + timedelta(minutes=20)
     today_str = now.strftime("%Y-%m-%d")
-    current_time_str = now.strftime("%H:%M")
+    buffer_time_str = buffer_now.strftime("%H:%M")
 
     formatted_slots = []
     for slot in slots:
         try:
-
             parts = [s.strip() for s in slot.split('-')]
             if len(parts) < 2: continue
             start_str, end_str = parts[0], parts[1]
 
-            if date_str == today_str and end_str < current_time_str:
+            # Only show slots that end at least 15 mins from now if booking for today
+            if date_str == today_str and end_str < buffer_time_str:
                 continue
 
             start_dt = datetime.strptime(start_str, "%H:%M")
@@ -284,20 +294,21 @@ def book_appointment():
 
     try:
         dt = datetime.strptime(dt_str, '%Y-%m-%dT%H:%M')
+        if dt < datetime.now() + timedelta(minutes=20):
+            return jsonify({"status": "error", "message": "Appointments must be booked at least 20 minutes in advance to allow for doctor review."}), 400
     except ValueError:
         return jsonify({"status": "error", "message": "Invalid date/time format"}), 400
 
     if medical_history and current_user.patient_profile:
-        current_user.patient_profile.history = medical_history
+        current_user.patient_profile.medical_history = medical_history
         db.session.commit()
 
     doctor = Doctor.query.get_or_404(doctor_id)
     
-    if doctor.status_override in ['break', 'offline', 'busy']:
-        status_names = {'break': 'On Break', 'offline': 'Offline', 'busy': 'Busy'}
+    if doctor.status_override == 'offline':
         return jsonify({
             "status": "error", 
-            "message": f"Doctor is currently {status_names.get(doctor.status_override)}. Please try again later."
+            "message": "Doctor is currently Offline. Please try again later."
         }), 400
 
     if not is_doctor_available(doctor, dt):

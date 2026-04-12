@@ -1,29 +1,48 @@
 document.addEventListener('DOMContentLoaded', (event) => {
 
-    
+    // === Doctor Row Expand/Collapse ===
+    document.querySelectorAll('.doctor-main-row').forEach(row => {
+        row.addEventListener('click', function () {
+            const doctorId = this.dataset.doctorId;
+            if (!doctorId) return;
+            const detailRow = document.getElementById(`doctor-details-${doctorId}`);
+            const isOpen = detailRow.style.display !== 'none';
+
+            // Close all open rows first
+            document.querySelectorAll('.doctor-details-row').forEach(r => r.style.display = 'none');
+            document.querySelectorAll('.doctor-main-row').forEach(r => r.classList.remove('expanded'));
+
+            // Toggle this one open
+            if (!isOpen) {
+                detailRow.style.display = 'table-row';
+                this.classList.add('expanded');
+                fetchDoctorStats(doctorId, detailRow);
+            }
+        });
+    });
+
     const downloadBtn = document.getElementById('downloadDoctorCSV');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function () {
-            const table = document.getElementById('doctorTable');
-            const rows = table.querySelectorAll('tr');
-            let csvContent = "Full Name,Email,Department,Status\n";
-
-            for (let i = 1; i < rows.length; i++) {
-                const name = rows[i].querySelector('strong').textContent.replace(',', '');
-                const email = rows[i].querySelector('.text-muted').textContent.replace(',', '');
-                const dept = rows[i].querySelectorAll('td')[1].textContent.trim().replace(',', '');
-                const status = rows[i].querySelector('.badge').textContent.trim();
-                csvContent += `${name},${email},${dept},${status}\n`;
-            }
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const rows = document.querySelectorAll('#doctorTable .doctor-main-row');
+            let csvContent = "Full Name,Degree,Department,Fees,Status\n";
+            rows.forEach(row => {
+                const name = row.querySelector('.doc-name')?.textContent.trim().replace(',', '') || '';
+                const degree = row.querySelector('.doc-degree')?.textContent.trim().replace(',', '') || '';
+                const dept = row.querySelector('.dept-badge')?.textContent.trim().replace(',', '') || '';
+                const fees = row.querySelector('.fees-label')?.textContent.trim().replace(',', '') || '';
+                const status = row.querySelector('.badge')?.textContent.trim() || '';
+                csvContent += `${name},${degree},${dept},${fees},${status}\n`;
+            });
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `HMS_Doctor_List_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `Doctors_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         });
     }
 
@@ -83,20 +102,39 @@ document.addEventListener('DOMContentLoaded', (event) => {
         });
     }
 
-    
     document.querySelectorAll('.btn-edit-dept').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const li = this.closest('li');
-            li.querySelector('.dept-display-view').style.display = 'none';
-            li.querySelector('.dept-edit-view').style.display = 'flex';
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const item = this.closest('.dept-item');
+            if (item) {
+                const displayView = item.querySelector('.dept-display-view');
+                const editView = item.querySelector('.dept-edit-view');
+                const input = editView.querySelector('.dept-edit-input');
+                displayView.style.display = 'none';
+                editView.style.display = 'flex';
+                // Auto-focus and select all text
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }
         });
     });
 
     document.querySelectorAll('.btn-cancel-edit').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const li = this.closest('li');
-            li.querySelector('.dept-display-view').style.display = 'flex';
-            li.querySelector('.dept-edit-view').style.display = 'none';
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const item = this.closest('.dept-item');
+            if (item) {
+                const displayView = item.querySelector('.dept-display-view');
+                const editView = item.querySelector('.dept-edit-view');
+                const input = editView.querySelector('.dept-edit-input');
+                const originalName = item.querySelector('.dept-item-name')?.textContent.trim();
+                // Reset the input to original value so stale edits don't persist
+                if (input && originalName) input.value = originalName;
+                editView.style.display = 'none';
+                displayView.style.display = 'flex';
+            }
         });
     });
 
@@ -117,50 +155,76 @@ document.addEventListener('DOMContentLoaded', (event) => {
     });
 
     
-    document.querySelectorAll('.doctor-main-row').forEach(row => {
-        row.addEventListener('click', function (e) {
-            if (e.target.closest('.table-actions') || e.target.closest('.modal')) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            const targetId = this.getAttribute('data-bs-target');
-            const targetEl = document.querySelector(targetId);
-            const isOpening = !targetEl.classList.contains('show');
-
-            if (isOpening) {
-                
-                document.querySelectorAll('.doctor-main-row').forEach(r => r.setAttribute('aria-expanded', 'false'));
-                this.setAttribute('aria-expanded', 'true');
-
-                
-                const openDetails = document.querySelector('.doctor-details-row.collapse.show');
-                if (openDetails && openDetails !== targetEl) {
-                    bootstrap.Collapse.getOrCreateInstance(openDetails).hide();
-                    
-                    setTimeout(() => {
-                        bootstrap.Collapse.getOrCreateInstance(targetEl).show();
-                    }, 50);
-                } else {
-                    bootstrap.Collapse.getOrCreateInstance(targetEl).show();
-                }
-            } else {
-                
-                this.setAttribute('aria-expanded', 'false');
-                bootstrap.Collapse.getOrCreateInstance(targetEl).hide();
-            }
-        });
+    // --- Performance Range Filter ---
+    const perfFp = flatpickr("#doctorPerfRange", {
+        mode: "range",
+        defaultDate: [new Date(new Date().setDate(new Date().getDate() - 180)), new Date()],
+        dateFormat: "Y-m-d",
+        onChange: () => {
+             // If any rows are already open, refresh their stats
+             document.querySelectorAll('.doctor-details-row.show').forEach(row => {
+                 const id = row.id.split('-').pop();
+                 fetchDoctorStats(id, row);
+             });
+        }
     });
 
-    
-    document.querySelectorAll('.doctor-details-row').forEach(detail => {
-        detail.addEventListener('hidden.bs.collapse', () => {
-            const row = document.querySelector(`[data-bs-target="#${detail.id}"]`);
-            if (row) row.setAttribute('aria-expanded', 'false');
-        });
-        detail.addEventListener('shown.bs.collapse', () => {
-            const row = document.querySelector(`[data-bs-target="#${detail.id}"]`);
-            if (row) row.setAttribute('aria-expanded', 'true');
+    async function fetchDoctorStats(id, containerRow) {
+        const statsBox = containerRow.querySelector(`.perf-stats-container-${id}`);
+        const earningsBox = containerRow.querySelector(`.earnings-label-${id}`);
+        const datesLabel = containerRow.querySelector('.perf-dates-label');
+        
+        const dates = perfFp.selectedDates;
+        let query = "";
+        if (dates.length === 2) {
+            query = `?start_date=${dates[0].toISOString().split('T')[0]}&end_date=${dates[1].toISOString().split('T')[0]}`;
+            datesLabel.textContent = `(${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${dates[1].toLocaleDateString('en-US', {month:'short', day:'numeric'})})`;
+        } else {
+            datesLabel.textContent = "(Last 6 Months)";
+        }
+
+        try {
+            const res = await fetch(`/api/admin/doctor-performance/${id}${query}`);
+            const data = await res.json();
+            
+            earningsBox.textContent = `₹${data.revenue.toLocaleString()}`;
+            
+            statsBox.innerHTML = `
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="stat-mini-card">
+                            <div class="val">${data.count}</div>
+                            <div class="lbl">Visits</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-mini-card">
+                            <div class="val" style="color:#10b981;">${data.status_dist.Completed || 0}</div>
+                            <div class="lbl">Completed</div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-1">
+                        <div class="detail-section-label">Recent Patients</div>
+                        <div class="d-flex flex-wrap">
+                            ${data.recent_patients.length
+                                ? data.recent_patients.map(p => `<span class="recent-patient-chip">${p}</span>`).join('')
+                                : '<span class="text-muted" style="font-size:0.8rem;">No recent visits</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            statsBox.innerHTML = `<div class="alert alert-danger smallest py-1 px-2">Failed to load stats</div>`;
+        }
+    }
+
+    // Performance range filter - refresh any open row
+    perfFp.config.onChange.push(() => {
+        document.querySelectorAll('.doctor-details-row').forEach(row => {
+            if (row.style.display !== 'none') {
+                const id = row.id.replace('doctor-details-', '');
+                fetchDoctorStats(id, row);
+            }
         });
     });
 

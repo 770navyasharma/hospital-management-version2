@@ -239,7 +239,7 @@
                                         </div>
                                         
                                         <button class="btn btn-link p-0 position-absolute top-0 end-0 m-2 text-muted opacity-50 hover-opacity-100"
-                                                @click.stop="globalState.notifications = globalState.notifications.filter(n => n.id !== note.id)"
+                                                @click.stop="sharedMethods.dismissNotification(note.id)"
                                                 title="Dismiss">
                                             <i class="bi bi-x fs-5"></i>
                                         </button>
@@ -519,75 +519,6 @@
                         </button>
                     </div>
                 </div>
-
-                <script>
-        
-        document.addEventListener('DOMContentLoaded', function () {
-            let timeout = null;
-            const initTooltips = () => {
-                if (timeout) clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-                    tooltipTriggerList.forEach(function (el) {
-                        let instance = bootstrap.Tooltip.getInstance(el);
-                        const newTitle = el.getAttribute('title') || el.getAttribute('data-bs-original-title');
-                        
-                        if (!instance) {
-                            if (newTitle) new bootstrap.Tooltip(el);
-                        } else {
-                            
-                            if (newTitle && instance._config.title !== newTitle) {
-                                
-                                const isShown = instance._activeTrigger && (instance._activeTrigger.click || instance._activeTrigger.hover || instance._activeTrigger.focus);
-                                
-                                if (isShown) {
-                                    
-                                    instance._config.title = newTitle;
-                                    if (instance.update) instance.update();
-                                    
-                                    const tip = instance.getTipElement();
-                                    if (tip) {
-                                        const inner = tip.querySelector('.tooltip-inner');
-                                        if (inner) inner.textContent = newTitle;
-                                    }
-                                } else {
-                                    instance.dispose();
-                                    new bootstrap.Tooltip(el);
-                                }
-                            }
-                        }
-                    });
-                }, 150);
-            };
-
-            
-            initTooltips();
-
-            
-            const observer = new MutationObserver((mutations) => {
-                let shouldUpdate = false;
-                for (let m of mutations) {
-                    
-                    if (m.target && (m.target.classList?.contains('tooltip') || m.target.closest?.('.tooltip'))) {
-                        continue;
-                    }
-
-                    if (m.type === 'childList' || (m.type === 'attributes' && m.attributeName === 'title')) {
-                        shouldUpdate = true;
-                        break;
-                    }
-                }
-                if (shouldUpdate) initTooltips();
-            });
-
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['title']
-            });
-        });
-    </script>
                 
                 <div class="col-md-9 p-0 d-flex flex-column h-100">
                     <div class="d-flex justify-content-between align-items-center p-4 px-5 bg-white border-bottom">
@@ -699,6 +630,55 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let timeout = null;
+        const initTooltips = () => {
+            if (timeout) clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                tooltipTriggerList.forEach(function (el) {
+                    let instance = bootstrap.Tooltip.getInstance(el);
+                    const newTitle = el.getAttribute('title') || el.getAttribute('data-bs-original-title');
+                    
+                    if (!instance) {
+                        if (newTitle) new bootstrap.Tooltip(el);
+                    } else {
+                        if (newTitle && instance._config.title !== newTitle) {
+                            const isShown = instance._activeTrigger && (instance._activeTrigger.click || instance._activeTrigger.hover || instance._activeTrigger.focus);
+                            if (isShown) {
+                                instance._config.title = newTitle;
+                                if (instance.update) instance.update();
+                                const tip = instance.getTipElement();
+                                if (tip) {
+                                    const inner = tip.querySelector('.tooltip-inner');
+                                    if (inner) inner.textContent = newTitle;
+                                }
+                            } else {
+                                instance.dispose();
+                                new bootstrap.Tooltip(el);
+                            }
+                        }
+                    }
+                });
+            }, 150);
+        };
+        initTooltips();
+        const observer = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            for (let m of mutations) {
+                if (m.target && (m.target.classList?.contains('tooltip') || m.target.closest?.('.tooltip'))) continue;
+                if (m.type === 'childList' || (m.type === 'attributes' && m.attributeName === 'title')) {
+                    shouldUpdate = true;
+                    break;
+                }
+            }
+            if (shouldUpdate) initTooltips();
+        });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
+    });
+</script>
 </div>
 {% endblock %}
 

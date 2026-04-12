@@ -106,7 +106,7 @@
                                     <div v-if="!note.is_read" class="notif-unread-dot"></div>
                                     
                                     <button class="notif-dismiss-btn"
-                                            @click.stop="globalState.notifications = globalState.notifications.filter(n => n.id !== note.id)"
+                                            @click.stop="sharedMethods.dismissNotification(note.id)"
                                             title="Dismiss">
                                         <i class="bi bi-x"></i>
                                     </button>

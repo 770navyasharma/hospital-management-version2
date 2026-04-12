@@ -34,23 +34,22 @@ createApp({
                 path: '',
                 type: '',
                 name: ''
-            }
+            },
+            historySearchQuery: '',
+            historyDateFilter: '',
+            nowClock: new Date()
         }
     },
     watch: {
         selectedSlot(newSlot) {
             if (newSlot) {
-                const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
+                const todayStr = this.getTodayStr();
                 let minTime = newSlot.start;
 
-                
                 if (this.selectedDate === todayStr) {
-                    const currentH = now.getHours().toString().padStart(2, '0');
-                    const currentM = now.getMinutes().toString().padStart(2, '0');
-                    const currentTime = `${currentH}:${currentM}`;
-                    if (currentTime > minTime) {
-                        minTime = currentTime;
+                    const threshold = this.leadTimeThreshold;
+                    if (threshold > minTime) {
+                        minTime = threshold;
                     }
                 }
 
@@ -81,11 +80,25 @@ createApp({
                     this.timePicker = null;
                 }
             }
+        },
+        selectedTime(newTime) {
+            if (this.isTodaySelected && newTime) {
+                const threshold = this.leadTimeThreshold;
+                if (newTime < threshold) {
+                    sharedMethods.showToast(`Time shifted to earliest possible window (${this.formatTime(threshold)}).`, "info");
+                    this.selectedTime = threshold;
+                    if (this.timePicker) this.timePicker.setDate(threshold);
+                }
+            }
         }
     },
     computed: {
         activeAppointments() {
-            return this.myAppointments.filter(a => ['Booked', 'Ongoing', 'Completed'].includes(a.status));
+            const todayStr = new Date().toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
+            return this.myAppointments.filter(a => 
+                ['Booked', 'Ongoing', 'Completed'].includes(a.status) && 
+                a.raw_date === todayStr
+            );
         },
         requestedAppointments() {
             return this.myAppointments.filter(a => a.status === 'Requested');
@@ -93,13 +106,29 @@ createApp({
         completedAppointments() {
             return this.myAppointments.filter(a => a.status === 'Completed').sort((a,b) => new Date(b.raw_datetime) - new Date(a.raw_datetime));
         },
+        filteredCompletedAppointments() {
+            return this.completedAppointments.filter(a => {
+                const q = this.historySearchQuery.toLowerCase().trim();
+                const matchesSearch = !q || a.doctor_name.toLowerCase().includes(q);
+                const matchesDate = !this.historyDateFilter || a.raw_date === this.historyDateFilter;
+                return matchesSearch && matchesDate;
+            });
+        },
         currentActiveAppt() {
             return this.activeAppointments[this.sliderIndex] || null;
+        },
+        isTodaySelected() {
+            return this.selectedDate === this.getTodayStr();
+        },
+        leadTimeThreshold() {
+            const bufferNow = new Date(this.nowClock.getTime() + 20 * 60000);
+            return bufferNow.getHours().toString().padStart(2, '0') + ":" + bufferNow.getMinutes().toString().padStart(2, '0');
         }
     },
     mounted() {
         this.doctors = window.doctorData || [];
         this.loadAppointments();
+        setInterval(() => { this.nowClock = new Date(); }, 10000);
     },
     methods: {
         async loadAppointments() {
@@ -114,6 +143,44 @@ createApp({
             } catch (e) {
                 console.error("Failed to load appointments:", e);
             }
+        },
+
+        getTodayStr() {
+            const d = this.nowClock || new Date();
+            const y = d.getFullYear();
+            const m = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
+
+        getLeadTimeBlockStyle(slot) {
+            if (!this.isTodaySelected) return { display: 'none' };
+            
+            const threshold = this.leadTimeThreshold;
+            if (threshold <= slot.start) return { display: 'none' };
+            
+            const startMins = this.timeToMinutes(slot.start);
+            const endMins = this.timeToMinutes(slot.end);
+            const thresholdMins = this.timeToMinutes(threshold);
+            
+            const totalWidth = endMins - startMins;
+            const deadWidth = Math.min(totalWidth, thresholdMins - startMins);
+            
+            const widthPct = (deadWidth / totalWidth) * 100;
+            
+            return {
+                left: '0%',
+                width: widthPct + '%',
+                backgroundColor: '#94a3b8',
+                opacity: '0.6',
+                zIndex: '2',
+                borderRadius: 'inherit'
+            };
+        },
+
+        timeToMinutes(t) {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
         },
 
         nextSlide() {
@@ -300,6 +367,11 @@ createApp({
             if (!this.selectedSlot) return sharedMethods.showToast("Please select a time slot.", "warning");
             const finalTime = this.selectedTime || this.selectedSlot.start;
 
+            // Strict validation check
+            if (this.isTodaySelected && finalTime < this.leadTimeThreshold) {
+                return sharedMethods.showToast("Please choose a time at least 20 minutes from now.", "error");
+            }
+
             this.loading = true;
             try {
                 const res = await fetch('/patient/api/book', {
@@ -379,12 +451,12 @@ createApp({
                 
                 
                 const data = {
-                    patient_name: "Patient (Self)",
-                    patient_pic: '', 
-                    patient_gender: '',
-                    patient_age: '',
-                    doctor_pic: appt.doctor_profile_pic,
-                    doctor_name: `Dr. ${appt.doctor_name || "Assigned Doctor"}`,
+                    patient_name: globalState.patientProfile?.full_name || "Patient (Self)",
+                    patient_pic: globalState.patientProfile?.profile_pic || '', 
+                    patient_gender: globalState.patientProfile?.gender || '',
+                    patient_age: globalState.patientProfile?.age || '',
+                    doctor_pic: appt.doctor_pic,
+                    doctor_name: appt.doctor_name.startsWith('Dr.') ? appt.doctor_name : `Dr. ${appt.doctor_name}`,
                     doctor_dept: appt.doctor_dept,
                     date: appt.raw_date || 'N/A',
                     id: appt.id,

@@ -8,24 +8,12 @@
             return {
                 globalState: shared.globalState,
                 sharedMethods: shared.sharedMethods,
-                allHistory: [],
-                allStats: [],
-                stats: {
-                    treatedCount: 0,
-                    cancelledCount: 0,
-                    queueCount: 0
-                },
                 activeSchedDates: [],
                 activeConfigs: {},
-                allAvailability: {},
                 showPatientModal: false,
                 selectedPatient: {},
                 patientHistory: [],
-                localAppointments: [],
-                totalToday: 0,
-                leftToday: 0,
-                pendingRequestsCount: 0,
-                nextPatientData: null
+                allAvailability: {}
             }
         },
         computed: {
@@ -36,14 +24,15 @@
                     { title: 'Pending Requests', value: this.pendingRequestsCount, bgColor: 'rgba(28, 200, 138, 0.1)', iconColor: '#1cc88a', icon: 'bi-person-plus-fill' }
                 ];
             },
-            appointments() { return this.localAppointments || []; },
+            appointments() { return this.globalState.appointments || []; },
             requests() { return this.globalState.requests || []; },
-            treatedCount() { return this.stats.treatedCount || 0; },
-            cancelledCount() { return this.stats.cancelledCount || 0; },
-            queueCount() { return this.stats.queueCount || 0; },
-            nextPatient() {
-                return this.nextPatientData;
-            }
+            treatedCount() { return this.globalState.stats.treatedCount || 0; },
+            cancelledCount() { return this.globalState.stats.cancelledCount || 0; },
+            queueCount() { return this.globalState.stats.queueCount || 0; },
+            nextPatient() { return this.globalState.nextPatient; },
+            totalToday() { return this.globalState.totalToday || 0; },
+            leftToday() { return this.globalState.leftToday || 0; },
+            pendingRequestsCount() { return this.globalState.requests.length || 0; }
         },
         async mounted() {
             console.log("Dashboard Mounted. Fetching initial data...");
@@ -61,19 +50,6 @@
                 }
 
                 if (data) {
-                    this.localAppointments = data.appointments || [];
-                    this.allHistory = data.history || [];
-                    this.allStats = data.stats || [];
-                    this.stats = {
-                        treatedCount: data.treated_count || 0,
-                        cancelledCount: data.cancelled_count || 0,
-                        queueCount: data.queue_count || 0
-                    };
-                    
-                    this.totalToday = data.total_today || 0;
-                    this.leftToday = data.left_today || 0;
-                    this.pendingRequestsCount = data.pending_requests_count || 0;
-                    this.nextPatientData = data.next_patient;
                     this.allAvailability = data.availability || {};
                     nextTick(() => this.renderChart());
                 }
@@ -202,17 +178,31 @@
                     this.sharedMethods.showToast("Please select at least one date.", "error");
                     return;
                 }
+
+                // Create a clean clone to avoid reference issues
+                const payload = JSON.parse(JSON.stringify(this.allAvailability));
+                
+                // Update with currently active configs
                 Object.keys(this.activeConfigs).forEach(date => {
-                    this.allAvailability[date] = this.activeConfigs[date].map(s => `${s.start}-${s.end}`);
+                    payload[date] = this.activeConfigs[date].map(s => `${s.start}-${s.end}`);
                 });
+
                 try {
                     const res = await fetch('/doctor/api/doctor/update-availability', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(this.allAvailability)
+                        body: JSON.stringify(payload)
                     });
-                    if (res.ok) this.sharedMethods.showToast(`Schedule updated!`);
-                } catch (e) { this.sharedMethods.showToast("Failed to save.", "error"); }
+                    const result = await res.json();
+                    if (res.ok) {
+                        this.allAvailability = payload;
+                        this.sharedMethods.showToast(`Schedule updated! Saved ${result.received_keys ? result.received_keys.length : 0} dates.`);
+                    } else {
+                        throw new Error("Server error");
+                    }
+                } catch (e) { 
+                    this.sharedMethods.showToast("Failed to save. Check your connection.", "error"); 
+                }
             },
             renderChart() {
                 const canvas = document.getElementById('summaryChart');
@@ -224,7 +214,7 @@
                     data: {
                         labels: ['Treated', 'Cancelled', 'In Queue'],
                         datasets: [{
-                            data: [this.stats.treatedCount, this.stats.cancelledCount, this.stats.queueCount],
+                            data: [this.globalState.stats.treatedCount, this.globalState.stats.cancelledCount, this.globalState.stats.queueCount],
                             backgroundColor: ['#1cc88a', '#e74a3b', '#4e73df'],
                             borderWidth: 0, cutout: '75%', borderRadius: 5
                         }]
@@ -243,7 +233,7 @@
                             ctx.font = `bold 2.5em Outfit, sans-serif`;
                             ctx.textBaseline = "middle";
                             ctx.fillStyle = "#1a202c";
-                            const total = (this.stats.treatedCount || 0) + (this.stats.cancelledCount || 0) + (this.stats.queueCount || 0);
+                            const total = (this.globalState.stats.treatedCount || 0) + (this.globalState.stats.cancelledCount || 0) + (this.globalState.stats.queueCount || 0);
                             const text = total.toString();
                             const textX = Math.round((width - ctx.measureText(text).width) / 2);
                             ctx.fillText(text, textX, height / 2 - 5);

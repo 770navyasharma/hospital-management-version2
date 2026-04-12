@@ -34,6 +34,13 @@
         selectedPastAppt: {},
         isEditingPastAppt: false,
         
+        // Sync these for instant dashboard updates
+        appointments: [],
+        stats: { treatedCount: 0, cancelledCount: 0, queueCount: 0 },
+        totalToday: 0,
+        leftToday: 0,
+        nextPatient: null,
+        
         dismissedUrgentIds: JSON.parse(localStorage.getItem('hms_dismissed_urgents') || '[]'),
     });
 
@@ -92,6 +99,17 @@
                 globalState.requests = data.requests || [];
                 globalState.statusOverride = data.status_override;
                 globalState.currentStatus = data.current_status;
+                
+                // Sync to global state for reactive UI updates
+                globalState.appointments = data.appointments || [];
+                globalState.stats = {
+                    treatedCount: data.treated_count || 0,
+                    cancelledCount: data.cancelled_count || 0,
+                    queueCount: data.queue_count || 0
+                };
+                globalState.totalToday = data.total_today || 0;
+                globalState.leftToday = data.left_today || 0;
+                globalState.nextPatient = data.next_patient;
 
                 const activeUrgent = (data.requests || []).filter(r => r.is_urgent && !globalState.dismissedUrgentIds.includes(r.id));
                 activeUrgent.forEach(req => {
@@ -155,7 +173,7 @@
 
         async fetchNotifications() {
             try {
-                const res = await fetch('/api/notifications');
+                const res = await fetch('/doctor/api/notifications');
                 if (res.ok) {
                     const newNotifs = await res.json();
                     
@@ -181,7 +199,7 @@
 
         async markAllAsRead() {
             try {
-                const res = await fetch('/api/notifications/mark-read', { method: 'POST' });
+                const res = await fetch('/doctor/api/notifications/mark-read', { method: 'POST' });
                 if (res.ok) {
                     globalState.notifications.forEach(n => n.is_read = true);
                 }
@@ -587,6 +605,18 @@
                     onCancel: () => { globalState.confirmModal.show = false; resolve(false); }
                 };
             });
+        },
+
+        async dismissNotification(id) {
+            try {
+                const res = await fetch(`/doctor/api/notifications/dismiss/${id}`, { method: 'POST' });
+                if (res.ok) {
+                    globalState.notifications = globalState.notifications.filter(n => n.id !== id);
+                }
+            } catch (e) {
+                console.error("Failed to dismiss:", e);
+                globalState.notifications = globalState.notifications.filter(n => n.id !== id);
+            }
         },
 
         async handleUrgentAction(id, action) {

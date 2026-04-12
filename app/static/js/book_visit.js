@@ -27,7 +27,8 @@ createApp({
             loading: false,
             selectedTime: '',
             timePicker: null,
-            showConfirmModal: false
+            showConfirmModal: false,
+            nowClock: new Date()
         }
     },
     computed: {
@@ -68,20 +69,25 @@ createApp({
                 });
             }
             return days;
+        },
+        isTodaySelected() {
+            return this.selectedDate === this.getTodayStr();
+        },
+        leadTimeThreshold() {
+            const bufferNow = new Date(this.nowClock.getTime() + 20 * 60000);
+            return bufferNow.getHours().toString().padStart(2, '0') + ":" + bufferNow.getMinutes().toString().padStart(2, '0');
         }
     },
     watch: {
         selectedSlot(newSlot) {
             if (newSlot) {
                 const now = new Date();
-                const todayStr = now.toISOString().split('T')[0];
+                const todayStr = this.getTodayStr();
                 let minTime = newSlot.start;
 
                 if (this.selectedDate === todayStr) {
-                    const currentH = now.getHours().toString().padStart(2, '0');
-                    const currentM = now.getMinutes().toString().padStart(2, '0');
-                    const currentTime = `${currentH}:${currentM}`;
-                    if (currentTime > minTime) minTime = currentTime;
+                    const threshold = this.leadTimeThreshold;
+                    if (threshold > minTime) minTime = threshold;
                 }
 
                 this.selectedTime = minTime;
@@ -183,7 +189,7 @@ createApp({
             this.bookedIntervals = []; 
             this.isUrgent = false;
             this.urgentNote = '';
-            this.medicalHistory = '';
+            this.medicalHistory = globalState.patientProfile?.medical_history || '';
             this.showBookingModal = true;
 
             
@@ -210,7 +216,11 @@ createApp({
 
         selectSlot(slot) {
             this.selectedSlot = slot;
-            this.selectedTime = slot.start;
+            let start = slot.start;
+            if (this.isTodaySelected && start < this.leadTimeThreshold) {
+                start = this.leadTimeThreshold;
+            }
+            this.selectedTime = start;
         },
 
         timeToMinutes(timeStr) {
@@ -261,7 +271,40 @@ createApp({
             const selStart = this.timeToMinutes(this.selectedTime);
             const left = ((selStart - sStart) / totalWidth) * 100;
             const width = (30 / totalWidth) * 100;
-            return { left: `${left}%`, width: `${width}%`, borderLeft: '2px solid #4e73df' };
+            return { left: `${left}%`, width: `${width}%`, borderLeft: '2px solid #4e73df', zIndex: '4' };
+        },
+
+        getTodayStr() {
+            const d = this.nowClock || new Date();
+            const y = d.getFullYear();
+            const m = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        },
+
+        getLeadTimeBlockStyle(slot) {
+            if (!this.isTodaySelected) return { display: 'none' };
+            
+            const threshold = this.leadTimeThreshold;
+            if (threshold <= slot.start) return { display: 'none' };
+            
+            const startMins = this.timeToMinutes(slot.start);
+            const endMins = this.timeToMinutes(slot.end);
+            const thresholdMins = this.timeToMinutes(threshold);
+            
+            const totalWidth = endMins - startMins;
+            const deadWidth = Math.min(totalWidth, thresholdMins - startMins);
+            
+            const widthPct = (deadWidth / totalWidth) * 100;
+            
+            return {
+                left: '0%',
+                width: widthPct + '%',
+                backgroundColor: '#94a3b8',
+                opacity: '0.6',
+                zIndex: '3',
+                borderRadius: 'inherit'
+            };
         },
 
         formatDate(dateStr) {
@@ -281,6 +324,11 @@ createApp({
         async submitBooking() {
             if (!this.selectedSlot) return sharedMethods.showToast("Please select a time slot.", "warning");
             const finalTime = this.selectedTime || this.selectedSlot.start;
+
+            if (this.isTodaySelected && finalTime < this.leadTimeThreshold) {
+                return sharedMethods.showToast(`Please choose a time at least 20 minutes from now (${this.formatTime(this.leadTimeThreshold)}).`, "error");
+            }
+
             this.loading = true;
             try {
                 const res = await fetch('/patient/api/book', {
@@ -298,6 +346,7 @@ createApp({
                     this.showConfirmModal = false;
                     this.showBookingModal = false;
                     sharedMethods.showToast("🎉 Appointment requested successfully! The doctor will confirm shortly.");
+                    sharedMethods.fetchProfile(); // Sync back the history update
                 } else {
                     const result = await res.json();
                     sharedMethods.showToast(result.message, "error");
@@ -333,5 +382,6 @@ createApp({
     mounted() {
         this.fetchDoctorStatuses();
         setInterval(() => this.fetchDoctorStatuses(), 60000);
+        setInterval(() => { this.nowClock = new Date(); }, 10000);
     }
 }).mount('#patient-app');

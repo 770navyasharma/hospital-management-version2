@@ -96,10 +96,14 @@
 
         
         document.addEventListener('DOMContentLoaded', () => {
+            // Skip base toasts on admin pages — admin has its own toast system
+            if (window.location.pathname.startsWith('/admin')) return;
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
+                        {% if message and message.strip() %}
                         window.showToast("{{ message }}", "{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'primary' }}", "{{ category.upper() }}");
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             {% endwith %}

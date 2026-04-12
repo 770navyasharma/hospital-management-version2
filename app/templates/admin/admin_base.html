@@ -10,38 +10,47 @@
 {% block navbar %}{% endblock %}
 
 {% block page_content %}
+<script>
+    // Synchronously remove globalToast before Bootstrap initializes it on admin pages.
+    document.addEventListener('DOMContentLoaded', function() {
+        var gt = document.getElementById('globalToast');
+        if (gt) { var c = gt.closest('.toast-container'); if (c) c.remove(); else gt.remove(); }
+    }, true); // capture phase = runs first
+</script>
 <div class="admin-wrapper">
     <nav class="admin-sidebar">
         <a class="sidebar-brand" href="{{ url_for('main.admin_dashboard') }}">
-            <span class="sidebar-brand-icon"><i class="bi bi-hospital-fill"></i></span>
+            <div class="sidebar-brand-icon"><i class="bi bi-hospital-fill"></i></div>
             <span class="sidebar-brand-text">HMS Admin</span>
         </a>
+        
         <div>
             <span class="sidebar-heading">Analytics</span>
             <ul class="sidebar-nav-list">
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('main.admin_dashboard') }}" class="{{ 'active' if request.path == url_for('main.admin_dashboard') else '' }}">
-                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                        <i class="bi bi-cpu-fill"></i> Dashboard
                     </a>
                 </li>
             </ul>
         </div>
+        
         <div>
             <span class="sidebar-heading">Management</span>
             <ul class="sidebar-nav-list">
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('main.admin_doctors') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_doctors')) else '' }}">
-                        <i class="bi bi-clipboard2-pulse"></i> Doctors
+                        <i class="bi bi-person-badge-fill"></i> Manage Doctors
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('main.admin_patients') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_patients')) else '' }}">
-                        <i class="bi bi-people-fill"></i> Patients
+                        <i class="bi bi-people-fill"></i> Patients Directory
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('main.admin_appointments') }}" class="{{ 'active' if request.path.startswith(url_for('main.admin_appointments')) else '' }}">
-                        <i class="bi bi-calendar-check"></i> Appointments
+                        <i class="bi bi-calendar2-check-fill"></i> Appointments List
                     </a>
                 </li>
             </ul>
@@ -51,7 +60,7 @@
             <ul class="sidebar-nav-list">
                 <li class="sidebar-nav-item">
                     <a href="{{ url_for('security.logout') }}" class="logout-link">
-                        <i class="bi bi-box-arrow-left"></i> Logout
+                        <i class="bi bi-power"></i> System Logout
                     </a>
                 </li>
             </ul>
@@ -63,39 +72,45 @@
     </main>
 </div>
 
-<div class="toast-container position-fixed top-0 end-0 p-3">
+<div class="toast-container position-fixed top-0 end-0 p-3" id="adminToastContainer">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                {% if message and message.strip() and category in ['success', 'danger', 'warning', 'info', 'primary'] %}
+                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
                     <div class="d-flex">
-                        <div class="toast-body">
-                            {{ message }}
-                        </div>
+                        <div class="toast-body">{{ message }}</div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
         {% endif %}
     {% endwith %}
 </div>
 
+    <!-- Premium Executive Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 pb-0 justify-content-center pt-4">
-                    <h5 class="modal-title fw-800 text-uppercase ls-1" id="confirmationModalLabel">Confirm Action</h5>
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0 justify-content-end pt-3 pe-3">
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body py-4 px-4 text-center">
-                    <div class="display-4 text-primary opacity-25 mb-3">
-                        <i class="bi bi-exclamation-circle-fill"></i>
+                <div class="modal-body py-4 px-5 text-center">
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 rounded-circle mb-3 shadow-sm" style="width: 90px; height: 90px; border: 4px solid #fff;">
+                            <i class="bi bi-shield-lock-fill text-warning" style="font-size: 2.5rem;"></i>
+                        </div>
                     </div>
-                    <p id="confirmationModalText" class="lead fw-bold mb-0 text-dark"></p>
-                    <p class="text-muted small mt-2">This action is permanent and will take effect immediately.</p>
+                    <h3 class="modal-title w-100 text-center mb-2">Security Verification</h3>
+                    <p id="confirmationModalText" class="text-secondary fw-medium px-2 mb-0" style="font-size: 1rem;"></p>
+                    <div class="mt-4 p-3 bg-light rounded-4 border border-white">
+                        <p class="smallest fw-bold text-muted text-uppercase mb-0 ls-1"><i class="bi bi-info-circle-fill me-1 text-primary opacity-50"></i> Audit Trail: This action is being logged</p>
+                    </div>
                 </div>
-                <div class="modal-footer border-0 pb-4 justify-content-center gap-3">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Go Back</button>
-                    <button type="button" class="btn rounded-pill px-5 fw-bold" id="confirmActionButton">Execute Action</button>
+                <div class="modal-footer border-0 pb-5 px-5 justify-content-center gap-3">
+                    <button type="button" class="btn btn-premium-light" data-bs-dismiss="modal">RETAIN STATUS</button>
+                    <button type="button" class="btn btn-premium-primary" id="confirmActionButton">EXECUTE CHANGES</button>
                 </div>
             </div>
         </div>
