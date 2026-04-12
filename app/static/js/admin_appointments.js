@@ -100,9 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="status-badge status-${appt.status.toLowerCase()}">${appt.status}</span>
                     </td>
                     <td class="text-end pe-4">
-                        <a href="javascript:void(0)" class="view-link justify-content-end" onclick="viewDetails(${appt.id})">
-                            VIEW RECORD <i class="bi bi-arrow-right"></i>
-                        </a>
+                        <span class="smallest fw-bold text-muted text-uppercase ls-1">Record Locked</span>
                     </td>
                 </tr>
             `;
